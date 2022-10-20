@@ -1,6 +1,7 @@
 # 10101 (a.k.a TenTenOne)
 
 ## Dependencies
+
 This project requires `flutter` and `Rust`.
 
 ## Building
