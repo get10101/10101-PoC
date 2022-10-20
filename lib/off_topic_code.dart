@@ -15,9 +15,7 @@ Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
       body: ListView(
         children: [
           Container(height: 16),
-            const Card(
-              child: Text("Legends of Lightning")
-              ),
+          const Card(child: Text("Legends of Lightning")),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Card(
