@@ -27,7 +27,7 @@
 		33CC10F62044A3C60003C045 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 33CC10F42044A3C60003C045 /* MainMenu.xib */; };
 		33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC11122044BFA00003C045 /* MainFlutterWindow.swift */; };
 		5DCFBE4E7C2AD08712D21BEB /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AC4CAD777CCE8195EEEED9F /* Pods_Runner.framework */; };
-		A379BA9527BFF7AF00A4CD85 /* flutter_rust_bridge_example.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A379BA9227BFF76900A4CD85 /* flutter_rust_bridge_example.dylib */; };
+		A379BA9527BFF7AF00A4CD85 /* ten_ten_one.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A379BA9227BFF76900A4CD85 /* ten_ten_one.dylib */; };
 		A379BA9627BFF7D000A4CD85 /* bridge_generated.h in Resources */ = {isa = PBXBuildFile; fileRef = A379BA8C27BFF75900A4CD85 /* bridge_generated.h */; };
 /* End PBXBuildFile section */
 
@@ -41,17 +41,17 @@
 		};
 		A379BA9127BFF76900A4CD85 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = A379BA8D27BFF76900A4CD85 /* flutter_rust_bridge_example.xcodeproj */;
+			containerPortal = A379BA8D27BFF76900A4CD85 /* ten_ten_one.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = CA60FBAABA3A2B3BABD1B908;
-			remoteInfo = "flutter_rust_bridge_example-cdylib";
+			remoteInfo = "ten_ten_one-cdylib";
 		};
 		A379BA9327BFF7AA00A4CD85 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = A379BA8D27BFF76900A4CD85 /* flutter_rust_bridge_example.xcodeproj */;
+			containerPortal = A379BA8D27BFF76900A4CD85 /* ten_ten_one.xcodeproj */;
 			proxyType = 1;
 			remoteGlobalIDString = CA60FBAABA3AEF9A9B28F6B9;
-			remoteInfo = "flutter_rust_bridge_example-cdylib";
+			remoteInfo = "ten_ten_one-cdylib";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -88,7 +88,7 @@
 		842E5678ECBC61DFDDEEE2D5 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		A379BA8C27BFF75900A4CD85 /* bridge_generated.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bridge_generated.h; sourceTree = "<group>"; };
-		A379BA8D27BFF76900A4CD85 /* flutter_rust_bridge_example.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = flutter_rust_bridge_example.xcodeproj; path = ../rust/flutter_rust_bridge_example.xcodeproj; sourceTree = "<group>"; };
+		A379BA8D27BFF76900A4CD85 /* ten_ten_one.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ten_ten_one.xcodeproj; path = ../rust/ten_ten_one.xcodeproj; sourceTree = "<group>"; };
 		A3B8EE939F14F5AA947E7DDE /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		B95FCA28249E171BD83D6DAF /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -98,7 +98,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A379BA9527BFF7AF00A4CD85 /* flutter_rust_bridge_example.dylib in Frameworks */,
+				A379BA9527BFF7AF00A4CD85 /* ten_ten_one.dylib in Frameworks */,
 				5DCFBE4E7C2AD08712D21BEB /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -120,7 +120,7 @@
 		33CC10E42044A3C60003C045 = {
 			isa = PBXGroup;
 			children = (
-				A379BA8D27BFF76900A4CD85 /* flutter_rust_bridge_example.xcodeproj */,
+				A379BA8D27BFF76900A4CD85 /* ten_ten_one.xcodeproj */,
 				33FAB671232836740065AC1E /* Runner */,
 				33CEB47122A05771004F2AC0 /* Flutter */,
 				33CC10EE2044A3C60003C045 /* Products */,
@@ -187,7 +187,7 @@
 		A379BA8E27BFF76900A4CD85 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A379BA9227BFF76900A4CD85 /* flutter_rust_bridge_example.dylib */,
+				A379BA9227BFF76900A4CD85 /* ten_ten_one.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -265,7 +265,7 @@
 			projectReferences = (
 				{
 					ProductGroup = A379BA8E27BFF76900A4CD85 /* Products */;
-					ProjectRef = A379BA8D27BFF76900A4CD85 /* flutter_rust_bridge_example.xcodeproj */;
+					ProjectRef = A379BA8D27BFF76900A4CD85 /* ten_ten_one.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -277,10 +277,10 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		A379BA9227BFF76900A4CD85 /* flutter_rust_bridge_example.dylib */ = {
+		A379BA9227BFF76900A4CD85 /* ten_ten_one.dylib */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.dylib";
-			path = flutter_rust_bridge_example.dylib;
+			path = ten_ten_one.dylib;
 			remoteRef = A379BA9127BFF76900A4CD85 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -382,7 +382,7 @@
 		};
 		A379BA9427BFF7AA00A4CD85 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = "flutter_rust_bridge_example-cdylib";
+			name = "ten_ten_one-cdylib";
 			targetProxy = A379BA9327BFF7AA00A4CD85 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */

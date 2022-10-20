@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'bridge_generated.io.dart';
 
-const base = 'flutter_rust_bridge_example';
+const base = 'ten_ten_one';
 final path = Platform.isWindows ? '$base.dll' : 'lib$base.so';
 late final dylib = Platform.isIOS
     ? DynamicLibrary.process()

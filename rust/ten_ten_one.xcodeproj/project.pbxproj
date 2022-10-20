@@ -41,7 +41,7 @@
             isa = PBXFileReference;
             explicitFileType = "compiled.mach-o.dylib";
             includeInIndex = 0;
-            name = "flutter_rust_bridge_example.dylib";
+            name = "ten_ten_one.dylib";
             sourceTree = TARGET_BUILD_DIR;
         };
                 CA60F3380D5C3EF4668187A5 /* Cargo.toml */ = {
@@ -90,7 +90,7 @@ CA60F3380D5C98AF0B5890DB,
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-        CA60FBAABA3AEF9A9B28F6B9 /* flutter_rust_bridge_example-cdylib */ = {
+        CA60FBAABA3AEF9A9B28F6B9 /* ten_ten_one-cdylib */ = {
             isa = PBXNativeTarget;
             buildConfigurationList = CA60545B73F2EF9A9B28F6B9;
             buildPhases = (
@@ -102,8 +102,8 @@ CA60F3380D5C98AF0B5890DB,
             );
             dependencies = (
             );
-            name = "flutter_rust_bridge_example-cdylib";
-            productName = "flutter_rust_bridge_example.dylib";
+            name = "ten_ten_one-cdylib";
+            productName = "ten_ten_one.dylib";
             productReference = CA60FBAABA3A2B3BABD1B908;
             productType = "com.apple.product-type.library.dynamic";
         };
@@ -131,9 +131,9 @@ CA60F3380D5C98AF0B5890DB,
             CA605E8450E7EF9A9B28F6B9 /* cdylib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
-                    PRODUCT_NAME = "flutter_rust_bridge_example";
-                    "CARGO_XCODE_CARGO_FILE_NAME" = "libflutter_rust_bridge_example.dylib";
-                    "CARGO_XCODE_CARGO_DEP_FILE_NAME" = "libflutter_rust_bridge_example.d";
+                    PRODUCT_NAME = "ten_ten_one";
+                    "CARGO_XCODE_CARGO_FILE_NAME" = "libten_ten_one.dylib";
+                    "CARGO_XCODE_CARGO_DEP_FILE_NAME" = "libten_ten_one.d";
                     SUPPORTED_PLATFORMS = "macosx";
                     
                 };
@@ -142,9 +142,9 @@ CA60F3380D5C98AF0B5890DB,
             CA60E906EDCDEF9A9B28F6B9 /* cdylib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
-                    PRODUCT_NAME = "flutter_rust_bridge_example";
-                    "CARGO_XCODE_CARGO_FILE_NAME" = "libflutter_rust_bridge_example.dylib";
-                    "CARGO_XCODE_CARGO_DEP_FILE_NAME" = "libflutter_rust_bridge_example.d";
+                    PRODUCT_NAME = "ten_ten_one";
+                    "CARGO_XCODE_CARGO_FILE_NAME" = "libten_ten_one.dylib";
+                    "CARGO_XCODE_CARGO_DEP_FILE_NAME" = "libten_ten_one.d";
                     SUPPORTED_PLATFORMS = "macosx";
                     
                 };
@@ -195,7 +195,7 @@ CA60F3380D5C98AF0B5890DB,
             "CARGO_XCODE_TARGET_OS[sdk=iphoneos*]" = "ios";
             "CARGO_XCODE_TARGET_OS[sdk=appletvsimulator*]" = "tvos";
             "CARGO_XCODE_TARGET_OS[sdk=appletvos*]" = "tvos";
-            PRODUCT_NAME = "flutter_rust_bridge_example";
+            PRODUCT_NAME = "ten_ten_one";
             SDKROOT = macosx;
         
                 "CARGO_XCODE_BUILD_MODE" = "release"; /* for xcode scripts */
@@ -219,7 +219,7 @@ CA60F3380D5C98AF0B5890DB,
             "CARGO_XCODE_TARGET_OS[sdk=iphoneos*]" = "ios";
             "CARGO_XCODE_TARGET_OS[sdk=appletvsimulator*]" = "tvos";
             "CARGO_XCODE_TARGET_OS[sdk=appletvos*]" = "tvos";
-            PRODUCT_NAME = "flutter_rust_bridge_example";
+            PRODUCT_NAME = "ten_ten_one";
             SDKROOT = macosx;
         
                 "CARGO_XCODE_BUILD_MODE" = "debug"; /* for xcode scripts */

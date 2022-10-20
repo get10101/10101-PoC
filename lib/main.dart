@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide Size;
 import 'bridge_definitions.dart';
-import 'package:flutter_rust_bridge_example/off_topic_code.dart';
+import 'package:ten_ten_one/off_topic_code.dart';
 
 import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 export 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart' show api;
