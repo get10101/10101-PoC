@@ -3,17 +3,52 @@
 ## Dependencies
 
 This project requires `flutter` and `Rust`.
+A lot of complexity for building the app has been encapsulated in a [Makefile](./Makefile).
+
+To install necessary project dependencies for all targets, run the following:
+
+```sh
+make deps
+```
 
 ## Building
 
-The instructions below allow building for the native desktop on your platform.
-Instructions for building for other platforms will be added soon.
+The instructions below allow building the Rust backend for 10101 application.
+
+### Bindings to Flutter
+
+Bindings for Flutter can be generated with the following command:
 
 ```sh
-cd rust
-cargo build
-cd ..
+make gen
+```
 
-flutter pub get
+### Native (desktop)
+
+```sh
+make native
+```
+
+### iOS
+
+```sh
+make ios
+```
+
+### Android
+
+```sh
+make android
+```
+
+## Running
+
+After compiling the relevant Rust backend in the previous section, invoke Flutter:
+
+```sh
 flutter run
 ```
+
+note: Flutter might ask you which target you'd like to run.
+
+Running 10101 for `web` target in currently unsupported.
