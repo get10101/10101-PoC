@@ -1,0 +1,4 @@
+status = [
+  "formatting",
+  "lint-commits",
+]
