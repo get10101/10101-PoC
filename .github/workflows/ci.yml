@@ -30,6 +30,19 @@ jobs:
       - name: Disallow squash! commits
         run: git log --pretty=format:%s origin/main..HEAD | grep -zv squash!
 
+  lint-flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Verify flutter formatting
+        run: flutter format --output=none --set-exit-if-changed --line-length 100 .
+      - name: Analyze flutter code
+        run: flutter analyze --fatal-infos
   # See: https://betterprogramming.pub/test-flutter-apps-on-android-with-github-actions-abdba2137b4
   flutter_android_test:
     name: Flutter (Android) integration test
