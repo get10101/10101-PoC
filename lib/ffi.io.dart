@@ -10,4 +10,4 @@ late final dylib = Platform.isIOS
     : Platform.isMacOS
         ? DynamicLibrary.executable()
         : DynamicLibrary.open(path);
-late final api = FlutterRustBridgeExampleImpl(dylib);
+late final api = TenTenOneImpl(dylib);

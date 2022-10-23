@@ -19,4 +19,4 @@ Future<WasmModule> _initModule() {
   });
 }
 
-final api = FlutterRustBridgeExampleImpl.wasm(_initModule());
+final api = TenTenOneImpl.wasm(_initModule());
