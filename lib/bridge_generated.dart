@@ -14,7 +14,8 @@ class TenTenOneImpl implements TenTenOne {
   factory TenTenOneImpl(ExternalLibrary dylib) => TenTenOneImpl.raw(TenTenOnePlatform(dylib));
 
   /// Only valid on web/WASM platforms.
-  factory TenTenOneImpl.wasm(FutureOr<WasmModule> module) => TenTenOneImpl(module as ExternalLibrary);
+  factory TenTenOneImpl.wasm(FutureOr<WasmModule> module) =>
+      TenTenOneImpl(module as ExternalLibrary);
   TenTenOneImpl.raw(this._platform);
   Future<Uint8List> drawMandelbrot(
           {required Size imageSize,
@@ -23,35 +24,42 @@ class TenTenOneImpl implements TenTenOne {
           required int numThreads,
           dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) => _platform.inner.wire_draw_mandelbrot(port_, _platform.api2wire_box_autoadd_size(imageSize),
-            _platform.api2wire_box_autoadd_point(zoomPoint), api2wire_f64(scale), api2wire_i32(numThreads)),
+        callFfi: (port_) => _platform.inner.wire_draw_mandelbrot(
+            port_,
+            _platform.api2wire_box_autoadd_size(imageSize),
+            _platform.api2wire_box_autoadd_point(zoomPoint),
+            api2wire_f64(scale),
+            api2wire_i32(numThreads)),
         parseSuccessData: _wire2api_ZeroCopyBuffer_Uint8List,
         constMeta: kDrawMandelbrotConstMeta,
         argValues: [imageSize, zoomPoint, scale, numThreads],
         hint: hint,
       ));
 
-  FlutterRustBridgeTaskConstMeta get kDrawMandelbrotConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kDrawMandelbrotConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "draw_mandelbrot",
         argNames: ["imageSize", "zoomPoint", "scale", "numThreads"],
       );
 
   Future<String> passingComplexStructs({required TreeNode root, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) =>
-            _platform.inner.wire_passing_complex_structs(port_, _platform.api2wire_box_autoadd_tree_node(root)),
+        callFfi: (port_) => _platform.inner
+            .wire_passing_complex_structs(port_, _platform.api2wire_box_autoadd_tree_node(root)),
         parseSuccessData: _wire2api_String,
         constMeta: kPassingComplexStructsConstMeta,
         argValues: [root],
         hint: hint,
       ));
 
-  FlutterRustBridgeTaskConstMeta get kPassingComplexStructsConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kPassingComplexStructsConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "passing_complex_structs",
         argNames: ["root"],
       );
 
-  Future<BoxedPoint> returningStructsWithBoxedFields({dynamic hint}) => _platform.executeNormal(FlutterRustBridgeTask(
+  Future<BoxedPoint> returningStructsWithBoxedFields({dynamic hint}) =>
+      _platform.executeNormal(FlutterRustBridgeTask(
         callFfi: (port_) => _platform.inner.wire_returning_structs_with_boxed_fields(port_),
         parseSuccessData: _wire2api_boxed_point,
         constMeta: kReturningStructsWithBoxedFieldsConstMeta,
@@ -59,30 +67,32 @@ class TenTenOneImpl implements TenTenOne {
         hint: hint,
       ));
 
-  FlutterRustBridgeTaskConstMeta get kReturningStructsWithBoxedFieldsConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kReturningStructsWithBoxedFieldsConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "returning_structs_with_boxed_fields",
         argNames: [],
       );
 
   Future<int> offTopicMemoryTestInputArray({required Uint8List input, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) =>
-            _platform.inner.wire_off_topic_memory_test_input_array(port_, _platform.api2wire_uint_8_list(input)),
+        callFfi: (port_) => _platform.inner
+            .wire_off_topic_memory_test_input_array(port_, _platform.api2wire_uint_8_list(input)),
         parseSuccessData: _wire2api_i32,
         constMeta: kOffTopicMemoryTestInputArrayConstMeta,
         argValues: [input],
         hint: hint,
       ));
 
-  FlutterRustBridgeTaskConstMeta get kOffTopicMemoryTestInputArrayConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kOffTopicMemoryTestInputArrayConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "off_topic_memory_test_input_array",
         argNames: ["input"],
       );
 
   Future<Uint8List> offTopicMemoryTestOutputZeroCopyBuffer({required int len, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) =>
-            _platform.inner.wire_off_topic_memory_test_output_zero_copy_buffer(port_, api2wire_i32(len)),
+        callFfi: (port_) => _platform.inner
+            .wire_off_topic_memory_test_output_zero_copy_buffer(port_, api2wire_i32(len)),
         parseSuccessData: _wire2api_ZeroCopyBuffer_Uint8List,
         constMeta: kOffTopicMemoryTestOutputZeroCopyBufferConstMeta,
         argValues: [len],
@@ -97,22 +107,24 @@ class TenTenOneImpl implements TenTenOne {
 
   Future<Uint8List> offTopicMemoryTestOutputVecU8({required int len, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) => _platform.inner.wire_off_topic_memory_test_output_vec_u8(port_, api2wire_i32(len)),
+        callFfi: (port_) =>
+            _platform.inner.wire_off_topic_memory_test_output_vec_u8(port_, api2wire_i32(len)),
         parseSuccessData: _wire2api_uint_8_list,
         constMeta: kOffTopicMemoryTestOutputVecU8ConstMeta,
         argValues: [len],
         hint: hint,
       ));
 
-  FlutterRustBridgeTaskConstMeta get kOffTopicMemoryTestOutputVecU8ConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kOffTopicMemoryTestOutputVecU8ConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "off_topic_memory_test_output_vec_u8",
         argNames: ["len"],
       );
 
   Future<int> offTopicMemoryTestInputVecOfObject({required List<Size> input, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) =>
-            _platform.inner.wire_off_topic_memory_test_input_vec_of_object(port_, _platform.api2wire_list_size(input)),
+        callFfi: (port_) => _platform.inner.wire_off_topic_memory_test_input_vec_of_object(
+            port_, _platform.api2wire_list_size(input)),
         parseSuccessData: _wire2api_i32,
         constMeta: kOffTopicMemoryTestInputVecOfObjectConstMeta,
         argValues: [input],
@@ -127,7 +139,8 @@ class TenTenOneImpl implements TenTenOne {
 
   Future<List<Size>> offTopicMemoryTestOutputVecOfObject({required int len, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) => _platform.inner.wire_off_topic_memory_test_output_vec_of_object(port_, api2wire_i32(len)),
+        callFfi: (port_) => _platform.inner
+            .wire_off_topic_memory_test_output_vec_of_object(port_, api2wire_i32(len)),
         parseSuccessData: _wire2api_list_size,
         constMeta: kOffTopicMemoryTestOutputVecOfObjectConstMeta,
         argValues: [len],
@@ -142,8 +155,8 @@ class TenTenOneImpl implements TenTenOne {
 
   Future<int> offTopicMemoryTestInputComplexStruct({required TreeNode input, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) => _platform.inner
-            .wire_off_topic_memory_test_input_complex_struct(port_, _platform.api2wire_box_autoadd_tree_node(input)),
+        callFfi: (port_) => _platform.inner.wire_off_topic_memory_test_input_complex_struct(
+            port_, _platform.api2wire_box_autoadd_tree_node(input)),
         parseSuccessData: _wire2api_i32,
         constMeta: kOffTopicMemoryTestInputComplexStructConstMeta,
         argValues: [input],
@@ -158,7 +171,8 @@ class TenTenOneImpl implements TenTenOne {
 
   Future<TreeNode> offTopicMemoryTestOutputComplexStruct({required int len, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) => _platform.inner.wire_off_topic_memory_test_output_complex_struct(port_, api2wire_i32(len)),
+        callFfi: (port_) => _platform.inner
+            .wire_off_topic_memory_test_output_complex_struct(port_, api2wire_i32(len)),
         parseSuccessData: _wire2api_tree_node,
         constMeta: kOffTopicMemoryTestOutputComplexStructConstMeta,
         argValues: [len],
@@ -171,7 +185,8 @@ class TenTenOneImpl implements TenTenOne {
         argNames: ["len"],
       );
 
-  Future<int> offTopicDeliberatelyReturnError({dynamic hint}) => _platform.executeNormal(FlutterRustBridgeTask(
+  Future<int> offTopicDeliberatelyReturnError({dynamic hint}) =>
+      _platform.executeNormal(FlutterRustBridgeTask(
         callFfi: (port_) => _platform.inner.wire_off_topic_deliberately_return_error(port_),
         parseSuccessData: _wire2api_i32,
         constMeta: kOffTopicDeliberatelyReturnErrorConstMeta,
@@ -179,12 +194,14 @@ class TenTenOneImpl implements TenTenOne {
         hint: hint,
       ));
 
-  FlutterRustBridgeTaskConstMeta get kOffTopicDeliberatelyReturnErrorConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kOffTopicDeliberatelyReturnErrorConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "off_topic_deliberately_return_error",
         argNames: [],
       );
 
-  Future<int> offTopicDeliberatelyPanic({dynamic hint}) => _platform.executeNormal(FlutterRustBridgeTask(
+  Future<int> offTopicDeliberatelyPanic({dynamic hint}) =>
+      _platform.executeNormal(FlutterRustBridgeTask(
         callFfi: (port_) => _platform.inner.wire_off_topic_deliberately_panic(port_),
         parseSuccessData: _wire2api_i32,
         constMeta: kOffTopicDeliberatelyPanicConstMeta,
@@ -192,7 +209,8 @@ class TenTenOneImpl implements TenTenOne {
         hint: hint,
       ));
 
-  FlutterRustBridgeTaskConstMeta get kOffTopicDeliberatelyPanicConstMeta => const FlutterRustBridgeTaskConstMeta(
+  FlutterRustBridgeTaskConstMeta get kOffTopicDeliberatelyPanicConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
         debugName: "off_topic_deliberately_panic",
         argNames: [],
       );

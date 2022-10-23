@@ -20,13 +20,11 @@ Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Card(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: Column(
                   children: [
                     const Text('Example 1',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     Container(height: 8),
                     const Text(
                         'Image generated (periodically) by Rust and displayed by Flutter/Dart'),
@@ -36,8 +34,7 @@ Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
                             width: 50,
                             height: 50,
                             child: Center(
-                                child: AnimatedReplaceableImage(
-                                    image: MemoryImage(exampleImage))))
+                                child: AnimatedReplaceableImage(image: MemoryImage(exampleImage))))
                         : Container()),
                     Container(height: 4),
                     const Text('Mandelbrot Set',
@@ -55,20 +52,16 @@ Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Card(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: Column(
                   children: [
                     const Text('Example 2',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     Container(height: 8),
-                    const Text(
-                        'Complex struct/class is passed smoothly through FFI'),
+                    const Text('Complex struct/class is passed smoothly through FFI'),
                     Container(height: 24),
                     Text(exampleText ?? '',
-                        style:
-                            const TextStyle(fontSize: 11, color: Colors.grey)),
+                        style: const TextStyle(fontSize: 11, color: Colors.grey)),
                     Container(height: 8),
                   ],
                 ),
@@ -96,12 +89,10 @@ final examplePoint = Point(
 class AnimatedReplaceableImage extends StatefulWidget {
   final ImageProvider image;
 
-  const AnimatedReplaceableImage({Key? key, required this.image})
-      : super(key: key);
+  const AnimatedReplaceableImage({Key? key, required this.image}) : super(key: key);
 
   @override
-  _AnimatedReplaceableImageState createState() =>
-      _AnimatedReplaceableImageState();
+  _AnimatedReplaceableImageState createState() => _AnimatedReplaceableImageState();
 }
 
 class _AnimatedReplaceableImageState extends State<AnimatedReplaceableImage> {
@@ -126,8 +117,7 @@ class _AnimatedReplaceableImageState extends State<AnimatedReplaceableImage> {
   Widget build(BuildContext context) {
     return Image(
       image: widget.image,
-      frameBuilder: (BuildContext context, Widget child, int? frame,
-              bool wasSynchronouslyLoaded) =>
+      frameBuilder: (BuildContext context, Widget child, int? frame, bool wasSynchronouslyLoaded) =>
           (frame == null && previousImage != null)
               ? Stack(children: [Image(image: previousImage!), child])
               : child,

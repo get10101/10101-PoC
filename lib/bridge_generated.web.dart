@@ -10,7 +10,8 @@ import 'bridge_generated.dart';
 export 'bridge_generated.dart';
 import 'package:meta/meta.dart';
 
-class TenTenOnePlatform extends FlutterRustBridgeBase<TenTenOneWire> with FlutterRustBridgeSetupMixin {
+class TenTenOnePlatform extends FlutterRustBridgeBase<TenTenOneWire>
+    with FlutterRustBridgeSetupMixin {
   TenTenOnePlatform(FutureOr<WasmModule> dylib) : super(TenTenOneWire(dylib)) {
     setupMixinConstructor();
   }
@@ -78,8 +79,8 @@ external TenTenOneWasmModule get wasmModule;
 class TenTenOneWasmModule implements WasmModule {
   external Object /* Promise */ call([String? moduleName]);
   external TenTenOneWasmModule bind(dynamic thisArg, String moduleName);
-  external void wire_draw_mandelbrot(
-      NativePortType port_, List<dynamic> image_size, List<dynamic> zoom_point, double scale, int num_threads);
+  external void wire_draw_mandelbrot(NativePortType port_, List<dynamic> image_size,
+      List<dynamic> zoom_point, double scale, int num_threads);
 
   external void wire_passing_complex_structs(NativePortType port_, List<dynamic> root);
 
@@ -91,11 +92,13 @@ class TenTenOneWasmModule implements WasmModule {
 
   external void wire_off_topic_memory_test_output_vec_u8(NativePortType port_, int len);
 
-  external void wire_off_topic_memory_test_input_vec_of_object(NativePortType port_, List<dynamic> input);
+  external void wire_off_topic_memory_test_input_vec_of_object(
+      NativePortType port_, List<dynamic> input);
 
   external void wire_off_topic_memory_test_output_vec_of_object(NativePortType port_, int len);
 
-  external void wire_off_topic_memory_test_input_complex_struct(NativePortType port_, List<dynamic> input);
+  external void wire_off_topic_memory_test_input_complex_struct(
+      NativePortType port_, List<dynamic> input);
 
   external void wire_off_topic_memory_test_output_complex_struct(NativePortType port_, int len);
 
@@ -109,8 +112,8 @@ class TenTenOneWasmModule implements WasmModule {
 class TenTenOneWire extends FlutterRustBridgeWasmWireBase<TenTenOneWasmModule> {
   TenTenOneWire(FutureOr<WasmModule> module) : super(WasmModule.cast<TenTenOneWasmModule>(module));
 
-  void wire_draw_mandelbrot(
-          NativePortType port_, List<dynamic> image_size, List<dynamic> zoom_point, double scale, int num_threads) =>
+  void wire_draw_mandelbrot(NativePortType port_, List<dynamic> image_size,
+          List<dynamic> zoom_point, double scale, int num_threads) =>
       wasmModule.wire_draw_mandelbrot(port_, image_size, zoom_point, scale, num_threads);
 
   void wire_passing_complex_structs(NativePortType port_, List<dynamic> root) =>
@@ -143,5 +146,6 @@ class TenTenOneWire extends FlutterRustBridgeWasmWireBase<TenTenOneWasmModule> {
   void wire_off_topic_deliberately_return_error(NativePortType port_) =>
       wasmModule.wire_off_topic_deliberately_return_error(port_);
 
-  void wire_off_topic_deliberately_panic(NativePortType port_) => wasmModule.wire_off_topic_deliberately_panic(port_);
+  void wire_off_topic_deliberately_panic(NativePortType port_) =>
+      wasmModule.wire_off_topic_deliberately_panic(port_);
 }

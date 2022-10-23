@@ -47,8 +47,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _callExampleFfiTwo() async {
-    final receivedText =
-        await api.passingComplexStructs(root: createExampleTree());
+    final receivedText = await api.passingComplexStructs(root: createExampleTree());
     if (mounted) setState(() => exampleText = receivedText);
   }
 }

@@ -75,7 +75,8 @@ class TenTenOnePlatform extends FlutterRustBridgeBase<TenTenOneWire> {
     _api_fill_to_wire_size(apiObj, wireObj.ref);
   }
 
-  void _api_fill_to_wire_box_autoadd_tree_node(TreeNode apiObj, ffi.Pointer<wire_TreeNode> wireObj) {
+  void _api_fill_to_wire_box_autoadd_tree_node(
+      TreeNode apiObj, ffi.Pointer<wire_TreeNode> wireObj) {
     _api_fill_to_wire_tree_node(apiObj, wireObj.ref);
   }
 
@@ -110,7 +111,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   TenTenOneWire(ffi.DynamicLibrary dynamicLibrary) : _lookup = dynamicLibrary.lookup;
 
   /// The symbols are looked up with [lookup].
-  TenTenOneWire.fromLookup(ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup)
+  TenTenOneWire.fromLookup(
+      ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup)
       : _lookup = lookup;
 
   void store_dart_post_cobject(
@@ -122,8 +124,10 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _store_dart_post_cobjectPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(DartPostCObjectFnType)>>('store_dart_post_cobject');
-  late final _store_dart_post_cobject = _store_dart_post_cobjectPtr.asFunction<void Function(DartPostCObjectFnType)>();
+      _lookup<ffi.NativeFunction<ffi.Void Function(DartPostCObjectFnType)>>(
+          'store_dart_post_cobject');
+  late final _store_dart_post_cobject =
+      _store_dart_post_cobjectPtr.asFunction<void Function(DartPostCObjectFnType)>();
 
   void wire_draw_mandelbrot(
     int port_,
@@ -145,8 +149,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
       ffi.NativeFunction<
           ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Size>, ffi.Pointer<wire_Point>, ffi.Double,
               ffi.Int32)>>('wire_draw_mandelbrot');
-  late final _wire_draw_mandelbrot = _wire_draw_mandelbrotPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_Size>, ffi.Pointer<wire_Point>, double, int)>();
+  late final _wire_draw_mandelbrot = _wire_draw_mandelbrotPtr.asFunction<
+      void Function(int, ffi.Pointer<wire_Size>, ffi.Pointer<wire_Point>, double, int)>();
 
   void wire_passing_complex_structs(
     int port_,
@@ -173,7 +177,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _wire_returning_structs_with_boxed_fieldsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_returning_structs_with_boxed_fields');
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_returning_structs_with_boxed_fields');
   late final _wire_returning_structs_with_boxed_fields =
       _wire_returning_structs_with_boxed_fieldsPtr.asFunction<void Function(int)>();
 
@@ -190,8 +195,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   late final _wire_off_topic_memory_test_input_arrayPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
           'wire_off_topic_memory_test_input_array');
-  late final _wire_off_topic_memory_test_input_array =
-      _wire_off_topic_memory_test_input_arrayPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+  late final _wire_off_topic_memory_test_input_array = _wire_off_topic_memory_test_input_arrayPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_off_topic_memory_test_output_zero_copy_buffer(
     int port_,
@@ -220,7 +225,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _wire_off_topic_memory_test_output_vec_u8Ptr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>('wire_off_topic_memory_test_output_vec_u8');
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Int32)>>(
+          'wire_off_topic_memory_test_output_vec_u8');
   late final _wire_off_topic_memory_test_output_vec_u8 =
       _wire_off_topic_memory_test_output_vec_u8Ptr.asFunction<void Function(int, int)>();
 
@@ -238,7 +244,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_list_size>)>>(
           'wire_off_topic_memory_test_input_vec_of_object');
   late final _wire_off_topic_memory_test_input_vec_of_object =
-      _wire_off_topic_memory_test_input_vec_of_objectPtr.asFunction<void Function(int, ffi.Pointer<wire_list_size>)>();
+      _wire_off_topic_memory_test_input_vec_of_objectPtr
+          .asFunction<void Function(int, ffi.Pointer<wire_list_size>)>();
 
   void wire_off_topic_memory_test_output_vec_of_object(
     int port_,
@@ -270,7 +277,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_TreeNode>)>>(
           'wire_off_topic_memory_test_input_complex_struct');
   late final _wire_off_topic_memory_test_input_complex_struct =
-      _wire_off_topic_memory_test_input_complex_structPtr.asFunction<void Function(int, ffi.Pointer<wire_TreeNode>)>();
+      _wire_off_topic_memory_test_input_complex_structPtr
+          .asFunction<void Function(int, ffi.Pointer<wire_TreeNode>)>();
 
   void wire_off_topic_memory_test_output_complex_struct(
     int port_,
@@ -297,7 +305,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _wire_off_topic_deliberately_return_errorPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_off_topic_deliberately_return_error');
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_off_topic_deliberately_return_error');
   late final _wire_off_topic_deliberately_return_error =
       _wire_off_topic_deliberately_return_errorPtr.asFunction<void Function(int)>();
 
@@ -310,7 +319,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _wire_off_topic_deliberately_panicPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_off_topic_deliberately_panic');
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_off_topic_deliberately_panic');
   late final _wire_off_topic_deliberately_panic =
       _wire_off_topic_deliberately_panicPtr.asFunction<void Function(int)>();
 
@@ -320,7 +330,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
 
   late final _new_box_autoadd_point_0Ptr =
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_Point> Function()>>('new_box_autoadd_point_0');
-  late final _new_box_autoadd_point_0 = _new_box_autoadd_point_0Ptr.asFunction<ffi.Pointer<wire_Point> Function()>();
+  late final _new_box_autoadd_point_0 =
+      _new_box_autoadd_point_0Ptr.asFunction<ffi.Pointer<wire_Point> Function()>();
 
   ffi.Pointer<wire_Size> new_box_autoadd_size_0() {
     return _new_box_autoadd_size_0();
@@ -328,14 +339,16 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
 
   late final _new_box_autoadd_size_0Ptr =
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_Size> Function()>>('new_box_autoadd_size_0');
-  late final _new_box_autoadd_size_0 = _new_box_autoadd_size_0Ptr.asFunction<ffi.Pointer<wire_Size> Function()>();
+  late final _new_box_autoadd_size_0 =
+      _new_box_autoadd_size_0Ptr.asFunction<ffi.Pointer<wire_Size> Function()>();
 
   ffi.Pointer<wire_TreeNode> new_box_autoadd_tree_node_0() {
     return _new_box_autoadd_tree_node_0();
   }
 
   late final _new_box_autoadd_tree_node_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_TreeNode> Function()>>('new_box_autoadd_tree_node_0');
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_TreeNode> Function()>>(
+          'new_box_autoadd_tree_node_0');
   late final _new_box_autoadd_tree_node_0 =
       _new_box_autoadd_tree_node_0Ptr.asFunction<ffi.Pointer<wire_TreeNode> Function()>();
 
@@ -348,8 +361,10 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _new_list_size_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_size> Function(ffi.Int32)>>('new_list_size_0');
-  late final _new_list_size_0 = _new_list_size_0Ptr.asFunction<ffi.Pointer<wire_list_size> Function(int)>();
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_size> Function(ffi.Int32)>>(
+          'new_list_size_0');
+  late final _new_list_size_0 =
+      _new_list_size_0Ptr.asFunction<ffi.Pointer<wire_list_size> Function(int)>();
 
   ffi.Pointer<wire_list_tree_node> new_list_tree_node_0(
     int len,
@@ -360,7 +375,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _new_list_tree_node_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_tree_node> Function(ffi.Int32)>>('new_list_tree_node_0');
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_tree_node> Function(ffi.Int32)>>(
+          'new_list_tree_node_0');
   late final _new_list_tree_node_0 =
       _new_list_tree_node_0Ptr.asFunction<ffi.Pointer<wire_list_tree_node> Function(int)>();
 
@@ -373,8 +389,10 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _new_uint_8_list_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_uint_8_list> Function(ffi.Int32)>>('new_uint_8_list_0');
-  late final _new_uint_8_list_0 = _new_uint_8_list_0Ptr.asFunction<ffi.Pointer<wire_uint_8_list> Function(int)>();
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_uint_8_list> Function(ffi.Int32)>>(
+          'new_uint_8_list_0');
+  late final _new_uint_8_list_0 =
+      _new_uint_8_list_0Ptr.asFunction<ffi.Pointer<wire_uint_8_list> Function(int)>();
 
   void free_WireSyncReturnStruct(
     WireSyncReturnStruct val,
@@ -385,7 +403,8 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   }
 
   late final _free_WireSyncReturnStructPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(WireSyncReturnStruct)>>('free_WireSyncReturnStruct');
+      _lookup<ffi.NativeFunction<ffi.Void Function(WireSyncReturnStruct)>>(
+          'free_WireSyncReturnStruct');
   late final _free_WireSyncReturnStruct =
       _free_WireSyncReturnStructPtr.asFunction<void Function(WireSyncReturnStruct)>();
 }
@@ -433,5 +452,6 @@ class wire_list_size extends ffi.Struct {
   external int len;
 }
 
-typedef DartPostCObjectFnType = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort, ffi.Pointer<ffi.Void>)>>;
+typedef DartPostCObjectFnType
+    = ffi.Pointer<ffi.NativeFunction<ffi.Bool Function(DartPort, ffi.Pointer<ffi.Void>)>>;
 typedef DartPort = ffi.Int64;
