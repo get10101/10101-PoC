@@ -18,16 +18,14 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('end-to-end test', () {
-    testWidgets('run and wait to see if there is memory problem',
-        (WidgetTester tester) async {
+    testWidgets('run and wait to see if there is memory problem', (WidgetTester tester) async {
       app.main();
       await tester.pumpAndSettle();
 
       // run many times to see memory leaks or other problems
       for (var i = 0; i < 20; ++i) {
         await tester.pumpAndSettle();
-        expect(
-            find.textContaining('Hi this string is from Rust'), findsOneWidget);
+        expect(find.textContaining('Hi this string is from Rust'), findsOneWidget);
 
         Future.delayed(const Duration(milliseconds: 50));
 
@@ -37,8 +35,7 @@ void main() {
       }
     });
 
-    testWidgets('test Rust deliberately have error',
-        (WidgetTester tester) async {
+    testWidgets('test Rust deliberately have error', (WidgetTester tester) async {
       app.main();
       await tester.pumpAndSettle();
 
@@ -67,15 +64,13 @@ void main() {
       }
     });
 
-    testWidgets('repeat call to offTopicMemoryTestInputComplexStruct',
-        (WidgetTester tester) async {
+    testWidgets('repeat call to offTopicMemoryTestInputComplexStruct', (WidgetTester tester) async {
       await _testMemoryProblemForSingleTypeOfMethod(
           tester,
           () async => expect(
               await app.api.offTopicMemoryTestInputComplexStruct(
                   input: TreeNode(name: 'root', children: [
-                for (var i = 0; i < 2000; ++i)
-                  TreeNode(name: 'child', children: [])
+                for (var i = 0; i < 2000; ++i) TreeNode(name: 'child', children: [])
               ])),
               2000));
     });
@@ -84,14 +79,11 @@ void main() {
       await _testMemoryProblemForSingleTypeOfMethod(
           tester,
           () async => expect(
-              (await app.api.offTopicMemoryTestOutputComplexStruct(len: 2000))
-                  .children
-                  .length,
+              (await app.api.offTopicMemoryTestOutputComplexStruct(len: 2000)).children.length,
               2000));
     });
 
-    testWidgets('repeat call to offTopicMemoryTestInputVecOfObject',
-        (WidgetTester tester) async {
+    testWidgets('repeat call to offTopicMemoryTestInputVecOfObject', (WidgetTester tester) async {
       await _testMemoryProblemForSingleTypeOfMethod(
           tester,
           () async => expect(
@@ -99,42 +91,32 @@ void main() {
                   input: List.filled(100000, Size(width: 42, height: 100))),
               100000));
     });
-    testWidgets('repeat call to offTopicMemoryTestOutputVecOfObject',
-        (WidgetTester tester) async {
+    testWidgets('repeat call to offTopicMemoryTestOutputVecOfObject', (WidgetTester tester) async {
       await _testMemoryProblemForSingleTypeOfMethod(
           tester,
           () async => expect(
-              (await app.api.offTopicMemoryTestOutputVecOfObject(len: 100000))
-                  .length,
-              100000));
+              (await app.api.offTopicMemoryTestOutputVecOfObject(len: 100000)).length, 100000));
     });
 
-    testWidgets('repeat call to offTopicMemoryTestInputArray',
-        (WidgetTester tester) async {
+    testWidgets('repeat call to offTopicMemoryTestInputArray', (WidgetTester tester) async {
       await _testMemoryProblemForSingleTypeOfMethod(
           tester,
           () async => expect(
-              await app.api
-                  .offTopicMemoryTestInputArray(input: Uint8List(1000000)),
-              1000000));
+              await app.api.offTopicMemoryTestInputArray(input: Uint8List(1000000)), 1000000));
     });
     testWidgets('repeat call to offTopicMemoryTestOutputZeroCopyBuffer',
         (WidgetTester tester) async {
       await _testMemoryProblemForSingleTypeOfMethod(
           tester,
           () async => expect(
-              (await app.api
-                      .offTopicMemoryTestOutputZeroCopyBuffer(len: 1000000))
-                  .length,
+              (await app.api.offTopicMemoryTestOutputZeroCopyBuffer(len: 1000000)).length,
               1000000));
     });
-    testWidgets('repeat call to offTopicMemoryTestOutputVecU8',
-        (WidgetTester tester) async {
+    testWidgets('repeat call to offTopicMemoryTestOutputVecU8', (WidgetTester tester) async {
       await _testMemoryProblemForSingleTypeOfMethod(
           tester,
-          () async => expect(
-              (await app.api.offTopicMemoryTestOutputVecU8(len: 200000)).length,
-              200000));
+          () async =>
+              expect((await app.api.offTopicMemoryTestOutputVecU8(len: 200000)).length, 200000));
     });
   });
 }

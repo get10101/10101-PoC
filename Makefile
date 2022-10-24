@@ -21,7 +21,7 @@ dprint:
 
 # Flutter lacks a dprint plugin, use its own formatter
 flutter-format:
-	flutter format . --fix
+	flutter format . --fix --line-length 100
 
 # Clean all build artifacts
 clean:
@@ -48,7 +48,7 @@ gen:rust
 	flutter_rust_bridge_codegen \
 		--rust-input rust/src/api.rs \
 		--dart-output lib/bridge_generated.dart \
-		--dart-format-line-length 120 \
+		--dart-format-line-length 100 \
 		--c-output ios/Runner/bridge_generated.h \
 		--c-output macos/Runner/bridge_generated.h \
 		--dart-decl-output lib/bridge_definitions.dart \
