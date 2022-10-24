@@ -16,3 +16,10 @@ updates:
     ignore:
       - dependency-name: 13rac1/block-fixup-merge-action
     open-pull-requests-limit: 10
+
+    # Flutter package updates
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
