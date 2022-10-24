@@ -1,5 +1,6 @@
 status = [
   "formatting",
   "lint-commits",
-  "lint-dart",
+  "clippy",
+  "lint-flutter",
 ]
