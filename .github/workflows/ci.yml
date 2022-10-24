@@ -29,3 +29,16 @@ jobs:
         run: git log --pretty=format:%s origin/main..HEAD | grep -zv fixup!
       - name: Disallow squash! commits
         run: git log --pretty=format:%s origin/main..HEAD | grep -zv squash!
+
+  # See: https://betterprogramming.pub/test-flutter-apps-on-android-with-github-actions-abdba2137b4
+  flutter_android_test:
+    name: Flutter (Android) integration test
+    strategy:
+      matrix:
+        device:
+          - "pixel"
+          - "Nexus 6"
+      fail-fast: false
+    uses: ./.github/workflows/flutter_android_test.yml
+    with:
+      device: ${{ matrix.device }}
