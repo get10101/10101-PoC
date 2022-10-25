@@ -23,7 +23,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # #499, https://github.com/actions/virtual-environments/issues/5595
       - name: Configure ndk
