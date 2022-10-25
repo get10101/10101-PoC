@@ -2,7 +2,10 @@
 
 ## Dependencies
 
-This project requires `flutter` and `Rust`.
+This project requires [Flutter](https://flutter.dev) and [Rust](https://www.rust-lang.org).
+Rust toolchain can be installed via [Rustup](https://rustup.rs/).
+In order to setup Flutter (as well as mobile simulators etc), please see the excellent Flutter guide [here](https://docs.flutter.dev/get-started/install)
+
 A lot of complexity for building the app has been encapsulated in a [Makefile](./Makefile).
 
 To install necessary project dependencies for all targets, run the following:
