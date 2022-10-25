@@ -41,6 +41,7 @@ jobs:
         run: rustup show
       - uses: Swatinem/rust-cache@v2.0.1
       - run: cargo clippy --all-targets -- -D warnings
+
   lint-flutter:
     runs-on: ubuntu-latest
     steps:
@@ -54,8 +55,9 @@ jobs:
         run: flutter format --output=none --set-exit-if-changed --line-length 100 .
       - name: Analyze flutter code
         run: flutter analyze --fatal-infos
+
   # See: https://betterprogramming.pub/test-flutter-apps-on-android-with-github-actions-abdba2137b4
-  flutter_android_test:
+  flutter-android-test:
     name: Flutter (Android) integration test
     strategy:
       matrix:
@@ -66,3 +68,18 @@ jobs:
     uses: ./.github/workflows/flutter_android_test.yml
     with:
       device: ${{ matrix.device }}
+
+  # Use an "accummulation" job here because bors often fails (timeouts)
+  ci-success:
+    name: CI
+    needs:
+      # TODO: Add flutter-android-test when bors is stable
+      - formatting
+      - lint-commits
+      - clippy
+      - lint-flutter
+    runs-on: ubuntu-latest
+    if: ${{ always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) }}
+    steps:
+      - name: CI succeeded
+        run: exit 0
