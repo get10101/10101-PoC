@@ -32,10 +32,16 @@ clean:
 native:rust
 	cd rust && cargo build
 
-# Build Rust library for Android
-android:rust
-	force-rebuild
+# Build Rust library for Android native targets
+android-native:rust
 	cd rust && cargo ndk -o ../android/app/src/main/jniLibs build
+
+# NOTE Android simulator needs target to be x86_64.
+android-sim:rust
+	cd rust && cargo ndk -t x86_64 -o ../android/app/src/main/jniLibs build
+
+# By default, Android is an alias for the simulator target
+android: android-native
 
 # Build Rust library for iOS
 ios:rust
@@ -57,6 +63,3 @@ gen:rust
 # Run the app (need to pick the target, if no mobile emulator is running)
 run:
 	flutter run
-
-# XXX: A workaround for Makefile weirdness - it can't notice
-force-rebuild: .

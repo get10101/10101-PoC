@@ -37,8 +37,18 @@ make ios
 
 ### Android
 
+#### Native
+
+For building for target devices, run:
+
 ```sh
 make android
+```
+
+#### Simulator
+
+```sh
+make android-sim
 ```
 
 ## Running
