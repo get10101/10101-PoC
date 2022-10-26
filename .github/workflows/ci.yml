@@ -50,8 +50,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           filters: |
             rust:
+              - '.github/workflows/**'
               - 'rust/**'
             flutter:
+              - '.github/workflows/**'
               - 'lib/**'
               - 'integration_test/**'
               - 'android/**'
@@ -61,7 +63,6 @@ jobs:
               - 'web/**'
               - 'windows/**'
               - 'pubspec.*'
-
   clippy:
     needs: changes
     if: ${{ needs.changes.outputs.rust == 'true' }}
