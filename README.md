@@ -64,4 +64,4 @@ flutter run
 
 note: Flutter might ask you which target you'd like to run.
 
-Running 10101 for `web` target in currently unsupported.
+Running 10101 for `web` target is currently unsupported.
