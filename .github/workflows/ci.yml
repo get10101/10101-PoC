@@ -35,7 +35,36 @@ jobs:
       - name: Disallow squash! commits
         run: git log --pretty=format:%s origin/main..HEAD | grep -zv squash!
 
+  # job to run change detection
+  changes:
+    runs-on: ubuntu-latest
+    # Set job outputs to values from filter step
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      flutter: ${{ steps.filter.outputs.flutter }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            rust:
+              - 'rust/**'
+            flutter:
+              - 'lib/**'
+              - 'integration_test/**'
+              - 'android/**'
+              - 'ios/**'
+              - 'linux/**'
+              - 'macos/**'
+              - 'web/**'
+              - 'windows/**'
+              - 'pubspec.*'
+
   clippy:
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -48,6 +77,8 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
 
   lint-flutter:
+    needs: changes
+    if: ${{ needs.changes.outputs.flutter == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -63,6 +94,8 @@ jobs:
 
   # See: https://betterprogramming.pub/test-flutter-apps-on-android-with-github-actions-abdba2137b4
   flutter-android-test:
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.flutter == 'true'  }}
     name: Flutter (Android) integration test
     strategy:
       matrix:
@@ -79,6 +112,7 @@ jobs:
     name: CI
     needs:
       # TODO: Add flutter-android-test when bors is stable
+      - changes
       - formatting
       - lint-commits
       - clippy
