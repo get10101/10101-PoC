@@ -3,22 +3,13 @@ use anyhow::Result;
 
 use flutter_rust_bridge::ZeroCopyBuffer;
 
+// TODO: Remove the examples below when we're comfortable using
+// rust-flutter-bridge and have our own integration test
+
 //
 // NOTE: Please look at https://github.com/fzyzcjy/flutter_rust_bridge/blob/master/frb_example/simple/rust/src/api.rs
 // to see more types that this code generator can generate.
 //
-
-pub fn draw_mandelbrot(
-    image_size: Size,
-    zoom_point: Point,
-    scale: f64,
-    num_threads: i32,
-) -> Result<ZeroCopyBuffer<Vec<u8>>> {
-    // Just an example that generates "complicated" images ;)
-    let image = crate::off_topic_code::mandelbrot(image_size, zoom_point, scale, num_threads)?;
-    Ok(ZeroCopyBuffer(image))
-}
-
 pub fn passing_complex_structs(root: TreeNode) -> String {
     format!(
         "Hi this string is from Rust. I received a complex struct: {:?}",

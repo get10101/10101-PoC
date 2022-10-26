@@ -24,16 +24,6 @@ class TenTenOnePlatform extends FlutterRustBridgeBase<TenTenOneWire>
   }
 
   @protected
-  List<dynamic> api2wire_box_autoadd_point(Point raw) {
-    return api2wire_point(raw);
-  }
-
-  @protected
-  List<dynamic> api2wire_box_autoadd_size(Size raw) {
-    return api2wire_size(raw);
-  }
-
-  @protected
   List<dynamic> api2wire_box_autoadd_tree_node(TreeNode raw) {
     return api2wire_tree_node(raw);
   }
@@ -46,11 +36,6 @@ class TenTenOnePlatform extends FlutterRustBridgeBase<TenTenOneWire>
   @protected
   List<dynamic> api2wire_list_tree_node(List<TreeNode> raw) {
     return raw.map(api2wire_tree_node).toList();
-  }
-
-  @protected
-  List<dynamic> api2wire_point(Point raw) {
-    return [api2wire_f64(raw.x), api2wire_f64(raw.y)];
   }
 
   @protected
@@ -79,9 +64,6 @@ external TenTenOneWasmModule get wasmModule;
 class TenTenOneWasmModule implements WasmModule {
   external Object /* Promise */ call([String? moduleName]);
   external TenTenOneWasmModule bind(dynamic thisArg, String moduleName);
-  external void wire_draw_mandelbrot(NativePortType port_, List<dynamic> image_size,
-      List<dynamic> zoom_point, double scale, int num_threads);
-
   external void wire_passing_complex_structs(NativePortType port_, List<dynamic> root);
 
   external void wire_returning_structs_with_boxed_fields(NativePortType port_);
@@ -111,10 +93,6 @@ class TenTenOneWasmModule implements WasmModule {
 
 class TenTenOneWire extends FlutterRustBridgeWasmWireBase<TenTenOneWasmModule> {
   TenTenOneWire(FutureOr<WasmModule> module) : super(WasmModule.cast<TenTenOneWasmModule>(module));
-
-  void wire_draw_mandelbrot(NativePortType port_, List<dynamic> image_size,
-          List<dynamic> zoom_point, double scale, int num_threads) =>
-      wasmModule.wire_draw_mandelbrot(port_, image_size, zoom_point, scale, num_threads);
 
   void wire_passing_complex_structs(NativePortType port_, List<dynamic> root) =>
       wasmModule.wire_passing_complex_structs(port_, root);

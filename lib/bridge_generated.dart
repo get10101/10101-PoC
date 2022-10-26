@@ -17,31 +17,6 @@ class TenTenOneImpl implements TenTenOne {
   factory TenTenOneImpl.wasm(FutureOr<WasmModule> module) =>
       TenTenOneImpl(module as ExternalLibrary);
   TenTenOneImpl.raw(this._platform);
-  Future<Uint8List> drawMandelbrot(
-          {required Size imageSize,
-          required Point zoomPoint,
-          required double scale,
-          required int numThreads,
-          dynamic hint}) =>
-      _platform.executeNormal(FlutterRustBridgeTask(
-        callFfi: (port_) => _platform.inner.wire_draw_mandelbrot(
-            port_,
-            _platform.api2wire_box_autoadd_size(imageSize),
-            _platform.api2wire_box_autoadd_point(zoomPoint),
-            api2wire_f64(scale),
-            api2wire_i32(numThreads)),
-        parseSuccessData: _wire2api_ZeroCopyBuffer_Uint8List,
-        constMeta: kDrawMandelbrotConstMeta,
-        argValues: [imageSize, zoomPoint, scale, numThreads],
-        hint: hint,
-      ));
-
-  FlutterRustBridgeTaskConstMeta get kDrawMandelbrotConstMeta =>
-      const FlutterRustBridgeTaskConstMeta(
-        debugName: "draw_mandelbrot",
-        argNames: ["imageSize", "zoomPoint", "scale", "numThreads"],
-      );
-
   Future<String> passingComplexStructs({required TreeNode root, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
         callFfi: (port_) => _platform.inner
@@ -290,11 +265,6 @@ class TenTenOneImpl implements TenTenOne {
 }
 
 // Section: api2wire
-
-@protected
-double api2wire_f64(double raw) {
-  return raw;
-}
 
 @protected
 int api2wire_i32(int raw) {

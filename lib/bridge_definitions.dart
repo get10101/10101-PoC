@@ -7,15 +7,6 @@ import 'dart:async';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 
 abstract class TenTenOne {
-  Future<Uint8List> drawMandelbrot(
-      {required Size imageSize,
-      required Point zoomPoint,
-      required double scale,
-      required int numThreads,
-      dynamic hint});
-
-  FlutterRustBridgeTaskConstMeta get kDrawMandelbrotConstMeta;
-
   Future<String> passingComplexStructs({required TreeNode root, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kPassingComplexStructsConstMeta;
