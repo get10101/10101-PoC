@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide Size;
 import 'bridge_definitions.dart';
-import 'package:ten_ten_one/off_topic_code.dart';
+import 'package:ten_ten_one/wallet.dart';
 
 import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 export 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart' show api;
@@ -21,33 +21,51 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Uint8List? exampleImage;
-  String? exampleText;
+  String? address;
+
+  late Wallet wallet;
 
   @override
   void initState() {
     super.initState();
-    runPeriodically(_callExampleFfiOne);
-    _callExampleFfiTwo();
+    wallet = Wallet();
+
   }
 
   @override
-  Widget build(BuildContext context) => buildPageUi(
-        exampleImage,
-        exampleText,
-      );
-
-  Future<void> _callExampleFfiOne() async {
-    final receivedImage = await api.drawMandelbrot(
-        imageSize: Size(width: 50, height: 50),
-        zoomPoint: examplePoint,
-        scale: generateScale(),
-        numThreads: 4);
-    if (mounted) setState(() => exampleImage = receivedImage);
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(appBar: AppBar(title: const Text('10101')),
+      body: ListView(
+        children: [
+          Container(height: 16),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Card(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: buildWallet,
+                    child: const Text('Build Wallet'),
+                  ),
+                  Container(height: 24),
+                  const Text('Address: '),
+                  Text(address ?? '', style: const TextStyle(fontSize: 12, color: Colors.black)),
+                  Container(height: 8),
+                ],
+              ),
+            ),
+          ),
+          ),
+        ],
+      ),
+      ),
+    );
   }
 
-  Future<void> _callExampleFfiTwo() async {
-    final receivedText = await api.passingComplexStructs(root: createExampleTree());
-    if (mounted) setState(() => exampleText = receivedText);
+  Future<void> buildWallet() async {
+    final tenTenOneAddress = await wallet.buildWallet();
+    setState(() => address = tenTenOneAddress);
   }
 }

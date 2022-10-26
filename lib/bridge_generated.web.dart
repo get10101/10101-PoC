@@ -24,43 +24,8 @@ class TenTenOnePlatform extends FlutterRustBridgeBase<TenTenOneWire>
   }
 
   @protected
-  List<dynamic> api2wire_box_autoadd_point(Point raw) {
-    return api2wire_point(raw);
-  }
-
-  @protected
-  List<dynamic> api2wire_box_autoadd_size(Size raw) {
-    return api2wire_size(raw);
-  }
-
-  @protected
-  List<dynamic> api2wire_box_autoadd_tree_node(TreeNode raw) {
-    return api2wire_tree_node(raw);
-  }
-
-  @protected
-  List<dynamic> api2wire_list_size(List<Size> raw) {
-    return raw.map(api2wire_size).toList();
-  }
-
-  @protected
-  List<dynamic> api2wire_list_tree_node(List<TreeNode> raw) {
-    return raw.map(api2wire_tree_node).toList();
-  }
-
-  @protected
-  List<dynamic> api2wire_point(Point raw) {
-    return [api2wire_f64(raw.x), api2wire_f64(raw.y)];
-  }
-
-  @protected
-  List<dynamic> api2wire_size(Size raw) {
-    return [api2wire_i32(raw.width), api2wire_i32(raw.height)];
-  }
-
-  @protected
-  List<dynamic> api2wire_tree_node(TreeNode raw) {
-    return [api2wire_String(raw.name), api2wire_list_tree_node(raw.children)];
+  Object api2wire_i64(int raw) {
+    return castNativeBigInt(raw);
   }
 
   @protected
@@ -79,32 +44,7 @@ external TenTenOneWasmModule get wasmModule;
 class TenTenOneWasmModule implements WasmModule {
   external Object /* Promise */ call([String? moduleName]);
   external TenTenOneWasmModule bind(dynamic thisArg, String moduleName);
-  external void wire_draw_mandelbrot(NativePortType port_, List<dynamic> image_size,
-      List<dynamic> zoom_point, double scale, int num_threads);
-
-  external void wire_passing_complex_structs(NativePortType port_, List<dynamic> root);
-
-  external void wire_returning_structs_with_boxed_fields(NativePortType port_);
-
-  external void wire_off_topic_memory_test_input_array(NativePortType port_, Uint8List input);
-
-  external void wire_off_topic_memory_test_output_zero_copy_buffer(NativePortType port_, int len);
-
-  external void wire_off_topic_memory_test_output_vec_u8(NativePortType port_, int len);
-
-  external void wire_off_topic_memory_test_input_vec_of_object(
-      NativePortType port_, List<dynamic> input);
-
-  external void wire_off_topic_memory_test_output_vec_of_object(NativePortType port_, int len);
-
-  external void wire_off_topic_memory_test_input_complex_struct(
-      NativePortType port_, List<dynamic> input);
-
-  external void wire_off_topic_memory_test_output_complex_struct(NativePortType port_, int len);
-
-  external void wire_off_topic_deliberately_return_error(NativePortType port_);
-
-  external void wire_off_topic_deliberately_panic(NativePortType port_);
+  external void wire_build_wallet(NativePortType port_, Object port, String data_dir);
 }
 
 // Section: WASM wire connector
@@ -112,40 +52,6 @@ class TenTenOneWasmModule implements WasmModule {
 class TenTenOneWire extends FlutterRustBridgeWasmWireBase<TenTenOneWasmModule> {
   TenTenOneWire(FutureOr<WasmModule> module) : super(WasmModule.cast<TenTenOneWasmModule>(module));
 
-  void wire_draw_mandelbrot(NativePortType port_, List<dynamic> image_size,
-          List<dynamic> zoom_point, double scale, int num_threads) =>
-      wasmModule.wire_draw_mandelbrot(port_, image_size, zoom_point, scale, num_threads);
-
-  void wire_passing_complex_structs(NativePortType port_, List<dynamic> root) =>
-      wasmModule.wire_passing_complex_structs(port_, root);
-
-  void wire_returning_structs_with_boxed_fields(NativePortType port_) =>
-      wasmModule.wire_returning_structs_with_boxed_fields(port_);
-
-  void wire_off_topic_memory_test_input_array(NativePortType port_, Uint8List input) =>
-      wasmModule.wire_off_topic_memory_test_input_array(port_, input);
-
-  void wire_off_topic_memory_test_output_zero_copy_buffer(NativePortType port_, int len) =>
-      wasmModule.wire_off_topic_memory_test_output_zero_copy_buffer(port_, len);
-
-  void wire_off_topic_memory_test_output_vec_u8(NativePortType port_, int len) =>
-      wasmModule.wire_off_topic_memory_test_output_vec_u8(port_, len);
-
-  void wire_off_topic_memory_test_input_vec_of_object(NativePortType port_, List<dynamic> input) =>
-      wasmModule.wire_off_topic_memory_test_input_vec_of_object(port_, input);
-
-  void wire_off_topic_memory_test_output_vec_of_object(NativePortType port_, int len) =>
-      wasmModule.wire_off_topic_memory_test_output_vec_of_object(port_, len);
-
-  void wire_off_topic_memory_test_input_complex_struct(NativePortType port_, List<dynamic> input) =>
-      wasmModule.wire_off_topic_memory_test_input_complex_struct(port_, input);
-
-  void wire_off_topic_memory_test_output_complex_struct(NativePortType port_, int len) =>
-      wasmModule.wire_off_topic_memory_test_output_complex_struct(port_, len);
-
-  void wire_off_topic_deliberately_return_error(NativePortType port_) =>
-      wasmModule.wire_off_topic_deliberately_return_error(port_);
-
-  void wire_off_topic_deliberately_panic(NativePortType port_) =>
-      wasmModule.wire_off_topic_deliberately_panic(port_);
+  void wire_build_wallet(NativePortType port_, Object port, String data_dir) =>
+      wasmModule.wire_build_wallet(port_, port, data_dir);
 }

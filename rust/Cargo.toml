@@ -8,8 +8,15 @@ name = "ten_ten_one"
 crate-type = ["cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticlib
 
 [dependencies]
-anyhow = { version = "1", features = ["backtrace"] }
+futures = "0.3"
 flutter_rust_bridge = "1.49.0"
-num = "0.4"                                             # unrelated to Flutter Rust Bridge. Used only to draw beautiful photos.
-image = "0.24.3"                                        # unrelated to Flutter Rust Bridge. Used only to draw beautiful photos.
-crossbeam = "0.8"                                       # unrelated to Flutter Rust Bridge. Used only to draw beautiful photos.
+reqwest = "0.11.6"
+tokio = { version = "1.14.0", features = ["rt-multi-thread", "fs"] }
+anyhow = { version = "1.0.49" }
+allo-isolate = "^0.1.14-beta.4"
+bdk = { version = "0.23.0", default-features = false, features = ["key-value-db"] }
+libp2p-core = { version = "0.33", default-features = false }
+rand = "0.6"
+sha2 = "0.10"
+hkdf = "0.12"
+secp256k1 = { version = "0.22", features = ["rand", "global-context-less-secure"] }
