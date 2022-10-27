@@ -55,6 +55,7 @@ jobs:
           java-version: "8.x" # "betterprogramming.pub" says must be java "8"
           cache: "gradle"
 
+      # Cache cargo dependencies (including cargo-ndk)
       - uses: actions/cache@v3
         id: cache-deps
         with:
@@ -63,11 +64,14 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            ./rust/target
-          key: ${{ runner.os }}-cargo-integrate-android-${{ hashFiles('**/Cargo.lock') }}-${{ steps.checkout.outputs.rustc_hash }}
-
+          key: ${{ runner.os }}-cargo-integrate-android-${{ hashFiles('**/Cargo.lock') }}
       - name: Add Rust targets
         run: rustup target add x86_64-linux-android
+
+      # cache Rust build - this changes more often than the dependencies
+      - uses: Swatinem/rust-cache@v2.0.1
+        with:
+          workspaces: "rust"
 
       - name: Install `cargo-ndk`
         if: steps.cache-deps.outputs.cache-hit != 'true'
