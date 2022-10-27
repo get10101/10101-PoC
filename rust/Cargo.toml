@@ -7,6 +7,9 @@ edition = "2018"
 name = "ten_ten_one"
 crate-type = ["cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticlib
 
+[build-dependencies]
+flutter_rust_bridge_codegen = { version = "1.49.0", features = [ "chrono" ] }
+
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }
 flutter_rust_bridge = "1.49.0"
