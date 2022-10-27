@@ -1,7 +1,20 @@
+use crate::wallet;
+use crate::wallet::WalletInfo;
 use anyhow::anyhow;
 use anyhow::Result;
-
+use flutter_rust_bridge::StreamSink;
 use flutter_rust_bridge::ZeroCopyBuffer;
+use std::thread::sleep;
+use std::time::Duration;
+
+pub fn run(feed: StreamSink<WalletInfo>) -> Result<()> {
+    let wallet = wallet::init_wallet()?;
+    loop {
+        let wallet_info = wallet.sync()?;
+        feed.add(wallet_info);
+        sleep(Duration::from_secs(60));
+    }
+}
 
 // TODO: Remove the examples below when we're comfortable using
 // rust-flutter-bridge and have our own integration test
