@@ -3,12 +3,11 @@
 /// Thus, we put it in this "utility" file, instead of the "main" file.
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:ten_ten_one/bridge_definitions.dart';
 
-Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
+Widget buildPageUi(String? walletBalance, String? exampleText) {
   return MaterialApp(
     home: Scaffold(
       appBar: AppBar(title: const Text('Coblox Academy')),
@@ -25,21 +24,17 @@ Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
                   children: [
                     const Text('Example 1',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    ElevatedButton(
+                        onPressed: () {
+                          debugPrint("pressed");
+                        },
+                        child: const Text('sampleButton')),
                     Container(height: 8),
-                    const Text(
-                        'Image generated (periodically) by Rust and displayed by Flutter/Dart'),
                     Container(height: 24),
-                    (exampleImage != null
-                        ? SizedBox(
-                            width: 50,
-                            height: 50,
-                            child: Center(
-                                child: AnimatedReplaceableImage(image: MemoryImage(exampleImage))))
-                        : Container()),
+                    Text(walletBalance ?? '',
+                        style: const TextStyle(fontSize: 11, color: Colors.grey)),
                     Container(height: 4),
-                    const Text('Mandelbrot Set',
-                        style: TextStyle(fontSize: 11, color: Colors.grey)),
-                    const Text('classical image requiring lots of computing',
+                    const Text('Example BDK wallet balance:',
                         style: TextStyle(fontSize: 11, color: Colors.grey)),
                     Container(height: 8),
                   ],

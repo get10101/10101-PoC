@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide Size;
 import 'package:ten_ten_one/off_topic_code.dart';
@@ -20,23 +19,30 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Uint8List? exampleImage;
+  // start with some simple balance to see whether we get anything out of BDK
+  String? walletBalance;
   String? exampleText;
 
   @override
   void initState() {
     super.initState();
+    _callInitWallet();
     _callExampleFfiTwo();
   }
 
   @override
   Widget build(BuildContext context) => buildPageUi(
-        exampleImage,
+        walletBalance,
         exampleText,
       );
 
   Future<void> _callExampleFfiTwo() async {
     final receivedText = await api.passingComplexStructs(root: createExampleTree());
     if (mounted) setState(() => exampleText = receivedText);
+  }
+
+  Future<void> _callInitWallet() async {
+    final receivedText = await api.initWallet();
+    if (mounted) setState(() => walletBalance = receivedText);
   }
 }
