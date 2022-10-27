@@ -19,30 +19,6 @@ use flutter_rust_bridge::*;
 
 // Section: wire functions
 
-fn wire_draw_mandelbrot_impl(
-    port_: MessagePort,
-    image_size: impl Wire2Api<Size> + UnwindSafe,
-    zoom_point: impl Wire2Api<Point> + UnwindSafe,
-    scale: impl Wire2Api<f64> + UnwindSafe,
-    num_threads: impl Wire2Api<i32> + UnwindSafe,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
-        WrapInfo {
-            debug_name: "draw_mandelbrot",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || {
-            let api_image_size = image_size.wire2api();
-            let api_zoom_point = zoom_point.wire2api();
-            let api_scale = scale.wire2api();
-            let api_num_threads = num_threads.wire2api();
-            move |task_callback| {
-                draw_mandelbrot(api_image_size, api_zoom_point, api_scale, api_num_threads)
-            }
-        },
-    )
-}
 fn wire_passing_complex_structs_impl(
     port_: MessagePort,
     root: impl Wire2Api<TreeNode> + UnwindSafe,
@@ -222,11 +198,6 @@ where
     }
 }
 
-impl Wire2Api<f64> for f64 {
-    fn wire2api(self) -> f64 {
-        self
-    }
-}
 impl Wire2Api<i32> for i32 {
     fn wire2api(self) -> i32 {
         self

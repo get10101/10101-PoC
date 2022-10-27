@@ -2,17 +2,6 @@ use super::*;
 // Section: wire functions
 
 #[no_mangle]
-pub extern "C" fn wire_draw_mandelbrot(
-    port_: i64,
-    image_size: *mut wire_Size,
-    zoom_point: *mut wire_Point,
-    scale: f64,
-    num_threads: i32,
-) {
-    wire_draw_mandelbrot_impl(port_, image_size, zoom_point, scale, num_threads)
-}
-
-#[no_mangle]
 pub extern "C" fn wire_passing_complex_structs(port_: i64, root: *mut wire_TreeNode) {
     wire_passing_complex_structs_impl(port_, root)
 }
@@ -76,16 +65,6 @@ pub extern "C" fn wire_off_topic_deliberately_panic(port_: i64) {
 // Section: allocate functions
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_point_0() -> *mut wire_Point {
-    support::new_leak_box_ptr(wire_Point::new_with_null_ptr())
-}
-
-#[no_mangle]
-pub extern "C" fn new_box_autoadd_size_0() -> *mut wire_Size {
-    support::new_leak_box_ptr(wire_Size::new_with_null_ptr())
-}
-
-#[no_mangle]
 pub extern "C" fn new_box_autoadd_tree_node_0() -> *mut wire_TreeNode {
     support::new_leak_box_ptr(wire_TreeNode::new_with_null_ptr())
 }
@@ -125,18 +104,6 @@ impl Wire2Api<String> for *mut wire_uint_8_list {
         String::from_utf8_lossy(&vec).into_owned()
     }
 }
-impl Wire2Api<Point> for *mut wire_Point {
-    fn wire2api(self) -> Point {
-        let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<Point>::wire2api(*wrap).into()
-    }
-}
-impl Wire2Api<Size> for *mut wire_Size {
-    fn wire2api(self) -> Size {
-        let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<Size>::wire2api(*wrap).into()
-    }
-}
 impl Wire2Api<TreeNode> for *mut wire_TreeNode {
     fn wire2api(self) -> TreeNode {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
@@ -160,14 +127,6 @@ impl Wire2Api<Vec<TreeNode>> for *mut wire_list_tree_node {
             support::vec_from_leak_ptr(wrap.ptr, wrap.len)
         };
         vec.into_iter().map(Wire2Api::wire2api).collect()
-    }
-}
-impl Wire2Api<Point> for wire_Point {
-    fn wire2api(self) -> Point {
-        Point {
-            x: self.x.wire2api(),
-            y: self.y.wire2api(),
-        }
     }
 }
 impl Wire2Api<Size> for wire_Size {
@@ -213,13 +172,6 @@ pub struct wire_list_tree_node {
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct wire_Point {
-    x: f64,
-    y: f64,
-}
-
-#[repr(C)]
-#[derive(Clone)]
 pub struct wire_Size {
     width: i32,
     height: i32,
@@ -248,15 +200,6 @@ pub trait NewWithNullPtr {
 impl<T> NewWithNullPtr for *mut T {
     fn new_with_null_ptr() -> Self {
         std::ptr::null_mut()
-    }
-}
-
-impl NewWithNullPtr for wire_Point {
-    fn new_with_null_ptr() -> Self {
-        Self {
-            x: Default::default(),
-            y: Default::default(),
-        }
     }
 }
 
