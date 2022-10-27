@@ -2,6 +2,11 @@ use super::*;
 // Section: wire functions
 
 #[no_mangle]
+pub extern "C" fn wire_run(port_: i64) {
+    wire_run_impl(port_)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_passing_complex_structs(port_: i64, root: *mut wire_TreeNode) {
     wire_passing_complex_structs_impl(port_, root)
 }

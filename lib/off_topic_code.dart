@@ -8,7 +8,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:ten_ten_one/generated/bridge_definitions.dart';
 
-Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
+Widget buildPageUi(Uint8List? exampleImage, String? exampleText, WalletInfo? walletInfo) {
   return MaterialApp(
     home: Scaffold(
       appBar: AppBar(title: const Text('Coblox Academy')),
@@ -16,6 +16,19 @@ Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
         children: [
           Container(height: 16),
           const Card(child: Text("Legends of Lightning")),
+          Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Card(
+                  child: Container(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      child: Column(
+                        children: [
+                          const Text("Wallet Info", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          (walletInfo != null ? Text('Address: ' + walletInfo!.address + ', Balance: ' + walletInfo!.balance.toString()) : Text('Waiting for wallet info!')),
+                        ],
+                      )
+                  )
+              )
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Card(

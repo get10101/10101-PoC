@@ -64,6 +64,8 @@ external TenTenOneWasmModule get wasmModule;
 class TenTenOneWasmModule implements WasmModule {
   external Object /* Promise */ call([String? moduleName]);
   external TenTenOneWasmModule bind(dynamic thisArg, String moduleName);
+  external void wire_run(NativePortType port_);
+
   external void wire_passing_complex_structs(NativePortType port_, List<dynamic> root);
 
   external void wire_returning_structs_with_boxed_fields(NativePortType port_);
@@ -93,6 +95,8 @@ class TenTenOneWasmModule implements WasmModule {
 
 class TenTenOneWire extends FlutterRustBridgeWasmWireBase<TenTenOneWasmModule> {
   TenTenOneWire(FutureOr<WasmModule> module) : super(WasmModule.cast<TenTenOneWasmModule>(module));
+
+  void wire_run(NativePortType port_) => wasmModule.wire_run(port_);
 
   void wire_passing_complex_structs(NativePortType port_, List<dynamic> root) =>
       wasmModule.wire_passing_complex_structs(port_, root);

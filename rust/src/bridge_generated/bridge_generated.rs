@@ -19,6 +19,16 @@ use flutter_rust_bridge::*;
 
 // Section: wire functions
 
+fn wire_run_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "run",
+            port: Some(port_),
+            mode: FfiCallMode::Stream,
+        },
+        move || move |task_callback| run(task_callback.stream_sink()),
+    )
+}
 fn wire_passing_complex_structs_impl(
     port_: MessagePort,
     root: impl Wire2Api<TreeNode> + UnwindSafe,
@@ -239,6 +249,13 @@ impl support::IntoDart for TreeNode {
     }
 }
 impl support::IntoDartExceptPrimitive for TreeNode {}
+
+impl support::IntoDart for WalletInfo {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.balance.into_dart(), self.address.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for WalletInfo {}
 
 // Section: executor
 

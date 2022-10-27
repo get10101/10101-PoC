@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide Size;
+import 'package:ten_ten_one/generated/bridge_definitions.dart';
 import 'package:ten_ten_one/off_topic_code.dart';
 
 import 'generated/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -22,18 +23,27 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Uint8List? exampleImage;
   String? exampleText;
+  WalletInfo? walletInfo;
+
+  late Stream<WalletInfo> feed;
 
   @override
   void initState() {
     super.initState();
     _callExampleFfiTwo();
+    feed = api.run();
+    listen();
+  }
+
+  Future<void> listen() async {
+    feed.listen((event) {
+      if (mounted) setState(() => walletInfo = event);
+      print("Address: " + walletInfo!.address + ": " + walletInfo!.balance.toString());
+    });
   }
 
   @override
-  Widget build(BuildContext context) => buildPageUi(
-        exampleImage,
-        exampleText,
-      );
+  Widget build(BuildContext context) => buildPageUi(exampleImage, exampleText, walletInfo);
 
   Future<void> _callExampleFfiTwo() async {
     final receivedText = await api.passingComplexStructs(root: createExampleTree());

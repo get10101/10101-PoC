@@ -1,7 +1,33 @@
 use anyhow::anyhow;
 use anyhow::Result;
-
+use flutter_rust_bridge::StreamSink;
 use flutter_rust_bridge::ZeroCopyBuffer;
+use std::thread::sleep;
+use std::time::Duration;
+
+const ONE_SECOND: Duration = Duration::from_secs(1);
+
+pub struct WalletInfo {
+    pub balance: u64,
+    pub address: String,
+}
+
+// can't omit the return type yet, this is a bug
+pub fn run(feed: StreamSink<WalletInfo>) -> Result<()> {
+    let mut balance: u64 = 0;
+    loop {
+        feed.add(WalletInfo {
+            balance,
+            address: "address 1".into(),
+        });
+        sleep(ONE_SECOND);
+        if balance == u64::MAX {
+            break;
+        }
+        balance += 1;
+    }
+    Ok(())
+}
 
 // TODO: Remove the examples below when we're comfortable using
 // rust-flutter-bridge and have our own integration test

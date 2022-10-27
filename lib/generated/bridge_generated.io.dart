@@ -102,6 +102,17 @@ class TenTenOneWire implements FlutterRustBridgeWireBase {
   late final _store_dart_post_cobject =
       _store_dart_post_cobjectPtr.asFunction<void Function(DartPostCObjectFnType)>();
 
+  void wire_run(
+    int port_,
+  ) {
+    return _wire_run(
+      port_,
+    );
+  }
+
+  late final _wire_runPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_run');
+  late final _wire_run = _wire_runPtr.asFunction<void Function(int)>();
+
   void wire_passing_complex_structs(
     int port_,
     ffi.Pointer<wire_TreeNode> root,

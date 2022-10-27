@@ -2,6 +2,11 @@ use super::*;
 // Section: wire functions
 
 #[wasm_bindgen]
+pub fn wire_run(port_: MessagePort) {
+    wire_run_impl(port_)
+}
+
+#[wasm_bindgen]
 pub fn wire_passing_complex_structs(port_: MessagePort, root: JsValue) {
     wire_passing_complex_structs_impl(port_, root)
 }

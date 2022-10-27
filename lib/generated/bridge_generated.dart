@@ -17,6 +17,19 @@ class TenTenOneImpl implements TenTenOne {
   factory TenTenOneImpl.wasm(FutureOr<WasmModule> module) =>
       TenTenOneImpl(module as ExternalLibrary);
   TenTenOneImpl.raw(this._platform);
+  Stream<WalletInfo> run({dynamic hint}) => _platform.executeStream(FlutterRustBridgeTask(
+        callFfi: (port_) => _platform.inner.wire_run(port_),
+        parseSuccessData: _wire2api_wallet_info,
+        constMeta: kRunConstMeta,
+        argValues: [],
+        hint: hint,
+      ));
+
+  FlutterRustBridgeTaskConstMeta get kRunConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "run",
+        argNames: [],
+      );
+
   Future<String> passingComplexStructs({required TreeNode root, dynamic hint}) =>
       _platform.executeNormal(FlutterRustBridgeTask(
         callFfi: (port_) => _platform.inner
@@ -255,12 +268,25 @@ class TenTenOneImpl implements TenTenOne {
     );
   }
 
+  int _wire2api_u64(dynamic raw) {
+    return castInt(raw);
+  }
+
   int _wire2api_u8(dynamic raw) {
     return raw as int;
   }
 
   Uint8List _wire2api_uint_8_list(dynamic raw) {
     return raw as Uint8List;
+  }
+
+  WalletInfo _wire2api_wallet_info(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return WalletInfo(
+      balance: _wire2api_u64(arr[0]),
+      address: _wire2api_String(arr[1]),
+    );
   }
 }
 

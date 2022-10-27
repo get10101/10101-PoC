@@ -7,6 +7,10 @@ import 'dart:async';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 
 abstract class TenTenOne {
+  Stream<WalletInfo> run({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRunConstMeta;
+
   Future<String> passingComplexStructs({required TreeNode root, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kPassingComplexStructsConstMeta;
@@ -87,5 +91,15 @@ class TreeNode {
   TreeNode({
     required this.name,
     required this.children,
+  });
+}
+
+class WalletInfo {
+  final int balance;
+  final String address;
+
+  WalletInfo({
+    required this.balance,
+    required this.address,
   });
 }
