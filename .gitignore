@@ -5,3 +5,6 @@
 # generated files, not meant to be checked in
 .flutter-plugins*
 /build/
+# generated files by flutter-rust-bridge
+**/bridge_generated*
+**/bridge_definitions.dart
