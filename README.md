@@ -14,6 +14,11 @@ To install necessary project dependencies for all targets, run the following:
 make deps
 ```
 
+## Documentation
+
+This project uses [flutter-rust-bridge](https://github.com/fzyzcjy/flutter_rust_bridge).
+It is strongly encouraged to read its [documentation](https://cjycode.com/flutter_rust_bridge/index.html) before jumping into the project in order to understand the project's structure, conventions and ways of integrating between Rust and Flutter.
+
 ## Building
 
 The instructions below allow building the Rust backend for 10101 application.
