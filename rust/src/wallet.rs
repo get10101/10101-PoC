@@ -13,7 +13,12 @@ use std::str::FromStr;
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
 
-pub fn init_wallet(network: &str) -> Result<()> {
+#[derive(Debug)]
+pub struct WalletInfo {
+    pub phrase: Vec<String>,
+}
+
+pub fn init_wallet(network: &str) -> Result<WalletInfo> {
     let network = Network::from_str(network)?;
 
     let electrum_url = match network {
@@ -37,7 +42,9 @@ pub fn init_wallet(network: &str) -> Result<()> {
 
     wallet.sync(&blockchain, SyncOptions::default())?;
 
-    Ok(())
+    Ok(WalletInfo {
+        phrase: seed.phrase,
+    })
 }
 
 #[cfg(test)]

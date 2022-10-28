@@ -1,9 +1,10 @@
 use crate::wallet;
+use crate::wallet::WalletInfo;
 use anyhow::anyhow;
 use anyhow::Result;
 use flutter_rust_bridge::ZeroCopyBuffer;
 
-pub fn init_wallet(network: String) -> Result<()> {
+pub fn init_wallet(network: String) -> Result<WalletInfo> {
     wallet::init_wallet(&network)
 }
 
