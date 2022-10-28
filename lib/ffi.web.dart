@@ -2,7 +2,7 @@
 
 import 'dart:html';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
-import 'bridge_generated.web.dart';
+import 'bridge_generated/bridge_generated.web.dart';
 
 const root = 'pkg/ten_ten_one';
 

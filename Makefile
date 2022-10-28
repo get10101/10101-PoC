@@ -56,11 +56,12 @@ gen:rust
 	flutter pub get
 	flutter_rust_bridge_codegen \
 		--rust-input rust/src/api.rs \
-		--dart-output lib/bridge_generated.dart \
+		--rust-output rust/src/bridge_generated/bridge_generated.rs \
+		--dart-output lib/bridge_generated/bridge_generated.dart \
 		--dart-format-line-length 100 \
 		--c-output ios/Runner/bridge_generated.h \
 		--c-output macos/Runner/bridge_generated.h \
-		--dart-decl-output lib/bridge_definitions.dart \
+		--dart-decl-output lib/bridge_generated/bridge_definitions.dart \
 		--wasm
 
 # Run the app (need to pick the target, if no mobile emulator is running)
