@@ -6,7 +6,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/generated/bridge_definitions.dart';
+import 'package:ten_ten_one/bridge_definitions.dart';
 
 Widget buildPageUi(Uint8List? exampleImage, String? exampleText) {
   return MaterialApp(
