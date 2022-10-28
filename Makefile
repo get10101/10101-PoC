@@ -16,6 +16,9 @@ deps-ios:
 # Format all files in the project
 format: dprint flutter-format
 
+# convenience alias to match dprint API
+fmt: format
+
 dprint:
 	dprint fmt
 
@@ -63,3 +66,11 @@ gen:rust
 # Run the app (need to pick the target, if no mobile emulator is running)
 run:
 	flutter run
+
+clippy:rust
+	cd rust && cargo clippy --all-targets -- -D warnings
+
+lint-flutter:
+	flutter analyze --fatal-infos .
+
+lint: clippy lint-flutter
