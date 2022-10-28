@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Size;
+import 'package:ten_ten_one/dashboard.dart';
 
 export 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart' show api;
 
@@ -12,6 +13,7 @@ class TenTenOneApp extends StatelessWidget {
     return MaterialApp(
       title: 'TenTenOne',
       theme: ThemeData(primarySwatch: Colors.teal),
+      home: const Dashboard(),
     );
   }
 }
