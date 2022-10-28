@@ -67,15 +67,21 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.rust == 'true' }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: rust
     steps:
       - uses: actions/checkout@v3
       - name: Setup rust toolchain
         run: rustup show
       - uses: Swatinem/rust-cache@v2.0.1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - name: Install FFI bindings
+        run: cargo install flutter_rust_bridge_codegen
+      - name: Generate FFI bindings
+        working-directory: .
+        run: make gen
       - run: cargo clippy --all-targets -- -D warnings
+        working-directory: rust
 
   lint-flutter:
     needs: changes
@@ -86,6 +92,12 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Install FFI bindings
+        run: cargo install flutter_rust_bridge_codegen
+      - name: Generate FFI bindings
+        run: make gen
       - name: Install dependencies
         run: flutter pub get
       - name: Verify flutter formatting

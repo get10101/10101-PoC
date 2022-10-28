@@ -35,19 +35,19 @@ jobs:
 
           ln -sfn $ANDROID_HOME/ndk/21.4.7075529 $ANDROID_HOME/ndk-bundle
 
-      - name: Install Rust toolchain
-        id: checkout
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ inputs.rust_version }}
-          override: true
+      - name: Setup rust toolchain
+        run: rustup show
 
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
           flutter-version: ${{ inputs.flutter_version }}
           architecture: x64
+
+      - name: Install FFI bindings
+        run: cargo install flutter_rust_bridge_codegen
+      - name: Generate FFI bindings
+        run: make gen
 
       - uses: actions/setup-java@v3
         with:
