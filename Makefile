@@ -16,6 +16,9 @@ deps-ios:
 # Format all files in the project
 format: dprint flutter-format
 
+# convenience alias to match dprint API
+fmt: format
+
 dprint:
 	dprint fmt
 
