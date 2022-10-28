@@ -6,5 +6,6 @@
 .flutter-plugins*
 /build/
 # generated files by flutter-rust-bridge
-**/bridge_generated*
-**/bridge_definitions.dart
+bridge_generated.h
+**/bridge_generated/
+!/rust/src/bridge_generated/mod.rs
