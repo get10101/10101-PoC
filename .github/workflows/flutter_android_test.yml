@@ -91,4 +91,4 @@ jobs:
             api-level: 29
             arch: x86_64
             profile: ${{ inputs.device }}
-            script: flutter test integration_test/main.dart --verbose
+            script: flutter test integration_test --verbose
