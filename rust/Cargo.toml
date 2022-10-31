@@ -11,3 +11,4 @@ crate-type = ["cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticl
 anyhow = { version = "1", features = ["backtrace"] }
 flutter_rust_bridge = "1.49.0"
 bdk = "0.23.0"
+state = "0.5.3"

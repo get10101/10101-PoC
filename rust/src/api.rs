@@ -1,18 +1,27 @@
-use std::thread::sleep;
-use std::time::Duration;
-
-use crate::wallet;
 use crate::wallet::Wallet;
 use anyhow::anyhow;
+use anyhow::Context;
 use anyhow::Result;
+use bdk::Balance;
 use flutter_rust_bridge::ZeroCopyBuffer;
+use std::sync::Mutex;
 
-pub fn init_wallet() -> Result<Wallet> {
-    Box::new(crate::wallet::init_wallet())
+use state::Storage;
+
+static WALLET: Storage<Mutex<Wallet>> = Storage::new();
+
+pub fn init_wallet() -> Result<()> {
+    WALLET.set(Mutex::new(Wallet::new()?));
+    Ok(())
 }
 
-pub fn get_balance(wallet: Box<Wallet>) -> Result<Balance> {
-    wallet.sync()
+pub fn get_balance() -> Result<Balance> {
+    WALLET
+        .try_get()
+        .context("Wallet uninitialised")?
+        .lock()
+        .map_err(|_| anyhow!("cannot acquire wallet lock"))?
+        .sync()
 }
 
 // TODO: Remove the examples below when we're comfortable using
