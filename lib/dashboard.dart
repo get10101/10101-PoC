@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/seed.dart';
 
 import 'mocks.dart';
@@ -32,6 +33,7 @@ class _DashboardState extends State<Dashboard> {
           title: const Text('Dashboard'),
         ),
         body: ListView(children: [
+          const Balance(),
           GestureDetector(
               onTap: () => {
                     Navigator.pushNamed(
