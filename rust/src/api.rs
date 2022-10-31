@@ -1,7 +1,11 @@
+use crate::wallet;
 use anyhow::anyhow;
 use anyhow::Result;
-
 use flutter_rust_bridge::ZeroCopyBuffer;
+
+pub fn init_wallet() -> Result<()> {
+    wallet::init_wallet("testnet")
+}
 
 // TODO: Remove the examples below when we're comfortable using
 // rust-flutter-bridge and have our own integration test
