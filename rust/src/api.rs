@@ -1,27 +1,24 @@
-use crate::wallet::Wallet;
+use crate::wallet;
 use anyhow::anyhow;
-use anyhow::Context;
 use anyhow::Result;
-use bdk::Balance;
 use flutter_rust_bridge::ZeroCopyBuffer;
-use std::sync::Mutex;
 
-use state::Storage;
-
-static WALLET: Storage<Mutex<Wallet>> = Storage::new();
-
-pub fn init_wallet() -> Result<()> {
-    WALLET.set(Mutex::new(Wallet::new()?));
-    Ok(())
+pub struct Balance {
+    pub confirmed: u64,
 }
 
-pub fn get_balance() -> Result<Balance> {
-    WALLET
-        .try_get()
-        .context("Wallet uninitialised")?
-        .lock()
-        .map_err(|_| anyhow!("cannot acquire wallet lock"))?
-        .sync()
+impl Balance {
+    pub fn new(confirmed: u64) -> Balance {
+        Balance { confirmed }
+    }
+}
+
+pub fn init_wallet() -> Result<()> {
+    wallet::init_wallet()
+}
+
+pub fn get_balance() -> anyhow::Result<Balance> {
+    Ok(Balance::new(wallet::get_balance()?.confirmed))
 }
 
 // TODO: Remove the examples below when we're comfortable using

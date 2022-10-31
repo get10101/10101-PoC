@@ -1,3 +1,5 @@
+use anyhow::anyhow;
+use anyhow::Context;
 use anyhow::Result;
 use bdk::bitcoin;
 use bdk::blockchain::ElectrumBlockchain;
@@ -5,6 +7,24 @@ use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::Balance;
 use bdk::SyncOptions;
+use state::Storage;
+use std::sync::Mutex;
+
+static WALLET: Storage<Mutex<Wallet>> = Storage::new();
+
+pub fn init_wallet() -> Result<()> {
+    WALLET.set(Mutex::new(Wallet::new()?));
+    Ok(())
+}
+
+pub fn get_balance() -> Result<Balance> {
+    WALLET
+        .try_get()
+        .context("Wallet uninitialised")?
+        .lock()
+        .map_err(|_| anyhow!("cannot acquire wallet lock"))?
+        .sync()
+}
 
 pub struct Wallet {
     blockchain: ElectrumBlockchain,
