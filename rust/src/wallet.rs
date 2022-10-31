@@ -18,6 +18,7 @@ pub fn init_wallet() -> Result<()> {
 }
 
 pub fn get_balance() -> Result<Balance> {
+    println!("Wallet sync called");
     WALLET
         .try_get()
         .context("Wallet uninitialised")?
@@ -36,8 +37,7 @@ impl Wallet {
         self.wallet.sync(&self.blockchain, SyncOptions::default())?;
 
         let balance = self.wallet.get_balance()?;
-        println!("Descriptor balance: {} SAT", &balance);
-
+        println!("Wallet balance: {} SAT", &balance);
         Ok(balance)
     }
 

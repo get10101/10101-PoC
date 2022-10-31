@@ -37,12 +37,21 @@ class _MyAppState extends State<MyApp> {
       );
 
   Future<void> _callExampleFfiTwo() async {
-    final receivedText = await api.passingComplexStructs(root: createExampleTree());
+    final receivedText =
+        await api.passingComplexStructs(root: createExampleTree());
     if (mounted) setState(() => exampleText = receivedText);
   }
 
   Future<void> _callInitWallet() async {
-    final receivedText = await api.initWallet();
-    if (mounted) setState(() => walletBalance = receivedText);
+    await api.initWallet();
+    runPeriodically(_callSync);
+  }
+
+  Future<void> _callSync() async {
+    final balance = await api.getBalance();
+    if (mounted) setState(() => exampleText = balance.confirmed.toString());
   }
 }
+
+void runPeriodically(void Function() callback) =>
+    Timer.periodic(const Duration(seconds: 20), (timer) => callback());

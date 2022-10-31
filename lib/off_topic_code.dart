@@ -1,7 +1,6 @@
 /// Code in this file is more about Flutter than our package, `flutter rust bridge`.
 /// To understand this package, you do not need to have a deep understanding of this file and Flutter.
 /// Thus, we put it in this "utility" file, instead of the "main" file.
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -36,6 +35,9 @@ Widget buildPageUi(String? walletBalance, String? exampleText) {
                     Container(height: 4),
                     const Text('Example BDK wallet balance:',
                         style: TextStyle(fontSize: 11, color: Colors.grey)),
+                    Text(exampleText ?? '',
+                        style:
+                            const TextStyle(fontSize: 11, color: Colors.grey)),
                     Container(height: 8),
                   ],
                 ),
@@ -43,26 +45,6 @@ Widget buildPageUi(String? walletBalance, String? exampleText) {
             ),
           ),
           Container(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Card(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  children: [
-                    const Text('Example 2',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Container(height: 8),
-                    const Text('Complex struct/class is passed smoothly through FFI'),
-                    Container(height: 24),
-                    Text(exampleText ?? '',
-                        style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                    Container(height: 8),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     ),
@@ -127,6 +109,3 @@ double generateScale() {
   if (_scale < 1e-9) _scale = 1.0;
   return _scale;
 }
-
-void runPeriodically(void Function() callback) =>
-    Timer.periodic(const Duration(milliseconds: 500), (timer) => callback());
