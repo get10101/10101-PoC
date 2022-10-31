@@ -6,7 +6,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/bridge_definitions.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/off_topic_code.dart';
 
 import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
