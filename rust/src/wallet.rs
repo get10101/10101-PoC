@@ -1,13 +1,28 @@
+use anyhow::Result;
 use bdk::bitcoin;
-use bdk::blockchain::ElectrumBlockchain;
+pub use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::Balance;
 use bdk::SyncOptions;
-use bdk::Wallet;
 
-// TODO: Split these calls up
-pub fn init_wallet() -> anyhow::Result<Balance> {
+pub struct Wallet {
+    blockchain: ElectrumBlockchain,
+    wallet: bdk::Wallet<MemoryDatabase>,
+}
+
+impl Wallet {
+    pub fn sync(&self) -> Result<Balance> {
+        self.wallet.sync(&self.blockchain, SyncOptions::default())?;
+
+        let balance = self.wallet.get_balance()?;
+        println!("Descriptor balance: {} SAT", &balance);
+
+        Ok(balance)
+    }
+}
+
+pub fn init_wallet() -> Result<Wallet> {
     let client = Client::new("ssl://electrum.blockstream.info:60002")?;
     let blockchain = ElectrumBlockchain::from(client);
     let wallet = Wallet::new(
@@ -16,11 +31,5 @@ pub fn init_wallet() -> anyhow::Result<Balance> {
         bitcoin::Network::Testnet,
         MemoryDatabase::default(),
     )?;
-
-    wallet.sync(&blockchain, SyncOptions::default())?;
-
-    let balance = wallet.get_balance()?;
-    println!("Descriptor balance: {} SAT", &balance);
-
-    Ok(balance)
+    Ok(Wallet { blockchain, wallet })
 }

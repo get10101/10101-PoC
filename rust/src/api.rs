@@ -2,15 +2,17 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use crate::wallet;
+use crate::wallet::Wallet;
 use anyhow::anyhow;
 use anyhow::Result;
 use flutter_rust_bridge::ZeroCopyBuffer;
 
-pub fn init_wallet() -> Result<String> {
-    println!("going to sleep");
-    sleep(Duration::from_secs(60));
-    let balance = wallet::init_wallet()?.confirmed;
-    Ok(format!("Example code descriptor balance: {balance}"))
+pub fn init_wallet() -> Result<Wallet> {
+    Box::new(crate::wallet::init_wallet())
+}
+
+pub fn get_balance(wallet: Box<Wallet>) -> Result<Balance> {
+    wallet.sync()
 }
 
 // TODO: Remove the examples below when we're comfortable using
