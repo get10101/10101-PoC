@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/bridge_definitions.dart';
 import 'package:ten_ten_one/seed.dart';
 
-import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
-export 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart' show api;
+import 'mocks.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -13,12 +11,11 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  late WalletInfo walletInfo;
+  WalletInfo walletInfo = WalletInfo();
 
   @override
   void initState() {
     super.initState();
-    initWallet();
   }
 
   @override
@@ -51,11 +48,5 @@ class _DashboardState extends State<Dashboard> {
                 ),
               ))
         ]));
-  }
-
-  Future<void> initWallet() async {
-    // todo: this should eventually come from the settings
-    final info = await api.initWallet(network: "testnet");
-    if (mounted) setState(() => walletInfo = info);
   }
 }

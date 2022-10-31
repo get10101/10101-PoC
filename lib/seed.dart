@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/bridge_definitions.dart';
+import 'mocks.dart';
 
 class Seed extends StatelessWidget {
   const Seed({Key? key}) : super(key: key);
@@ -23,9 +23,7 @@ class Seed extends StatelessWidget {
                         children: [
                           const Text("Seed phrase",
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          (walletInfo != null
-                              ? Text(walletInfo.phrase.toString())
-                              : Text('Waiting for wallet info!')),
+                          Text(walletInfo.phrase.toString())
                         ],
                       )))),
         ]));
