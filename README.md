@@ -7,6 +7,7 @@ Rust toolchain can be installed via [Rustup](https://rustup.rs/).
 In order to setup Flutter (as well as mobile simulators etc), please see the excellent Flutter guide [here](https://docs.flutter.dev/get-started/install)
 
 A lot of complexity for building the app has been encapsulated in a [Makefile](./Makefile).
+To see the available commands, simply run `make help` or `make`.
 
 To install necessary project dependencies for all targets, run the following:
 
@@ -58,6 +59,14 @@ make android
 ```sh
 make android-sim
 ```
+
+## Formatting
+
+We strive to keep the code consistent, therefore before submitting PRs one should run: `make format` to ensure code is properly formatted.
+
+## Linting
+
+Static analysers (`clippy` and `flutter analyze`) can be run by calling `make lint`.
 
 ## Running
 
