@@ -28,6 +28,7 @@ pub enum Network {
 pub struct Wallet {
     blockchain: ElectrumBlockchain,
     wallet: bdk::Wallet<MemoryDatabase>,
+    seed: Bip39Seed,
 }
 
 impl From<Network> for bitcoin::Network {
@@ -61,7 +62,11 @@ impl Wallet {
             MemoryDatabase::new(),
         )?;
 
-        Ok(Wallet { blockchain, wallet })
+        Ok(Wallet {
+            blockchain,
+            wallet,
+            seed,
+        })
     }
 
     pub fn sync(&self) -> Result<bdk::Balance> {
@@ -88,6 +93,16 @@ pub fn get_balance() -> Result<bdk::Balance> {
         .lock()
         .map_err(|_| anyhow!("cannot acquire wallet lock"))?
         .sync()
+}
+
+pub fn get_seed_phrase() -> Result<Vec<String>> {
+    let wallet = WALLET
+        .try_get()
+        .context("Wallet uninitialised")?
+        .lock()
+        .map_err(|_| anyhow!("cannot acquire wallet lock"))?;
+
+    Ok(wallet.seed.get_seed_phrase())
 }
 
 #[cfg(test)]

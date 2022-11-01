@@ -1,8 +1,11 @@
+import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/models/seed_backup.model.dart';
 import 'package:go_router/go_router.dart';
-import 'mocks.dart';
+
+import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 class Seed extends StatefulWidget {
   const Seed({Key? key}) : super(key: key);
@@ -17,6 +20,29 @@ class Seed extends StatefulWidget {
 class _SeedState extends State<Seed> {
   bool checked = false;
   bool visibility = false;
+
+  // initialise the phrase with empty words - in order for the widget to not throw
+  // an error while waiting for the rust api. Seems to be the easiest way of handling
+  // uninitialised state, as the words will be ready immediately after the widget is
+  // initialised and the words are not visible at first.
+  List<String> phrase = ["", "", "", "", "", "", "", "", "", "", "", ""];
+
+  @override
+  void initState() {
+    _callGetSeedPhrase();
+    super.initState();
+  }
+
+  Future<void> _callGetSeedPhrase() async {
+    try {
+      final seedPhrase = await api.getSeedPhrase();
+      setState(() {
+        phrase = seedPhrase;
+      });
+    } on FfiException catch (error) {
+      FLog.error(text: "Failed to fetch seed phrase: Error: " + error.message, exception: error);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
