@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:ten_ten_one/models/seed_backup.model.dart';
+import 'package:go_router/go_router.dart';
+
 import 'mocks.dart';
 
 class Seed extends StatefulWidget {
@@ -105,13 +109,29 @@ class _SeedState extends State<Seed> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Checkbox(value: checked, onChanged: (bool? changed) {}),
+                          Checkbox(
+                              value: checked,
+                              onChanged: (bool? changed) {
+                                setState(() {
+                                  checked = changed!;
+                                });
+                              }),
                           const Text('I have made a backup of my seed'),
                         ],
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
-                        children: [ElevatedButton(onPressed: () {}, child: const Text('Done'))],
+                        children: [
+                          ElevatedButton(
+                              onPressed: checked
+                                  ? () {
+                                      final seedBackupModel = context.read<SeedBackupModel>();
+                                      seedBackupModel.update();
+                                      context.go('/');
+                                    }
+                                  : null,
+                              child: const Text('Done'))
+                        ],
                       )
                     ],
                   )),
