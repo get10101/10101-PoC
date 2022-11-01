@@ -96,13 +96,9 @@ mod tests {
     use super::Network;
 
     #[test]
-    fn init_wallet_success() {
+    fn wallet_support_for_different_bitcoin_networks() {
         wallet::init_wallet(Network::Mainnet).expect("wallet to be initialized");
         wallet::init_wallet(Network::Testnet).expect("wallet to be initialized");
-    }
-
-    #[test]
-    fn init_wallet_fail() {
         wallet::init_wallet(Network::Regtest).expect_err("wallet should not succeed to initialize");
     }
 }
