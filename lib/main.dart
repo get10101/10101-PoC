@@ -1,4 +1,6 @@
+import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart' hide Size;
+import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
@@ -33,7 +35,14 @@ class _TenTenOneState extends State<TenTenOneApp> {
   void initState() {
     super.initState();
     setupRustLogging();
-    _callInitWallet();
+    try {
+      _callInitWallet();
+      FLog.info(text: "Successfully initialised wallet");
+    } on FfiException catch (error) {
+      FLog.error(text: "Wallet failed to initialise: Error: " + error.message, exception: error);
+    } catch (error) {
+      FLog.error(text: "Wallet failed to initialise: Unknown error");
+    }
   }
 
   @override
