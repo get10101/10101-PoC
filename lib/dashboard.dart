@@ -26,9 +26,7 @@ class _DashboardState extends State<Dashboard> {
     final seedBackupModel = context.watch<SeedBackupModel>();
     List<Widget> widgets = [const Balance()];
 
-    widgets.add(Expanded(
-        // Sized box necessary to achieve nested ListViews
-        child: SizedBox(
+    widgets.add(SizedBox(
       height: 110.0,
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -41,7 +39,7 @@ class _DashboardState extends State<Dashboard> {
           const ServiceCard(Service.sportsbet),
         ],
       ),
-    )));
+    ));
     widgets.add(const Divider(
       height: 30,
       thickness: 7,
