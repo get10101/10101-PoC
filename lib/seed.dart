@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/models/seed_backup.model.dart';
 import 'package:go_router/go_router.dart';
-
 import 'mocks.dart';
 
 class Seed extends StatefulWidget {

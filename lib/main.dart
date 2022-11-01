@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/balance.model.dart';
-import 'package:ten_ten_one/models/seedbackup.model.dart';
+import 'package:ten_ten_one/models/seed_backup.model.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:go_router/go_router.dart';
 

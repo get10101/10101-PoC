@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/models/seedbackup.model.dart';
+import 'package:ten_ten_one/models/seed_backup.model.dart';
 import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/models/service.model.dart';
 import 'package:ten_ten_one/seed.dart';
