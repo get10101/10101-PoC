@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class CfdTrading extends StatelessWidget {
   const CfdTrading({Key? key}) : super(key: key);
 
-  static const routeName = '/cfd-trading';
+  static const route = '/cfd-trading';
 
   @override
   Widget build(BuildContext context) {
