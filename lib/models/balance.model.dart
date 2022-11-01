@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 
 class BalanceModel extends ChangeNotifier {
-  int amount = 0;
+  // TODO: Change to 0, just to see that it updates :)
+  int amount = -1;
 
   void update(int amount) {
     this.amount = amount;
