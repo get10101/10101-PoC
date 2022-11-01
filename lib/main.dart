@@ -4,6 +4,8 @@ import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/balance.model.dart';
 import 'package:ten_ten_one/seed.dart';
 
+import 'bridge_generated/bridge_definitions.dart';
+
 import 'dart:async';
 
 import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -40,7 +42,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 
   Future<void> _callInitWallet() async {
-    await api.initWallet();
+    await api.initWallet(network: Network.Testnet);
 
     // initial sync
     _callSync();

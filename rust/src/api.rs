@@ -1,4 +1,5 @@
 use crate::wallet;
+use crate::wallet::Network;
 use anyhow::Result;
 
 pub struct Balance {
@@ -11,8 +12,8 @@ impl Balance {
     }
 }
 
-pub fn init_wallet() -> Result<()> {
-    wallet::init_wallet("testnet")
+pub fn init_wallet(network: Network) -> Result<()> {
+    wallet::init_wallet(network)
 }
 
 pub fn get_balance() -> anyhow::Result<Balance> {

@@ -3,14 +3,13 @@ use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
-use bdk::bitcoin::Network;
+use bdk::bitcoin;
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::KeychainKind;
 use bdk::SyncOptions;
 use state::Storage;
-use std::str::FromStr;
 use std::sync::Mutex;
 
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
@@ -19,23 +18,37 @@ pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 
+pub enum Network {
+    Mainnet,
+    Testnet,
+    Regtest,
+}
+
 pub struct Wallet {
     blockchain: ElectrumBlockchain,
     wallet: bdk::Wallet<MemoryDatabase>,
 }
 
-impl Wallet {
-    pub fn new(network: &str) -> Result<Wallet> {
-        let network = Network::from_str(network)?;
+impl From<Network> for bitcoin::Network {
+    fn from(network: Network) -> Self {
+        match network {
+            Network::Mainnet => bitcoin::Network::Bitcoin,
+            Network::Testnet => bitcoin::Network::Testnet,
+            Network::Regtest => bitcoin::Network::Regtest,
+        }
+    }
+}
 
+impl Wallet {
+    pub fn new(network: Network) -> Result<Wallet> {
         let electrum_url = match network {
-            Network::Bitcoin => MAINNET_ELECTRUM,
+            Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
             _ => bail!("Only public networks are supported"),
         };
 
         let seed = Bip39Seed::new()?;
-        let ext_priv_key = seed.derive_extended_priv_key(Network::Testnet)?;
+        let ext_priv_key = seed.derive_extended_priv_key(network.into())?;
 
         let client = Client::new(electrum_url)?;
         let blockchain = ElectrumBlockchain::from(client);
@@ -61,7 +74,7 @@ impl Wallet {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: &str) -> Result<()> {
+pub fn init_wallet(network: Network) -> Result<()> {
     WALLET.set(Mutex::new(Wallet::new(network)?));
     Ok(())
 }
@@ -80,15 +93,12 @@ pub fn get_balance() -> Result<bdk::Balance> {
 mod tests {
     use crate::wallet;
 
-    #[test]
-    fn init_wallet_success() {
-        wallet::init_wallet("bitcoin").expect("wallet to be initialized");
-        wallet::init_wallet("testnet").expect("wallet to be initialized");
-    }
+    use super::Network;
 
     #[test]
-    fn init_wallet_fail() {
-        wallet::init_wallet("regtest").expect_err("wallet should not succeed to initialize");
-        wallet::init_wallet("blabla").expect_err("wallet should not succeed to initialize");
+    fn wallet_support_for_different_bitcoin_networks() {
+        wallet::init_wallet(Network::Mainnet).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Testnet).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Regtest).expect_err("wallet should not succeed to initialize");
     }
 }
