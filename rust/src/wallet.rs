@@ -35,7 +35,7 @@ impl Wallet {
         };
 
         let seed = Bip39Seed::new()?;
-        let ext_priv_key = seed.derive_extended_priv_key(Network::Testnet)?;
+        let ext_priv_key = seed.derive_extended_priv_key(network)?;
 
         let client = Client::new(electrum_url)?;
         let blockchain = ElectrumBlockchain::from(client);
