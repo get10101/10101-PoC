@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/models/service.model.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:ten_ten_one/service_card.dart';
-
-import 'mocks.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -15,8 +14,6 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  WalletInfo walletInfo = WalletInfo();
-
   @override
   void initState() {
     super.initState();
@@ -39,12 +36,7 @@ class _DashboardState extends State<Dashboard> {
               padding: const EdgeInsets.only(left: 15, right: 15),
               children: [
                 GestureDetector(
-                  onTap: () => {
-                    Navigator.pushNamed(
-                      context,
-                      CfdTrading.routeName,
-                    )
-                  },
+                  onTap: () => {GoRouter.of(context).go(CfdTrading.route)},
                   child: const ServiceCard(Service.cfd),
                 ),
                 const ServiceCard(Service.sportsbet),
@@ -59,13 +51,7 @@ class _DashboardState extends State<Dashboard> {
             endIndent: 30,
           ),
           GestureDetector(
-              onTap: () => {
-                    Navigator.pushNamed(
-                      context,
-                      Seed.routeName,
-                      arguments: walletInfo,
-                    )
-                  },
+              onTap: () => {GoRouter.of(context).go(Seed.route)},
               child: Card(
                 shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
                 child: Column(

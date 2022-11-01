@@ -4,11 +4,11 @@ import 'mocks.dart';
 class Seed extends StatelessWidget {
   const Seed({Key? key}) : super(key: key);
 
-  static const routeName = '/seed';
+  static const route = '/' + subRouteName;
+  static const subRouteName = 'seed';
 
   @override
   Widget build(BuildContext context) {
-    final walletInfo = ModalRoute.of(context)!.settings.arguments as WalletInfo;
     return Scaffold(
         appBar: AppBar(
           title: const Text('Backup Seed'),
@@ -23,7 +23,7 @@ class Seed extends StatelessWidget {
                         children: [
                           const Text("Seed phrase",
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text(walletInfo.phrase.toString())
+                          Text(phrase.toString())
                         ],
                       )))),
         ]));

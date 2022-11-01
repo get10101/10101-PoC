@@ -4,6 +4,7 @@ import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/balance.model.dart';
 import 'package:ten_ten_one/seed.dart';
+import 'package:go_router/go_router.dart';
 
 import 'bridge_generated/bridge_definitions.dart';
 
@@ -32,16 +33,36 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'TenTenOne',
       theme: ThemeData(primarySwatch: Colors.teal),
-      routes: {
-        Seed.routeName: (context) => const Seed(),
-        CfdTrading.routeName: (context) => const CfdTrading(),
-      },
-      home: const Dashboard(),
+      routerConfig: _router,
     );
   }
+
+  final GoRouter _router = GoRouter(
+    routes: <GoRoute>[
+      GoRoute(
+          path: '/',
+          builder: (BuildContext context, GoRouterState state) {
+            return const Dashboard();
+          },
+          routes: [
+            GoRoute(
+              path: Seed.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const Seed();
+              },
+            ),
+          ]),
+      GoRoute(
+        path: CfdTrading.route,
+        builder: (BuildContext context, GoRouterState state) {
+          return const CfdTrading();
+        },
+      ),
+    ],
+  );
 
   Future<void> _callInitWallet() async {
     await api.initWallet(network: Network.Testnet);
