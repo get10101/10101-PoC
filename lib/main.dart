@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/balance.model.dart';
+import 'package:ten_ten_one/models/seed_backup.model.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,9 +14,12 @@ import 'dart:async';
 import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 BalanceModel balanceModel = BalanceModel();
+SeedBackupModel seedBackupModel = SeedBackupModel();
 
-void main() =>
-    runApp(ChangeNotifierProvider(create: (context) => balanceModel, child: const TenTenOneApp()));
+void main() => runApp(MultiProvider(providers: [
+      ChangeNotifierProvider(create: (context) => balanceModel),
+      ChangeNotifierProvider(create: (context) => seedBackupModel),
+    ], child: const TenTenOneApp()));
 
 class TenTenOneApp extends StatefulWidget {
   const TenTenOneApp({Key? key}) : super(key: key);
