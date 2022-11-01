@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Divider;
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
@@ -7,6 +7,7 @@ import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/models/service.model.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:ten_ten_one/service_card.dart';
+import 'package:ten_ten_one/utilities/divider.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -24,7 +25,7 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     final seedBackupModel = context.watch<SeedBackupModel>();
-    List<Widget> widgets = [const Balance()];
+    List<Widget> widgets = [const Balance(), const Divider()];
 
     widgets.add(SizedBox(
       height: 110.0,
@@ -40,13 +41,7 @@ class _DashboardState extends State<Dashboard> {
         ],
       ),
     ));
-    widgets.add(const Divider(
-      height: 30,
-      thickness: 7,
-      color: Colors.grey,
-      indent: 30,
-      endIndent: 30,
-    ));
+    widgets.add(const Divider());
 
     if (!seedBackupModel.backup) {
       widgets.add(const BackupSeedCard());
