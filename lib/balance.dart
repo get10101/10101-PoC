@@ -13,7 +13,7 @@ class Balance extends StatelessWidget {
     return Consumer<BalanceModel>(
       builder: (context, balance, child) {
         return Container(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
           child: Column(
             children: [
               Center(
@@ -31,7 +31,7 @@ class Balance extends StatelessWidget {
               const Divider(
                 height: 30,
                 thickness: 7,
-                color: Colors.black,
+                color: Colors.grey,
                 indent: 30,
                 endIndent: 30,
               )
