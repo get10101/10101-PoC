@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Size;
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/balance.model.dart';
 import 'package:ten_ten_one/seed.dart';
@@ -36,6 +37,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
       theme: ThemeData(primarySwatch: Colors.teal),
       routes: {
         Seed.routeName: (context) => const Seed(),
+        CfdTrading.routeName: (context) => const CfdTrading(),
       },
       home: const Dashboard(),
     );
