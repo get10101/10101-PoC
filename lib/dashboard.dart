@@ -25,9 +25,31 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     final seedBackupModel = context.watch<SeedBackupModel>();
-    List<Widget> widgets = [const Balance(), const Divider()];
+    List<Widget> widgets = [
+      const Balance(),
+      const Divider(),
+      const ServiceNavigation(),
+      const Divider()
+    ];
 
-    widgets.add(SizedBox(
+    if (!seedBackupModel.backup) {
+      widgets.add(const BackupSeedCard());
+    }
+
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Dashboard'),
+        ),
+        body: ListView(children: widgets));
+  }
+}
+
+class ServiceNavigation extends StatelessWidget {
+  const ServiceNavigation({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
       height: 110.0,
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -40,18 +62,7 @@ class _DashboardState extends State<Dashboard> {
           const ServiceCard(Service.sportsbet),
         ],
       ),
-    ));
-    widgets.add(const Divider());
-
-    if (!seedBackupModel.backup) {
-      widgets.add(const BackupSeedCard());
-    }
-
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Dashboard'),
-        ),
-        body: ListView(children: widgets));
+    );
   }
 }
 
