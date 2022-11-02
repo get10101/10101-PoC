@@ -55,7 +55,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'TenTenOne',
-      theme: ThemeData(primarySwatch: Colors.teal),
+      theme: ThemeData(primarySwatch: Colors.orange),
       routerConfig: _router,
     );
   }
