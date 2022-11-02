@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Divider;
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/models/seed_backup.model.dart';
 import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/models/service.model.dart';
@@ -38,8 +39,9 @@ class _DashboardState extends State<Dashboard> {
 
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Dashboard'),
+          title: Text(ServiceGroup.wallet.label),
         ),
+        drawer: const Menu(),
         body: ListView(children: widgets));
   }
 }

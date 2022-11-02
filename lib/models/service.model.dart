@@ -1,9 +1,21 @@
 import 'package:flutter/material.dart';
 
-enum ServiceGroup { trade, bets }
+enum ServiceGroup { wallet, trade, bets }
 
 extension ServiceGroupExtension on ServiceGroup {
-  static const labels = {Service.cfd: "Trading", Service.sportsbet: "Bets"};
+  static const labels = {
+    ServiceGroup.wallet: "Wallet",
+    ServiceGroup.trade: "Trading",
+    ServiceGroup.bets: "Bets"
+  };
+  static const icons = {
+    ServiceGroup.wallet: Icons.wallet,
+    ServiceGroup.trade: Icons.query_stats,
+    ServiceGroup.bets: Icons.casino
+  };
+
+  String get label => labels[this]!;
+  IconData get icon => icons[this]!;
 }
 
 enum Service { cfd, sportsbet }

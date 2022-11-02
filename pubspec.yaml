@@ -40,6 +40,7 @@ dependencies:
   provider: ^6.0.0
   intl: ^0.17.0
   go_router: ^5.1.1
+  flutter_svg: ^1.1.6
   f_logs: ^2.0.1
 
 dev_dependencies:
@@ -98,3 +99,5 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  assets:
+    - assets/10101_logo.svg
