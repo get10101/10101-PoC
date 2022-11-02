@@ -1,3 +1,4 @@
+use crate::logger::log;
 use crate::seed::Bip39Seed;
 use anyhow::anyhow;
 use anyhow::bail;
@@ -67,7 +68,7 @@ impl Wallet {
         self.wallet.sync(&self.blockchain, SyncOptions::default())?;
 
         let balance = self.wallet.get_balance()?;
-        println!("Wallet balance: {} SAT", &balance);
+        log(&format!("Wallet balance: {} SAT", &balance));
         Ok(balance)
     }
 }
@@ -80,7 +81,7 @@ pub fn init_wallet(network: Network) -> Result<()> {
 }
 
 pub fn get_balance() -> Result<bdk::Balance> {
-    println!("Wallet sync called");
+    log("Wallet sync called");
     WALLET
         .try_get()
         .context("Wallet uninitialised")?
