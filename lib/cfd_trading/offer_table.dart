@@ -16,59 +16,30 @@ class OfferTable extends StatelessWidget {
 
     return Table(
       children: [
-        // Table Row do not yet support a height attribute, hence we need to use the SizedBox
-        // workaround. see also https://github.com/flutter/flutter/issues/36936
-        TableRow(children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-            Text('Funding Rate', style: TextStyle(fontSize: 20)),
-            SizedBox(height: 15, width: 0)
-          ]),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Wrap(
-              children: [
-                const Icon(Icons.currency_bitcoin),
-                Text('$fundingRate', style: const TextStyle(fontSize: 20)),
-              ],
-            )
-          ]),
-        ]),
-        TableRow(children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-            Text('Margin', style: TextStyle(fontSize: 20)),
-            SizedBox(height: 15, width: 0)
-          ]),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Wrap(
-              children: [
-                const Icon(Icons.currency_bitcoin),
-                Text('$margin', style: const TextStyle(fontSize: 20)),
-              ],
-            )
-          ]),
-        ]),
-        TableRow(children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-            Text('Expiry', style: TextStyle(fontSize: 20)),
-            SizedBox(height: 15, width: 0)
-          ]),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(DateFormat('dd.MM.yy-kk:mm').format(expiry), style: const TextStyle(fontSize: 20))
-          ]),
-        ]),
-        TableRow(children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-            Text('Liquidation Price', style: TextStyle(fontSize: 20)),
-            SizedBox(height: 15, width: 0)
-          ]),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Wrap(
-              children: [
-                Text('\$$fmtLiquidationPrice', style: const TextStyle(fontSize: 20)),
-              ],
-            )
-          ]),
-        ]),
+        buildRow('Funding Rate', '$fundingRate', true),
+        buildRow('Margin', '$margin', true),
+        buildRow('Expiry', DateFormat('dd.MM.yy-kk:mm').format(expiry), false),
+        buildRow('Liquidation Price', '\$$fmtLiquidationPrice', false)
       ],
     );
+  }
+
+  TableRow buildRow(String label, String value, bool bitcoin) {
+    return TableRow(children: [
+      // Table Row do not yet support a height attribute, hence we need to use the SizedBox
+      // workaround. see also https://github.com/flutter/flutter/issues/36936
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: const TextStyle(fontSize: 20)),
+        const SizedBox(height: 15, width: 0)
+      ]),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Wrap(
+          children: [
+            bitcoin ? const Icon(Icons.currency_bitcoin) : const SizedBox(),
+            Text(value, style: const TextStyle(fontSize: 20)),
+          ],
+        )
+      ]),
+    ]);
   }
 }

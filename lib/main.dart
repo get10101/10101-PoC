@@ -4,6 +4,7 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart' hide Size;
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/balance.model.dart';
@@ -76,11 +77,18 @@ class _TenTenOneState extends State<TenTenOneApp> {
             ),
           ]),
       GoRoute(
-        path: CfdTrading.route,
-        builder: (BuildContext context, GoRouterState state) {
-          return const CfdTrading();
-        },
-      ),
+          path: CfdTrading.route,
+          builder: (BuildContext context, GoRouterState state) {
+            return const CfdTrading();
+          },
+          routes: [
+            GoRoute(
+              path: CfdOrderConfirmation.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const CfdOrderConfirmation();
+              },
+            ),
+          ]),
     ],
   );
 
