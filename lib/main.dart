@@ -1,4 +1,6 @@
+import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart' hide Size;
+import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
@@ -16,10 +18,16 @@ import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 BalanceModel balanceModel = BalanceModel();
 SeedBackupModel seedBackupModel = SeedBackupModel();
 
-void main() => runApp(MultiProvider(providers: [
-      ChangeNotifierProvider(create: (context) => balanceModel),
-      ChangeNotifierProvider(create: (context) => seedBackupModel),
-    ], child: const TenTenOneApp()));
+void main() {
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+  };
+
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(create: (context) => balanceModel),
+    ChangeNotifierProvider(create: (context) => seedBackupModel),
+  ], child: const TenTenOneApp()));
+}
 
 class TenTenOneApp extends StatefulWidget {
   const TenTenOneApp({Key? key}) : super(key: key);
@@ -33,7 +41,14 @@ class _TenTenOneState extends State<TenTenOneApp> {
   void initState() {
     super.initState();
     setupRustLogging();
-    _callInitWallet();
+    try {
+      _callInitWallet();
+      FLog.info(text: "Successfully initialised wallet");
+    } on FfiException catch (error) {
+      FLog.error(text: "Wallet failed to initialise: Error: " + error.message, exception: error);
+    } catch (error) {
+      FLog.error(text: "Wallet failed to initialise: Unknown error");
+    }
   }
 
   @override
