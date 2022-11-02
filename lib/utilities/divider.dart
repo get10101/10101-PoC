@@ -6,7 +6,7 @@ class Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: const EdgeInsets.fromLTRB(15, 15, 15, 15),
+        margin: const EdgeInsets.only(top: 10, bottom: 10),
         child: const Card(elevation: 0, color: Colors.grey, child: SizedBox(height: 5)));
   }
 }

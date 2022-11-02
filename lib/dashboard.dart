@@ -42,7 +42,7 @@ class _DashboardState extends State<Dashboard> {
           title: Text(ServiceGroup.wallet.label),
         ),
         drawer: const Menu(),
-        body: ListView(children: widgets));
+        body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets));
   }
 }
 
@@ -55,7 +55,6 @@ class ServiceNavigation extends StatelessWidget {
       height: 110.0,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 15, right: 15),
         children: [
           GestureDetector(
             onTap: () => {GoRouter.of(context).go(CfdTrading.route)},
@@ -76,7 +75,6 @@ class BackupSeedCard extends StatelessWidget {
     return GestureDetector(
         onTap: () => {GoRouter.of(context).go(Seed.route)},
         child: Card(
-          margin: const EdgeInsets.only(left: 15, right: 15),
           shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
