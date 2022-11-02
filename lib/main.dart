@@ -32,6 +32,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
   @override
   void initState() {
     super.initState();
+    setupRustLogging();
     _callInitWallet();
   }
 
@@ -80,6 +81,12 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Future<void> _callSync() async {
     final balance = await api.getBalance();
     if (mounted) setState(() => balanceModel.update(balance.confirmed));
+  }
+
+  Future<void> setupRustLogging() async {
+    api.initLogging().listen((event) {
+      debugPrint('log from rust: ${event.msg}');
+    });
   }
 }
 
