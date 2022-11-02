@@ -9,7 +9,7 @@ class Balance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var formatter = NumberFormat.decimalPattern('en');
+    final formatter = NumberFormat.decimalPattern('en');
     return Consumer<BalanceModel>(
       builder: (context, balance, child) {
         return Container(
