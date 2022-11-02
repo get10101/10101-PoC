@@ -11,6 +11,7 @@ import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/cfd_trading_state.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/receive.dart';
+import 'package:ten_ten_one/receive.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/send.dart';

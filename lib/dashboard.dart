@@ -7,6 +7,7 @@ import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/receive.dart';
+import 'package:ten_ten_one/receive.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:ten_ten_one/send.dart';
 import 'package:ten_ten_one/service_card.dart';
