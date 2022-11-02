@@ -10,8 +10,10 @@ import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/cfd_trading_state.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
+import 'package:ten_ten_one/receive.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ten_ten_one/send.dart';
 
 import 'bridge_generated/bridge_definitions.dart';
 
@@ -75,6 +77,18 @@ class _TenTenOneState extends State<TenTenOneApp> {
               path: Seed.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
                 return const Seed();
+              },
+            ),
+            GoRoute(
+              path: Send.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const Send();
+              },
+            ),
+            GoRoute(
+              path: Receive.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const Receive();
               },
             ),
           ]),
