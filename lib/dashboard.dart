@@ -2,9 +2,9 @@ import 'package:flutter/material.dart' hide Divider;
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/models/seed_backup.model.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_offer.dart';
 import 'package:ten_ten_one/models/service.model.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:ten_ten_one/service_card.dart';
@@ -57,7 +57,7 @@ class ServiceNavigation extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         children: [
           GestureDetector(
-            onTap: () => {GoRouter.of(context).go(CfdOffer.route)},
+            onTap: () => {GoRouter.of(context).go(CfdTrading.route)},
             child: const ServiceCard(Service.cfd),
           ),
           const ServiceCard(Service.sportsbet),
