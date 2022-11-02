@@ -12,6 +12,7 @@ use bdk::KeychainKind;
 use bdk::SyncOptions;
 use state::Storage;
 use std::sync::Mutex;
+use std::sync::MutexGuard;
 
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
@@ -78,6 +79,14 @@ impl Wallet {
     }
 }
 
+fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
+    WALLET
+        .try_get()
+        .context("Wallet uninitialised")?
+        .lock()
+        .map_err(|_| anyhow!("cannot acquire wallet lock"))
+}
+
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
 pub fn init_wallet(network: Network) -> Result<()> {
@@ -87,22 +96,12 @@ pub fn init_wallet(network: Network) -> Result<()> {
 
 pub fn get_balance() -> Result<bdk::Balance> {
     log("Wallet sync called");
-    WALLET
-        .try_get()
-        .context("Wallet uninitialised")?
-        .lock()
-        .map_err(|_| anyhow!("cannot acquire wallet lock"))?
-        .sync()
+    get_wallet()?.sync()
 }
 
 pub fn get_seed_phrase() -> Result<Vec<String>> {
-    let wallet = WALLET
-        .try_get()
-        .context("Wallet uninitialised")?
-        .lock()
-        .map_err(|_| anyhow!("cannot acquire wallet lock"))?;
-
-    Ok(wallet.seed.get_seed_phrase())
+    let seed_phrase = get_wallet()?.seed.get_seed_phrase();
+    Ok(seed_phrase)
 }
 
 #[cfg(test)]
