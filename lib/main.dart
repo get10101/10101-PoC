@@ -100,7 +100,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   Future<void> setupRustLogging() async {
     api.initLogging().listen((event) {
-      debugPrint('log from rust: ${event.msg}');
+      FLog.logThis(text: 'log from rust: ${event.msg}', type: LogLevel.DEBUG);
     });
   }
 }
