@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/menu.dart';
 
 class CfdTrading extends StatefulWidget {
@@ -69,17 +67,7 @@ class _CfdTradingState extends State<CfdTrading> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.orange,
         onTap: _onItemTapped,
-      ),
-      floatingActionButton: Visibility(
-        visible: _selectedIndex == 0,
-        child: FloatingActionButton(
-          onPressed: () {
-            GoRouter.of(context).go(CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName);
-          },
-          backgroundColor: Colors.orange,
-          child: const Icon(Icons.shopping_cart_checkout),
-        ),
-      ),
+      )
     );
   }
 }

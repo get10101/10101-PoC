@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart' hide Divider;
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
@@ -30,28 +32,37 @@ class CfdOffer extends StatelessWidget {
     final fmtAsk = formatter.format(ask);
     final fmtIndex = formatter.format(index);
 
-    return ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
-      const Balance(),
-      const Divider(),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Text("bid $fmtBid"),
-          Text("ask $fmtAsk"),
-          Text("index $fmtIndex"),
-        ],
-      ),
-      const SizedBox(height: 15),
-      TtoTabs(
-          tabs: const [
-            Text('Buy / Long', style: TextStyle(fontSize: 20)),
-            Text('Sell / Short', style: TextStyle(fontSize: 20)),
+    return Scaffold(
+      body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
+        const Balance(),
+        const Divider(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Text("bid $fmtBid"),
+            Text("ask $fmtAsk"),
+            Text("index $fmtIndex"),
           ],
-          content: [Position.long, Position.short]
-              .map((position) => CfdPosition(position: position))
-              .toList(),
-          padding: const EdgeInsets.only(bottom: 15, top: 15)),
-    ]);
+        ),
+        const SizedBox(height: 15),
+        TtoTabs(
+            tabs: const [
+              Text('Buy / Long', style: TextStyle(fontSize: 20)),
+              Text('Sell / Short', style: TextStyle(fontSize: 20)),
+            ],
+            content: [Position.long, Position.short]
+                .map((position) => CfdPosition(position: position))
+                .toList(),
+            padding: const EdgeInsets.only(bottom: 15, top: 15)),
+      ]),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          GoRouter.of(context).go(CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName);
+        },
+        backgroundColor: Colors.orange,
+        child: const Icon(Icons.shopping_cart_checkout),
+      ),
+    );
   }
 }
 
