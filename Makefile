@@ -14,7 +14,7 @@ help: Makefile
 lint: clippy lint-flutter
 
 ## all: Re-generate bindings, compile Rust lib, and run the Flutter project
-all:rust gen native run
+all: FORCE gen native run
 
 ## deps: Install missing dependencies.
 deps: deps-gen deps-android deps-ios
@@ -50,15 +50,15 @@ clean:
 	cd rust && cargo clean
 
 ## native: Build Rust library for native target (to run on your desktop)
-native:rust
+native: FORCE
 	cd rust && cargo build
 
 # Build Rust library for Android native targets
-android-native:rust
+android-native: FORCE
 	cd rust && cargo ndk -o ../android/app/src/main/jniLibs build
 
 # NOTE Android simulator needs target to be x86_64.
-android-sim:rust
+android-sim: FORCE
 	cd rust && cargo ndk -t x86_64 -o ../android/app/src/main/jniLibs build
 
 ## android: Build Rust library for Android
@@ -66,12 +66,12 @@ android-sim:rust
 android: android-native
 
 ## ios: Build Rust library for iOS
-ios:rust
+ios: FORCE
 	cd rust && cargo lipo
 	cp rust/target/universal/debug/libten_ten_one.a ios/Runner
 
 ## gen: Run codegen (needs to run before `flutter run`)
-gen:rust
+gen: FORCE
 	flutter pub get
 	flutter_rust_bridge_codegen \
 		--rust-input rust/src/api.rs \
@@ -87,8 +87,10 @@ gen:rust
 run:
 	flutter run
 
-clippy:rust
+clippy: FORCE
 	cd rust && cargo clippy --all-targets -- -D warnings
 
 lint-flutter:
 	flutter analyze --fatal-infos .
+
+FORCE: ;
