@@ -2,10 +2,10 @@ import 'package:flutter/material.dart' hide Divider;
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/models/seed_backup.model.dart';
-import 'package:ten_ten_one/cfd_trading.dart';
-import 'package:ten_ten_one/models/service.model.dart';
+import 'package:ten_ten_one/models/seed_backup_model.dart';
+import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:ten_ten_one/service_card.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
@@ -42,7 +42,7 @@ class _DashboardState extends State<Dashboard> {
           title: Text(ServiceGroup.wallet.label),
         ),
         drawer: const Menu(),
-        body: ListView(children: widgets));
+        body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets));
   }
 }
 
@@ -55,7 +55,6 @@ class ServiceNavigation extends StatelessWidget {
       height: 110.0,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 15, right: 15),
         children: [
           GestureDetector(
             onTap: () => {GoRouter.of(context).go(CfdTrading.route)},
@@ -76,7 +75,6 @@ class BackupSeedCard extends StatelessWidget {
     return GestureDetector(
         onTap: () => {GoRouter.of(context).go(Seed.route)},
         child: Card(
-          margin: const EdgeInsets.only(left: 15, right: 15),
           shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
           child: Column(
             mainAxisSize: MainAxisSize.min,

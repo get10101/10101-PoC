@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/dashboard.dart';
-import 'package:ten_ten_one/models/balance.model.dart';
-import 'package:ten_ten_one/models/seed_backup.model.dart';
+import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/seed.dart';
 
 final GoRouter _router = GoRouter(
