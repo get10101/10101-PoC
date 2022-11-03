@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/cfd_trading/offer_table.dart';
+import 'package:intl/intl.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
+import 'package:ten_ten_one/utilities/tto_table.dart';
 
 enum Position { short, long }
 
@@ -19,6 +20,15 @@ class _PositionTabState extends State<PositionTab> {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = NumberFormat.decimalPattern('en');
+
+    // mock data
+    const fundingRate = 0.000002;
+    const margin = 0.0025;
+    final expiry = DateTime.now();
+    const liquidationPrice = 13104;
+    final fmtLiquidationPrice = formatter.format(liquidationPrice);
+
     return ListView(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Dropdown(
@@ -31,7 +41,13 @@ class _PositionTabState extends State<PositionTab> {
       Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
         Container(
             margin: const EdgeInsets.only(top: 25),
-            child: OfferTable(0.000002, 0.0025, DateTime.now(), 13104)),
+            child: TtoTable([
+              const TtoRow(label: 'Funding Rate', value: '$fundingRate', icon: Icons.currency_bitcoin),
+              const TtoRow(label: 'Margin', value: '$margin', icon: Icons.currency_bitcoin),
+              TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(expiry)),
+              TtoRow(label: 'Liquidation Price', value: '\$ $fmtLiquidationPrice'),
+            ]),
+        )
       ])
     ]);
   }

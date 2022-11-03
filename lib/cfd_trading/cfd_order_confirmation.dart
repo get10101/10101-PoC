@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ten_ten_one/utilities/tto_table.dart';
 
 class CfdOrderConfirmation extends StatelessWidget {
   static const subRouteName = 'cfd-order-confirmation';
@@ -10,14 +11,20 @@ class CfdOrderConfirmation extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
+    // mock data
     const margin = 0.0025;
     const openPrice = 19656;
-    final fmtOpenPrice = formatter.format(openPrice);
-
+    const unrealizedPL = -0.00005566;
     const liquidationPrice = 13104;
-    final fmtLiquidationPrice = formatter.format(liquidationPrice);
-
     final expiry = DateTime.now();
+    const contracts = 100;
+    const double estimatedFees = -0.0000000004;
+
+    final fmtOpenPrice = formatter.format(openPrice);
+    final fmtLiquidationPrice = formatter.format(liquidationPrice);
+    final fmtEstimatedFees = estimatedFees.toStringAsFixed(10);
+    final fmtMargin = margin.toStringAsFixed(10);
+    final fmtUnrealizedPL = unrealizedPL.toStringAsFixed(10);
 
     return Scaffold(
         appBar: AppBar(title: const Text('CFD Order Confirmation')),
@@ -26,18 +33,16 @@ class CfdOrderConfirmation extends StatelessWidget {
           child: Column(children: [
             const Center(child: Text('BTCUSD', style: TextStyle(fontSize: 24))),
             const SizedBox(height: 25),
-            Table(
-              children: [
-                buildRow('Position', 'Long', false),
-                buildRow('Open Price', '\$$fmtOpenPrice', false),
-                buildRow('Unrealized P/L', '-0.00005566', true),
-                buildRow('Margin', '$margin', true),
-                buildRow('Expiry', DateFormat('dd.MM.yy-kk:mm').format(expiry), false),
-                buildRow('Liquidation Price', '\$$fmtLiquidationPrice', false),
-                buildRow('Contracts', '100', false),
-                buildRow('Estimated fees', '-0.0000000040', true)
-              ],
-            ),
+            TtoTable([
+              const TtoRow(label: 'Position', value: 'Long'),
+              TtoRow(label: 'Open Price', value: '\$ $fmtOpenPrice'),
+              TtoRow(label: 'Unrealized P/L', value: fmtUnrealizedPL, icon: Icons.currency_bitcoin),
+              TtoRow(label: 'Margin', value: fmtMargin, icon: Icons.currency_bitcoin),
+              TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(expiry)),
+              TtoRow(label: 'Liquidation Price', value: '\$ $fmtLiquidationPrice'),
+              const TtoRow(label: 'Contracts', value: '$contracts'),
+              TtoRow(label: 'Estimated fees', value: fmtEstimatedFees, icon: Icons.currency_bitcoin)
+            ]),
             const SizedBox(height: 20),
             const Text(
                 'This will open a position and lock up $margin BTC in a channel. Would you like to proceed',
@@ -58,24 +63,5 @@ class CfdOrderConfirmation extends StatelessWidget {
             )
           ]),
         ));
-  }
-
-  TableRow buildRow(String label, String value, bool bitcoin) {
-    return TableRow(children: [
-      // Table Row do not yet support a height attribute, hence we need to use the SizedBox
-      // workaround. see also https://github.com/flutter/flutter/issues/36936
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 20)),
-        const SizedBox(height: 15, width: 0)
-      ]),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Wrap(
-          children: [
-            bitcoin ? const Icon(Icons.currency_bitcoin) : const SizedBox(),
-            Text(value, style: const TextStyle(fontSize: 20)),
-          ],
-        )
-      ]),
-    ]);
   }
 }
