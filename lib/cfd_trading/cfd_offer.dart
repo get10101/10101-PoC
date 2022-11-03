@@ -25,17 +25,10 @@ class CfdOffer extends StatelessWidget {
     const bid = 19000;
     const ask = 19200;
     const index = 19100;
-    const fundingRate = 0.000002;
-    const margin = 0.0025;
-    final expiry = DateTime.now();
-    const liquidationPrice = 13104;
 
     final fmtBid = formatter.format(bid);
     final fmtAsk = formatter.format(ask);
     final fmtIndex = formatter.format(index);
-    final fmtLiquidationPrice = formatter.format(liquidationPrice);
-    final fmtFundingRate = fundingRate.toStringAsFixed(10);
-    final fmtMargin = margin.toStringAsFixed(10);
 
     return ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
       const Balance(),
@@ -55,33 +48,60 @@ class CfdOffer extends StatelessWidget {
             Text('Sell / Short', style: TextStyle(fontSize: 20)),
           ],
           content: [Position.long, Position.short]
-              .map((position) => ListView(children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Dropdown(
-                          values: List<int>.generate(10, (i) => (i + 1) * 100)
-                              .map((quantity) => quantity.toString())
-                              .toList()),
-                      const Dropdown(values: tradingPairs),
-                      const Dropdown(values: leverages),
-                    ]),
-                    Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
-                      Container(
-                        margin: const EdgeInsets.only(top: 25),
-                        child: TtoTable([
-                          TtoRow(
-                              label: 'Funding Rate',
-                              value: fmtFundingRate,
-                              icon: Icons.currency_bitcoin),
-                          TtoRow(label: 'Margin', value: fmtMargin, icon: Icons.currency_bitcoin),
-                          TtoRow(
-                              label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(expiry)),
-                          TtoRow(label: 'Liquidation Price', value: '\$ $fmtLiquidationPrice'),
-                        ]),
-                      )
-                    ])
-                  ]))
+              .map((position) => CfdPosition(position: position))
               .toList(),
           padding: const EdgeInsets.only(bottom: 15, top: 15)),
+    ]);
+  }
+}
+
+class CfdPosition extends StatefulWidget {
+  final Position position;
+
+  const CfdPosition({super.key, required this.position});
+
+  @override
+  State<CfdPosition> createState() => _CfdPositionState();
+}
+
+class _CfdPositionState extends State<CfdPosition> with AutomaticKeepAliveClientMixin<CfdPosition> {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final formatter = NumberFormat.decimalPattern('en');
+
+    const fundingRate = 0.000002;
+    const margin = 0.0025;
+    final expiry = DateTime.now();
+    const liquidationPrice = 13104;
+
+    final fmtLiquidationPrice = formatter.format(liquidationPrice);
+    final fmtFundingRate = fundingRate.toStringAsFixed(10);
+    final fmtMargin = margin.toStringAsFixed(10);
+
+    return ListView(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Dropdown(
+            values: List<int>.generate(10, (i) => (i + 1) * 100)
+                .map((quantity) => quantity.toString())
+                .toList()),
+        const Dropdown(values: CfdOffer.tradingPairs),
+        const Dropdown(values: CfdOffer.leverages),
+      ]),
+      Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
+        Container(
+          margin: const EdgeInsets.only(top: 25),
+          child: TtoTable([
+            TtoRow(label: 'Funding Rate', value: fmtFundingRate, icon: Icons.currency_bitcoin),
+            TtoRow(label: 'Margin', value: fmtMargin, icon: Icons.currency_bitcoin),
+            TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(expiry)),
+            TtoRow(label: 'Liquidation Price', value: '\$ $fmtLiquidationPrice'),
+          ]),
+        )
+      ])
     ]);
   }
 }
