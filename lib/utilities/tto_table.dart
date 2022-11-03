@@ -5,11 +5,10 @@ class TtoRow {
   final String value;
   final IconData? icon;
 
-  const TtoRow({ required this.label, required this.value, this.icon});
+  const TtoRow({required this.label, required this.value, this.icon});
 }
 
 class TtoTable extends StatelessWidget {
-
   final List<TtoRow> rows;
 
   const TtoTable(this.rows, {super.key});

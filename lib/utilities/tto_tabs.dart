@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-class PositionTabs extends StatelessWidget {
+class TtoTabs extends StatelessWidget {
   final List<Widget> tabs;
   final List<Widget> content;
 
   final EdgeInsetsGeometry padding;
 
-  const PositionTabs({super.key, required this.padding, required this.tabs, required this.content});
+  const TtoTabs({super.key, required this.padding, required this.tabs, required this.content});
 
   @override
   Widget build(BuildContext context) {
