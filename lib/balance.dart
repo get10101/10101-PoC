@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import 'models/balance.model.dart';
+import 'models/balance_model.dart';
 
 class Balance extends StatelessWidget {
   const Balance({Key? key}) : super(key: key);
