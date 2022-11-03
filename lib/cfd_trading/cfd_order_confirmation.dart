@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/models/cfd_trading_state.dart';
+import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 
 class CfdOrderConfirmation extends StatelessWidget {
@@ -11,42 +16,39 @@ class CfdOrderConfirmation extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    // mock data
-    const margin = 0.0025;
-    const openPrice = 19656;
-    const unrealizedPL = -0.00005566;
-    const liquidationPrice = 13104;
-    final expiry = DateTime.now();
-    const contracts = 100;
-    const double estimatedFees = -0.0000000004;
+    final cfdTradingState = context.read<CfdTradingState>();
+    final order = cfdTradingState.getDraftOrder();
 
-    final fmtOpenPrice = formatter.format(openPrice);
-    final fmtLiquidationPrice = formatter.format(liquidationPrice);
-    final fmtEstimatedFees = estimatedFees.toStringAsFixed(10);
-    final fmtMargin = margin.toStringAsFixed(10);
-    final fmtUnrealizedPL = unrealizedPL.toStringAsFixed(10);
+    final openPrice = formatter.format(order.openPrice);
+    final liquidationPrice = formatter.format(order.liquidationPrice);
+    final estimatedFees = order.estimatedFees.toStringAsFixed(10);
+    final margin = order.margin.toStringAsFixed(10);
+    final unrealizedPL = order.unrealizedPL.toStringAsFixed(10);
+    final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
+    final quantity = order.quantity.toString();
+    final tradingPair = order.tradingPair.toString().split('.')[1].toUpperCase();
 
     return Scaffold(
         appBar: AppBar(title: const Text('CFD Order Confirmation')),
         body: Container(
           padding: const EdgeInsets.only(top: 15, right: 30, left: 30),
           child: Column(children: [
-            const Center(child: Text('BTCUSD', style: TextStyle(fontSize: 24))),
+            Center(child: Text(tradingPair, style: const TextStyle(fontSize: 24))),
             const SizedBox(height: 25),
             TtoTable([
-              const TtoRow(label: 'Position', value: 'Long'),
-              TtoRow(label: 'Open Price', value: '\$ $fmtOpenPrice'),
-              TtoRow(label: 'Unrealized P/L', value: fmtUnrealizedPL, icon: Icons.currency_bitcoin),
-              TtoRow(label: 'Margin', value: fmtMargin, icon: Icons.currency_bitcoin),
-              TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(expiry)),
-              TtoRow(label: 'Liquidation Price', value: '\$ $fmtLiquidationPrice'),
-              const TtoRow(label: 'Contracts', value: '$contracts'),
-              TtoRow(label: 'Estimated fees', value: fmtEstimatedFees, icon: Icons.currency_bitcoin)
+              TtoRow(label: 'Position', value: order.position == Position.long ? 'Long' : 'Short'),
+              TtoRow(label: 'Open Price', value: '\$ $openPrice'),
+              TtoRow(label: 'Unrealized P/L', value: unrealizedPL, icon: Icons.currency_bitcoin),
+              TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
+              TtoRow(label: 'Expiry', value: expiry),
+              TtoRow(label: 'Liquidation Price', value: '\$ $liquidationPrice'),
+              TtoRow(label: 'Quantity', value: quantity),
+              TtoRow(label: 'Estimated fees', value: estimatedFees, icon: Icons.currency_bitcoin)
             ]),
             const SizedBox(height: 20),
-            const Text(
+            Text(
                 'This will open a position and lock up $margin BTC in a channel. Would you like to proceed',
-                style: TextStyle(fontSize: 20)),
+                style: const TextStyle(fontSize: 20)),
             Expanded(
               child: Container(
                 margin: const EdgeInsets.fromLTRB(0, 0, 20, 30),
@@ -55,7 +57,15 @@ class CfdOrderConfirmation extends StatelessWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children: [ElevatedButton(onPressed: () {}, child: const Text('Confirm'))],
+                      children: [
+                        ElevatedButton(
+                            onPressed: () {
+                              // todo send order to maker.
+                              cfdTradingState.finishOrder();
+                              context.go(CfdTrading.route);
+                            },
+                            child: const Text('Confirm'))
+                      ],
                     ),
                   ],
                 ),

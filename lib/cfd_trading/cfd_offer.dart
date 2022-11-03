@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/models/cfd_trading_state.dart';
+import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:ten_ten_one/utilities/tto_tabs.dart';
 
-enum Position {
-  long,
-  short,
-}
-
 class CfdOffer extends StatelessWidget {
-  static const tradingPairs = ['BTCUSD', 'ETHUSD'];
-  static const leverages = ['x1', 'x2', 'x3'];
+  static const leverages = [1, 2, 3];
 
   const CfdOffer({Key? key}) : super(key: key);
 
@@ -75,44 +73,79 @@ class CfdPosition extends StatefulWidget {
   State<CfdPosition> createState() => _CfdPositionState();
 }
 
-class _CfdPositionState extends State<CfdPosition> with AutomaticKeepAliveClientMixin<CfdPosition> {
+class _CfdPositionState extends State<CfdPosition> {
+  late Order order;
+
   @override
-  bool get wantKeepAlive => true;
+  void initState() {
+    super.initState();
+    final cfdTradingState = context.read<CfdTradingState>();
+
+    if (!cfdTradingState.isStarted()) {
+      // mock data
+      order = Order(
+          fundingRate: 0.000002,
+          margin: 0.0025,
+          expiry: DateTime.now(),
+          liquidationPrice: 13104,
+          openPrice: 19100,
+          unrealizedPL: -0.00005566,
+          quantity: 100,
+          estimatedFees: -0.000000004);
+      cfdTradingState.startOrder(order);
+    }
+    order = cfdTradingState.getDraftOrder();
+  }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
+    // this widget gets build whenever the tab changes. this event can be used
+    // to update draft order in the cfd trading state.
+    order.position = widget.position;
+
     final formatter = NumberFormat.decimalPattern('en');
 
-    const fundingRate = 0.000002;
-    const margin = 0.0025;
-    final expiry = DateTime.now();
-    const liquidationPrice = 13104;
-
-    final fmtLiquidationPrice = formatter.format(liquidationPrice);
-    final fmtFundingRate = fundingRate.toStringAsFixed(10);
-    final fmtMargin = margin.toStringAsFixed(10);
+    final liquidationPrice = formatter.format(order.liquidationPrice);
+    final fundingRate = order.fundingRate.toStringAsFixed(10);
+    final margin = order.margin.toStringAsFixed(10);
 
     return ListView(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Dropdown(
-            values: List<int>.generate(10, (i) => (i + 1) * 100)
-                .map((quantity) => quantity.toString())
-                .toList()),
-        const Dropdown(values: CfdOffer.tradingPairs),
-        const Dropdown(values: CfdOffer.leverages),
+          values: List<int>.generate(10, (i) => (i + 1) * 100)
+              .map((quantity) => quantity.toString())
+              .toList(),
+          onChange: (contracts) {
+            order.quantity = int.parse(contracts!);
+          },
+          value: order.quantity.toString(),
+        ),
+        Dropdown(
+            values:
+                TradingPair.values.map((t) => t.toString().split('.')[1].toUpperCase()).toList(),
+            onChange: (tradingPair) {
+              order.tradingPair =
+                  TradingPair.values.firstWhere((e) => e.name == tradingPair!.toLowerCase());
+            },
+            value: order.tradingPair.toString().split('.')[1].toUpperCase()),
+        Dropdown(
+            values: CfdOffer.leverages.map((l) => 'x$l').toList(),
+            onChange: (leverage) {
+              order.leverage = int.parse(leverage!.substring(1));
+            },
+            value: 'x' + order.leverage.toString()),
       ]),
       Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
         Container(
           margin: const EdgeInsets.only(top: 25),
           child: TtoTable([
-            TtoRow(label: 'Funding Rate', value: fmtFundingRate, icon: Icons.currency_bitcoin),
-            TtoRow(label: 'Margin', value: fmtMargin, icon: Icons.currency_bitcoin),
-            TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(expiry)),
-            TtoRow(label: 'Liquidation Price', value: '\$ $fmtLiquidationPrice'),
+            TtoRow(label: 'Funding Rate', value: fundingRate, icon: Icons.currency_bitcoin),
+            TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
+            TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(order.expiry)),
+            TtoRow(label: 'Liquidation Price', value: '\$ $liquidationPrice'),
           ]),
         )
-      ])
+      ]),
     ]);
   }
 }

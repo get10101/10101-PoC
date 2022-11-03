@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer.dart';
 import 'package:ten_ten_one/menu.dart';
+import 'package:ten_ten_one/models/cfd_trading_state.dart';
 
 class CfdTrading extends StatefulWidget {
   static const route = '/cfd-trading';
@@ -12,7 +14,6 @@ class CfdTrading extends StatefulWidget {
 }
 
 class _CfdTradingState extends State<CfdTrading> {
-  int _selectedIndex = 0;
   final List<Widget> _pages = <Widget>[
     const CfdOffer(),
     Center(
@@ -35,39 +36,42 @@ class _CfdTradingState extends State<CfdTrading> {
     ),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    CfdTradingState cfdTradingState = context.watch<CfdTradingState>();
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('CFD Trading'),
-      ),
-      drawer: const Menu(),
-      body: _pages.elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.handshake),
-            label: 'Trade',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.format_list_bulleted_sharp),
-            label: 'My CFDs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.candlestick_chart_sharp),
-            label: 'Market',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.orange,
-        onTap: _onItemTapped,
-      )
-    );
+        appBar: AppBar(
+          title: const Text('CFD Trading'),
+        ),
+        drawer: const Menu(),
+        body: _pages.elementAt(cfdTradingState.selectedIndex),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.handshake),
+              label: 'Trade',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.format_list_bulleted_sharp),
+              label: 'My CFDs',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.candlestick_chart_sharp),
+              label: 'Market',
+            ),
+          ],
+          currentIndex: cfdTradingState.selectedIndex,
+          selectedItemColor: Colors.orange,
+          onTap: (index) {
+            setState(() {
+              // setting the selected index should be sufficient but for some reason
+              // this is not triggering a rebuild even though the cfd trading state
+              // is watched. A manual re-rendering is triggered through the setState
+              // hook.
+              cfdTradingState.selectedIndex = index;
+            });
+          },
+        ));
   }
 }
