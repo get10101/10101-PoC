@@ -7,10 +7,10 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/cfd_trading_state.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
-import 'package:ten_ten_one/receive.dart';
 import 'package:ten_ten_one/receive.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:go_router/go_router.dart';
@@ -120,7 +120,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   Future<void> _callSync() async {
     final balance = await api.getBalance();
-    if (mounted) setState(() => balanceModel.update(balance.confirmed));
+    if (mounted) setState(() => balanceModel.update(Amount(balance.confirmed)));
   }
 
   Future<void> setupRustLogging() async {

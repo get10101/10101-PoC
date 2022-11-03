@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/dashboard.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/seed.dart';
@@ -53,8 +54,8 @@ void main() {
 
       Text balance = find.byKey(const Key('balance')).evaluate().first.widget as Text;
       // balance is empty on start
-      expect(balance.data, '-1');
-      balanceModel.update(1001);
+      expect(balance.data, '0');
+      balanceModel.update(Amount(1001));
       await tester.pumpAndSettle();
 
       balance = find.byKey(const Key('balance')).evaluate().first.widget as Text;
