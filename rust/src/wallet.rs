@@ -12,6 +12,7 @@ use bdk::KeychainKind;
 use bdk::SyncOptions;
 use state::Storage;
 use std::sync::Mutex;
+use std::sync::MutexGuard;
 
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
@@ -28,6 +29,7 @@ pub enum Network {
 pub struct Wallet {
     blockchain: ElectrumBlockchain,
     wallet: bdk::Wallet<MemoryDatabase>,
+    seed: Bip39Seed,
 }
 
 impl From<Network> for bitcoin::Network {
@@ -61,7 +63,11 @@ impl Wallet {
             MemoryDatabase::new(),
         )?;
 
-        Ok(Wallet { blockchain, wallet })
+        Ok(Wallet {
+            blockchain,
+            wallet,
+            seed,
+        })
     }
 
     pub fn sync(&self) -> Result<bdk::Balance> {
@@ -73,6 +79,14 @@ impl Wallet {
     }
 }
 
+fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
+    WALLET
+        .try_get()
+        .context("Wallet uninitialised")?
+        .lock()
+        .map_err(|_| anyhow!("cannot acquire wallet lock"))
+}
+
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
 pub fn init_wallet(network: Network) -> Result<()> {
@@ -82,12 +96,12 @@ pub fn init_wallet(network: Network) -> Result<()> {
 
 pub fn get_balance() -> Result<bdk::Balance> {
     log("Wallet sync called");
-    WALLET
-        .try_get()
-        .context("Wallet uninitialised")?
-        .lock()
-        .map_err(|_| anyhow!("cannot acquire wallet lock"))?
-        .sync()
+    get_wallet()?.sync()
+}
+
+pub fn get_seed_phrase() -> Result<Vec<String>> {
+    let seed_phrase = get_wallet()?.seed.get_seed_phrase();
+    Ok(seed_phrase)
 }
 
 #[cfg(test)]

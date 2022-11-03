@@ -10,7 +10,7 @@ use sha2::Sha256;
 #[derive(Clone)]
 pub struct Bip39Seed {
     pub seed: [u8; 64],
-    pub phrase: Vec<String>,
+    pub mnemonic: Mnemonic,
 }
 
 impl Bip39Seed {
@@ -18,17 +18,11 @@ impl Bip39Seed {
         let mut rng = rand::thread_rng();
         let mnemonic = Mnemonic::generate_in_with(&mut rng, Language::English, 12)?;
 
-        let phrase = mnemonic
-            .to_string()
-            .split(' ')
-            .map(|word| word.into())
-            .collect();
-
         // passing an empty string here is the expected argument if the seed should not be
         // additionally password protected (according to https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed)
         let seed = mnemonic.to_seed_normalized("");
 
-        Ok(Bip39Seed { seed, phrase })
+        Ok(Bip39Seed { seed, mnemonic })
     }
 
     pub fn derive_extended_priv_key(&self, network: Network) -> Result<ExtendedPrivKey> {
@@ -42,6 +36,16 @@ impl Bip39Seed {
 
         Ok(ext_priv_key)
     }
+
+    pub fn get_seed_phrase(&self) -> Vec<String> {
+        let phrase = self
+            .mnemonic
+            .to_string()
+            .split(' ')
+            .map(|word| word.into())
+            .collect();
+        phrase
+    }
 }
 
 #[cfg(test)]
@@ -51,6 +55,7 @@ mod tests {
     #[test]
     fn create_bip39_seed() {
         let seed = Bip39Seed::new().expect("seed to be generated");
-        assert_eq!(12, seed.phrase.len());
+        let phrase = seed.get_seed_phrase();
+        assert_eq!(12, phrase.len());
     }
 }

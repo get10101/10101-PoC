@@ -63,6 +63,9 @@ void main() {
 
     testWidgets('test if seed backup warning remains after checking but without done button click',
         (tester) async {
+      // this test will log an error as the wallet is not initialised. This can be ignored as the wallet
+      // is not needed for that test.
+
       final seedBackupModel = SeedBackupModel();
       await tester.pumpWidget(createDashboard(BalanceModel(), seedBackupModel));
 
@@ -84,6 +87,8 @@ void main() {
     });
 
     testWidgets('test if seed backup warning disappears after checkbox is checked', (tester) async {
+      // this test will log an error as the wallet is not initialised. This can be ignored as the wallet
+      // is not needed for that test.
       final seedBackupModel = SeedBackupModel();
       await tester.pumpWidget(createDashboard(BalanceModel(), seedBackupModel));
 

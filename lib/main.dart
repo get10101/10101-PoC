@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart' hide Size;
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
@@ -10,8 +12,6 @@ import 'package:ten_ten_one/seed.dart';
 import 'package:go_router/go_router.dart';
 
 import 'bridge_generated/bridge_definitions.dart';
-
-import 'dart:async';
 
 import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
@@ -100,7 +100,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   Future<void> setupRustLogging() async {
     api.initLogging().listen((event) {
-      debugPrint('log from rust: ${event.msg}');
+      FLog.logThis(text: 'log from rust: ${event.msg}', type: LogLevel.DEBUG);
     });
   }
 }
