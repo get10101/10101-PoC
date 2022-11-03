@@ -34,6 +34,8 @@ class CfdOffer extends StatelessWidget {
     final fmtAsk = formatter.format(ask);
     final fmtIndex = formatter.format(index);
     final fmtLiquidationPrice = formatter.format(liquidationPrice);
+    final fmtFundingRate = fundingRate.toStringAsFixed(10);
+    final fmtMargin = margin.toStringAsFixed(10);
 
     return ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
       const Balance(),
@@ -66,12 +68,11 @@ class CfdOffer extends StatelessWidget {
                       Container(
                         margin: const EdgeInsets.only(top: 25),
                         child: TtoTable([
-                          const TtoRow(
+                          TtoRow(
                               label: 'Funding Rate',
-                              value: '$fundingRate',
+                              value: fmtFundingRate,
                               icon: Icons.currency_bitcoin),
-                          const TtoRow(
-                              label: 'Margin', value: '$margin', icon: Icons.currency_bitcoin),
+                          TtoRow(label: 'Margin', value: fmtMargin, icon: Icons.currency_bitcoin),
                           TtoRow(
                               label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(expiry)),
                           TtoRow(label: 'Liquidation Price', value: '\$ $fmtLiquidationPrice'),
