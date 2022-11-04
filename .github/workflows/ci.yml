@@ -130,6 +130,10 @@ jobs:
         run: flutter format --output=none --set-exit-if-changed --line-length 100 .
       - name: Analyze flutter code
         run: flutter analyze --fatal-infos
+      - name: Install pana
+        run: flutter pub global activate pana
+      - name: Analyze dart package using pana
+        run: pana --no-warning --line-length 100 --exit-code-threshold 0
 
   # See: https://betterprogramming.pub/test-flutter-apps-on-android-with-github-actions-abdba2137b4
   flutter-android-test:
