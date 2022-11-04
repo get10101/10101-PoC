@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 
 class BalanceModel extends ChangeNotifier {
-  // TODO: Change to 0, just to see that it updates :)
-  int amount = -1;
+  Amount amount = Amount.zero;
 
-  void update(int amount) {
+  void update(Amount amount) {
     this.amount = amount;
     super.notifyListeners();
   }

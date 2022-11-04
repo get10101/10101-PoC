@@ -6,12 +6,15 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
+import 'package:ten_ten_one/payment_history_list_item.dart';
 import 'package:ten_ten_one/receive.dart';
 import 'package:ten_ten_one/seed.dart';
 import 'package:ten_ten_one/send.dart';
 import 'package:ten_ten_one/service_card.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+
+import 'mocks/payment_history.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -39,6 +42,20 @@ class _DashboardState extends State<Dashboard> {
     if (!seedBackupModel.backup) {
       widgets.add(const BackupSeedCard());
     }
+
+    final paymentHistory = mockPaymentHistory(10);
+
+    final paymentHistoryList = ListView.builder(
+      shrinkWrap: true,
+      physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      itemCount: paymentHistory.length,
+      itemBuilder: (context, index) {
+        return PaymentHistoryListItem(data: paymentHistory[index]);
+      },
+    );
+
+    widgets.add(paymentHistoryList);
 
     return Scaffold(
       appBar: AppBar(

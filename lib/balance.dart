@@ -12,6 +12,7 @@ class Balance extends StatelessWidget {
     final formatter = NumberFormat.decimalPattern('en');
     return Consumer<BalanceModel>(
       builder: (context, balance, child) {
+        var amountDisplay = balance.amount.display();
         return Container(
           margin: const EdgeInsets.only(top: 15),
           child: Column(
@@ -22,10 +23,11 @@ class Balance extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(formatter.format(balance.amount),
+                  Text(formatter.format(amountDisplay.value),
                       key: const Key('balance'),
                       style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold)),
-                  const Text('sat', style: TextStyle(fontSize: 20, color: Colors.grey)),
+                  Text(amountDisplay.label,
+                      style: const TextStyle(fontSize: 20, color: Colors.grey)),
                 ],
               ))
             ],
