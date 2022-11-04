@@ -84,7 +84,7 @@ class _CfdPositionState extends State<CfdPosition> {
     super.initState();
     final cfdTradingState = context.read<CfdTradingState>();
 
-    if (!cfdTradingState.isStarted()) {
+    if (cfdTradingState.size() == 0) {
       // mock data
       order = Order(
           fundingRate: Amount(200),
@@ -95,9 +95,11 @@ class _CfdPositionState extends State<CfdPosition> {
           pl: Amount(Random().nextInt(20000) + -10000),
           quantity: 100,
           estimatedFees: Amount(-4));
-      cfdTradingState.startOrder(order);
+
+      cfdTradingState.push(order);
     }
-    order = cfdTradingState.getDraftOrder();
+
+    order = cfdTradingState.peek();
   }
 
   @override

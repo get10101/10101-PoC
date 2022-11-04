@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
@@ -103,6 +104,12 @@ class _TenTenOneState extends State<TenTenOneApp> {
               path: CfdOrderConfirmation.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
                 return const CfdOrderConfirmation();
+              },
+            ),
+            GoRoute(
+              path: CfdOrderDetail.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const CfdOrderDetail();
               },
             ),
           ]),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -18,7 +20,7 @@ class CfdOrderConfirmation extends StatelessWidget {
     final formatter = NumberFormat.decimalPattern('en');
 
     final cfdTradingState = context.read<CfdTradingState>();
-    final order = cfdTradingState.getDraftOrder();
+    Order order = cfdTradingState.peek();
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
@@ -38,7 +40,7 @@ class CfdOrderConfirmation extends StatelessWidget {
             const SizedBox(height: 25),
             TtoTable([
               TtoRow(label: 'Position', value: order.position == Position.long ? 'Long' : 'Short'),
-              TtoRow(label: 'Open Price', value: '\$ $openPrice'),
+              TtoRow(label: 'Opening Price', value: '\$ $openPrice'),
               TtoRow(label: 'Unrealized P/L', value: unrealizedPL, icon: Icons.currency_bitcoin),
               TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
               TtoRow(label: 'Expiry', value: expiry),
@@ -61,8 +63,22 @@ class CfdOrderConfirmation extends StatelessWidget {
                       children: [
                         ElevatedButton(
                             onPressed: () {
+                              // switch index to cfd overview tab.
+                              cfdTradingState.selectedIndex = 1;
                               // todo send order to maker.
-                              cfdTradingState.finishOrder();
+                              order = cfdTradingState.pop();
+                              order.status = OrderStatus.pending;
+                              order.updated = DateTime.now();
+                              cfdTradingState.persist(order);
+                              // notify the cfd trading module about changes.
+                              cfdTradingState.notify();
+
+                              // mock cfd has been accepted.
+                              Timer(const Duration(seconds: 5), () {
+                                order.status = OrderStatus.open;
+                                cfdTradingState.notify();
+                              });
+
                               context.go(CfdTrading.route);
                             },
                             child: const Text('Confirm'))
