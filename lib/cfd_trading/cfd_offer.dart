@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/cfd_trading_state.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
@@ -84,14 +87,14 @@ class _CfdPositionState extends State<CfdPosition> {
     if (!cfdTradingState.isStarted()) {
       // mock data
       order = Order(
-          fundingRate: 0.000002,
-          margin: 0.0025,
+          fundingRate: Amount(200),
+          margin: Amount(250000),
           expiry: DateTime.now(),
           liquidationPrice: 13104,
           openPrice: 19100,
-          unrealizedPL: -0.00005566,
+          pl: Amount(Random().nextInt(20000) + -10000),
           quantity: 100,
-          estimatedFees: -0.000000004);
+          estimatedFees: Amount(-4));
       cfdTradingState.startOrder(order);
     }
     order = cfdTradingState.getDraftOrder();
@@ -106,8 +109,8 @@ class _CfdPositionState extends State<CfdPosition> {
     final formatter = NumberFormat.decimalPattern('en');
 
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final fundingRate = order.fundingRate.toStringAsFixed(10);
-    final margin = order.margin.toStringAsFixed(10);
+    final fundingRate = order.fundingRate.display(Currency.btc).value.toStringAsFixed(10);
+    final margin = order.margin.display(Currency.btc).value.toStringAsFixed(10);
 
     return ListView(children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -121,8 +124,7 @@ class _CfdPositionState extends State<CfdPosition> {
           value: order.quantity.toString(),
         ),
         Dropdown(
-            values:
-                TradingPair.values.map((t) => t.name.toUpperCase()).toList(),
+            values: TradingPair.values.map((t) => t.name.toUpperCase()).toList(),
             onChange: (tradingPair) {
               order.tradingPair =
                   TradingPair.values.firstWhere((e) => e.name == tradingPair!.toLowerCase());

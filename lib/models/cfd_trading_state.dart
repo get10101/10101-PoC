@@ -23,13 +23,22 @@ class CfdTradingState extends ChangeNotifier {
     return _draftOrder != null;
   }
 
+  List<Order> listOrders() {
+    return _orders;
+  }
+
   void finishOrder() {
-    // add draft order to orders. (pending)
-    _orders.add(_draftOrder!);
+    // transform draft order to pending order and add to orders.
+    final order = _draftOrder!;
+    order.status = OrderStatus.pending;
+    order.updated = DateTime.now();
+    _orders.add(order);
+
     // remove draft order from state.
     _draftOrder = null;
     // change tab to the cfds overview.
     selectedIndex = 1;
+
     super.notifyListeners();
   }
 }

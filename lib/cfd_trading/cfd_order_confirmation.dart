@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/cfd_trading_state.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
@@ -21,9 +22,9 @@ class CfdOrderConfirmation extends StatelessWidget {
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final estimatedFees = order.estimatedFees.toStringAsFixed(10);
-    final margin = order.margin.toStringAsFixed(10);
-    final unrealizedPL = order.unrealizedPL.toStringAsFixed(10);
+    final estimatedFees = order.estimatedFees.display(Currency.btc).value.toStringAsFixed(10);
+    final margin = order.margin.display(Currency.btc).value.toStringAsFixed(10);
+    final unrealizedPL = order.pl.display(Currency.btc).value.toStringAsFixed(10);
     final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
     final quantity = order.quantity.toString();
     final tradingPair = order.tradingPair.name.toUpperCase();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_overview.dart';
 import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/models/cfd_trading_state.dart';
 
@@ -16,15 +17,7 @@ class CfdTrading extends StatefulWidget {
 class _CfdTradingState extends State<CfdTrading> {
   final List<Widget> _pages = <Widget>[
     const CfdOffer(),
-    Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text("My CFDs"),
-          Icon(Icons.format_list_bulleted_sharp),
-        ],
-      ),
-    ),
+    const CfdOverview(),
     Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
