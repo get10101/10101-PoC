@@ -122,12 +122,12 @@ class _CfdPositionState extends State<CfdPosition> {
         ),
         Dropdown(
             values:
-                TradingPair.values.map((t) => t.toString().split('.')[1].toUpperCase()).toList(),
+                TradingPair.values.map((t) => t.name.toUpperCase()).toList(),
             onChange: (tradingPair) {
               order.tradingPair =
                   TradingPair.values.firstWhere((e) => e.name == tradingPair!.toLowerCase());
             },
-            value: order.tradingPair.toString().split('.')[1].toUpperCase()),
+            value: order.tradingPair.name.toUpperCase()),
         Dropdown(
             values: CfdOffer.leverages.map((l) => 'x$l').toList(),
             onChange: (leverage) {

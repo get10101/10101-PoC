@@ -26,12 +26,12 @@ class CfdOrderConfirmation extends StatelessWidget {
     final unrealizedPL = order.unrealizedPL.toStringAsFixed(10);
     final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
     final quantity = order.quantity.toString();
-    final tradingPair = order.tradingPair.toString().split('.')[1].toUpperCase();
+    final tradingPair = order.tradingPair.name.toUpperCase();
 
     return Scaffold(
         appBar: AppBar(title: const Text('CFD Order Confirmation')),
         body: Container(
-          padding: const EdgeInsets.only(top: 15, right: 30, left: 30),
+          padding: const EdgeInsets.only(top: 30, right: 30, left: 30),
           child: Column(children: [
             Center(child: Text(tradingPair, style: const TextStyle(fontSize: 24))),
             const SizedBox(height: 25),

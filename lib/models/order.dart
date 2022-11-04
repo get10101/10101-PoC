@@ -1,3 +1,6 @@
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/material.dart';
+
 enum Position {
   long,
   short,
@@ -6,6 +9,11 @@ enum Position {
 enum TradingPair {
   btcusd,
   ethusd,
+}
+
+extension TradingPairExtension on TradingPair {
+  static const icons = {TradingPair.btcusd: FontAwesomeIcons.bitcoin, TradingPair.ethusd: FontAwesomeIcons.ethereum};
+  IconData get icon => icons[this]!;
 }
 
 class Order {

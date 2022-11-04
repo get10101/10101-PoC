@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
-import 'package:flutter/material.dart' hide Size;
+import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
