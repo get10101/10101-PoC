@@ -7,6 +7,10 @@ class Divider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         margin: const EdgeInsets.only(top: 10, bottom: 10),
-        child: const Card(elevation: 0, color: Colors.grey, child: SizedBox(height: 5)));
+        decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            color: Colors.grey,
+            borderRadius: BorderRadius.circular(20)),
+        child: const SizedBox(height: 5));
   }
 }
