@@ -15,10 +15,18 @@ class CfdOverview extends StatelessWidget {
     final cfdTradingState = context.watch<CfdTradingState>();
     final orders = cfdTradingState.listOrders();
     List<Widget> widgets = [const Balance(), const Divider()];
-    List<CfdTradeItem> tradeItems = orders
+    widgets.addAll(orders
+        .where((order) => [OrderStatus.open, OrderStatus.pending].contains(order.status))
         .map((order) => CfdTradeItem(order: order))
-        .toList();
-    widgets.addAll(tradeItems);
+        .toList());
+
+    widgets.add(ExpansionTile(
+      title: const Text('Closed', style: TextStyle(fontSize: 20)),
+      children: orders
+          .where((order) => [OrderStatus.closed].contains(order.status))
+          .map((order) => CfdTradeItem(order: order))
+          .toList(),
+    ));
 
     return Scaffold(
         body: ListView(
@@ -58,15 +66,15 @@ class CfdTradeItem extends StatelessWidget {
                   ]),
                 ],
               ),
-              Row(
-                children: [
-              order.position == Position.long
-                  ? const FaIcon(FontAwesomeIcons.arrowTrendUp, color: Colors.green)
-                  : const FaIcon(FontAwesomeIcons.arrowTrendDown, color: Colors.red)]
-              ),
+              Row(children: [
+                order.position == Position.long
+                    ? const FaIcon(FontAwesomeIcons.arrowTrendUp, color: Colors.green)
+                    : const FaIcon(FontAwesomeIcons.arrowTrendDown, color: Colors.red)
+              ]),
               Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                 Text(pl.toString(),
-                    style: TextStyle(fontSize: 20, color: pl.isNegative ? Colors.red : Colors.green)),
+                    style:
+                        TextStyle(fontSize: 20, color: pl.isNegative ? Colors.red : Colors.green)),
                 const SizedBox(width: 5),
                 const Text(
                   'sat',
