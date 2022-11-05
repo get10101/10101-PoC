@@ -3,9 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/order.dart';
@@ -26,11 +28,13 @@ class _CfdOfferState extends State<CfdOffer> {
   late Order order;
 
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat.decimalPattern('en');
+
+    final cfdTradingService = context.watch<CfdTradingService>();
 
     // mock data
-    order = Order(
+    cfdTradingService.draftOrder ??= Order(
         fundingRate: Amount(200),
         margin: Amount(250000),
         expiry: DateTime.now(),
@@ -39,11 +43,8 @@ class _CfdOfferState extends State<CfdOffer> {
         pl: Amount(Random().nextInt(20000) + -10000),
         quantity: 100,
         estimatedFees: Amount(-4));
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
+    order = cfdTradingService.draftOrder!;
 
     // mock data
     const bid = 19000;

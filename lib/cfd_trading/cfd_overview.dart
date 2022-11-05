@@ -10,9 +10,14 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:ten_ten_one/models/order.dart';
 
-class CfdOverview extends StatelessWidget {
+class CfdOverview extends StatefulWidget {
   const CfdOverview({Key? key}) : super(key: key);
 
+  @override
+  State<CfdOverview> createState() => _CfdOverviewState();
+}
+
+class _CfdOverviewState extends State<CfdOverview> {
   @override
   Widget build(BuildContext context) {
     final cfdTradingService = context.watch<CfdTradingService>();
@@ -26,6 +31,10 @@ class CfdOverview extends StatelessWidget {
 
     widgets.add(ExpansionTile(
       title: const Text('Closed', style: TextStyle(fontSize: 20)),
+      onExpansionChanged: (changed) {
+        cfdTradingService.expanded = true;
+      },
+      initiallyExpanded: cfdTradingService.expanded,
       children: orders
           .where((order) => [OrderStatus.closed].contains(order.status))
           .map((order) => CfdTradeItem(order: order))

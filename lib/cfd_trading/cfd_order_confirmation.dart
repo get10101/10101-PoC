@@ -68,6 +68,10 @@ class CfdOrderConfirmation extends StatelessWidget {
                               // switch index to cfd overview tab.
                               cfdTradingService.selectedIndex = 1;
                               // todo send order to maker.
+
+                              // clear draft order from cfd service state
+                              cfdTradingService.draftOrder = null;
+
                               order.status = OrderStatus.pending;
                               order.updated = DateTime.now();
                               cfdTradingService.persist(order);
