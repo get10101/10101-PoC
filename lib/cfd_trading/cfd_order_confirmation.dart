@@ -6,21 +6,23 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/cfd_trading_state.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 
 class CfdOrderConfirmation extends StatelessWidget {
   static const subRouteName = 'cfd-order-confirmation';
 
-  const CfdOrderConfirmation({Key? key}) : super(key: key);
+  final Order? order;
+
+  const CfdOrderConfirmation({this.order, super.key});
 
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    final cfdTradingState = context.read<CfdTradingState>();
-    Order order = cfdTradingState.peek();
+    final cfdTradingService = context.read<CfdTradingService>();
+    Order order = this.order!;
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
@@ -64,19 +66,16 @@ class CfdOrderConfirmation extends StatelessWidget {
                         ElevatedButton(
                             onPressed: () {
                               // switch index to cfd overview tab.
-                              cfdTradingState.selectedIndex = 1;
+                              cfdTradingService.selectedIndex = 1;
                               // todo send order to maker.
-                              order = cfdTradingState.pop();
                               order.status = OrderStatus.pending;
                               order.updated = DateTime.now();
-                              cfdTradingState.persist(order);
-                              // notify the cfd trading module about changes.
-                              cfdTradingState.notify();
+                              cfdTradingService.persist(order);
 
                               // mock cfd has been accepted.
                               Timer(const Duration(seconds: 5), () {
                                 order.status = OrderStatus.open;
-                                cfdTradingState.notify();
+                                cfdTradingService.persist(order);
                               });
 
                               context.go(CfdTrading.route);

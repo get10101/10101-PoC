@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/models/cfd_trading_state.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -15,8 +15,9 @@ class CfdOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cfdTradingState = context.watch<CfdTradingState>();
-    final orders = cfdTradingState.listOrders();
+    final cfdTradingService = context.watch<CfdTradingService>();
+    final orders = cfdTradingService.listOrders();
+
     List<Widget> widgets = [const Balance(), const Divider()];
     widgets.addAll(orders
         .where((order) => [OrderStatus.open, OrderStatus.pending].contains(order.status))
@@ -51,9 +52,7 @@ class CfdTradeItem extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        final cfdTradingState = context.read<CfdTradingState>();
-        cfdTradingState.push(order);
-        context.go(CfdTrading.route + '/' + CfdOrderDetail.subRouteName);
+        context.go(CfdTrading.route + '/' + CfdOrderDetail.subRouteName, extra: order);
       },
       child: Container(
         decoration: const BoxDecoration(

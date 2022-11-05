@@ -1,6 +1,7 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
+import 'package:uuid/uuid.dart';
 
 enum Position {
   long,
@@ -39,6 +40,8 @@ extension OrderStatusExtension on OrderStatus {
 }
 
 class Order {
+  late String id;
+
   OrderStatus status;
 
   int liquidationPrice;
@@ -71,5 +74,6 @@ class Order {
       this.leverage = 2,
       this.status = OrderStatus.draft}) {
     updated = DateTime.now();
+    id = const Uuid().v4();
   }
 }

@@ -3,13 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/cfd_trading_state.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
@@ -30,24 +28,17 @@ class _CfdOfferState extends State<CfdOffer> {
   @override
   void initState() {
     super.initState();
-    final cfdTradingState = context.read<CfdTradingState>();
 
-    if (cfdTradingState.size() == 0) {
-      // mock data
-      order = Order(
-          fundingRate: Amount(200),
-          margin: Amount(250000),
-          expiry: DateTime.now(),
-          liquidationPrice: 13104,
-          openPrice: 19100,
-          pl: Amount(Random().nextInt(20000) + -10000),
-          quantity: 100,
-          estimatedFees: Amount(-4));
-
-      cfdTradingState.push(order);
-    }
-
-    order = cfdTradingState.peek();
+    // mock data
+    order = Order(
+        fundingRate: Amount(200),
+        margin: Amount(250000),
+        expiry: DateTime.now(),
+        liquidationPrice: 13104,
+        openPrice: 19100,
+        pl: Amount(Random().nextInt(20000) + -10000),
+        quantity: 100,
+        estimatedFees: Amount(-4));
   }
 
   @override
@@ -124,7 +115,8 @@ class _CfdOfferState extends State<CfdOffer> {
       ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          GoRouter.of(context).go(CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName);
+          GoRouter.of(context)
+              .go(CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName, extra: order);
         },
         backgroundColor: Colors.orange,
         child: const Icon(Icons.shopping_cart_checkout),

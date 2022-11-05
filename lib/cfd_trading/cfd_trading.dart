@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_overview.dart';
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/models/cfd_trading_state.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
 
 class CfdTrading extends StatefulWidget {
   static const route = '/cfd-trading';
@@ -31,14 +31,14 @@ class _CfdTradingState extends State<CfdTrading> {
 
   @override
   Widget build(BuildContext context) {
-    CfdTradingState cfdTradingState = context.watch<CfdTradingState>();
+    CfdTradingService cfdTradingService = context.watch<CfdTradingService>();
 
     return Scaffold(
         appBar: AppBar(
           title: const Text('CFD Trading'),
         ),
         drawer: const Menu(),
-        body: _pages.elementAt(cfdTradingState.selectedIndex),
+        body: _pages.elementAt(cfdTradingService.selectedIndex),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
@@ -54,7 +54,7 @@ class _CfdTradingState extends State<CfdTrading> {
               label: 'Market',
             ),
           ],
-          currentIndex: cfdTradingState.selectedIndex,
+          currentIndex: cfdTradingService.selectedIndex,
           selectedItemColor: Colors.orange,
           onTap: (index) {
             setState(() {
@@ -62,7 +62,7 @@ class _CfdTradingState extends State<CfdTrading> {
               // this is not triggering a rebuild even though the cfd trading state
               // is watched. A manual re-rendering is triggered through the setState
               // hook.
-              cfdTradingState.selectedIndex = index;
+              cfdTradingService.selectedIndex = index;
             });
           },
         ));

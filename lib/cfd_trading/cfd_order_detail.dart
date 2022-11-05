@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/cfd_trading_state.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
@@ -13,14 +13,16 @@ import 'package:go_router/go_router.dart';
 class CfdOrderDetail extends StatelessWidget {
   static const subRouteName = 'cfd-order-detail';
 
-  const CfdOrderDetail({Key? key}) : super(key: key);
+  final Order? order;
+
+  const CfdOrderDetail({this.order, super.key});
 
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    final cfdTradingState = context.watch<CfdTradingState>();
-    Order order = cfdTradingState.peek();
+    final cfdTradingService = context.watch<CfdTradingService>();
+    Order order = this.order!;
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
@@ -32,16 +34,7 @@ class CfdOrderDetail extends StatelessWidget {
     final tradingPair = order.tradingPair.name.toUpperCase();
 
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('CFD Order Details'),
-          leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                // remove order from stacked state when navigating back.
-                cfdTradingState.pop();
-                Navigator.pop(context, true);
-              }),
-        ),
+        appBar: AppBar(title: const Text('CFD Order Details')),
         body: Container(
             padding: const EdgeInsets.only(top: 30, right: 30, left: 30),
             child: Column(children: [
@@ -82,13 +75,10 @@ class CfdOrderDetail extends StatelessWidget {
                             visible: OrderStatus.open == order.status,
                             child: ElevatedButton(
                                 onPressed: () {
-                                  // remove order from stacked state when navigating back.
-                                  cfdTradingState.pop();
-
-                                  // mock cfd has been accepted.
-                                  Timer(const Duration(seconds: 1), () {
+                                  // mock cfd has been closed.
+                                  Timer(const Duration(seconds: 2), () {
                                     order.status = OrderStatus.closed;
-                                    cfdTradingState.notify();
+                                    cfdTradingService.persist(order);
                                   });
 
                                   context.go(CfdTrading.route);
