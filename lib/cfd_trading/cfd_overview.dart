@@ -22,6 +22,7 @@ class _CfdOverviewState extends State<CfdOverview> {
   Widget build(BuildContext context) {
     final cfdTradingService = context.watch<CfdTradingService>();
     final orders = cfdTradingService.listOrders();
+    orders.sort((a, b) => b.updated.compareTo(a.updated));
 
     List<Widget> widgets = [const Balance(), const Divider()];
     widgets.addAll(orders
