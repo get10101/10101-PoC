@@ -44,6 +44,8 @@ dependencies:
   f_logs: ^2.0.1
   flutter_speed_dial: ^6.2.0
   decimal: ^2.3.0
+  font_awesome_flutter: ^10.2.1
+  uuid: 3.0.6
 
 dev_dependencies:
   flutter_test:

@@ -1,15 +1,17 @@
 import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
-import 'package:flutter/material.dart' hide Size;
+import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
-import 'package:ten_ten_one/models/cfd_trading_state.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
+import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/receive.dart';
 import 'package:ten_ten_one/seed.dart';
@@ -31,7 +33,7 @@ void main() {
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => balanceModel),
     ChangeNotifierProvider(create: (context) => seedBackupModel),
-    ChangeNotifierProvider(create: (context) => CfdTradingState()),
+    ChangeNotifierProvider(create: (context) => CfdTradingService()),
   ], child: const TenTenOneApp()));
 }
 
@@ -102,7 +104,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
             GoRoute(
               path: CfdOrderConfirmation.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
-                return const CfdOrderConfirmation();
+                return CfdOrderConfirmation(order: state.extra as Order);
+              },
+            ),
+            GoRoute(
+              path: CfdOrderDetail.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return CfdOrderDetail(order: state.extra as Order);
               },
             ),
           ]),
