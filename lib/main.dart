@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
+import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +30,11 @@ void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
   };
+
+  final config = FLog.getDefaultConfigurations();
+  config.activeLogLevel = foundation.kReleaseMode ? LogLevel.INFO : LogLevel.DEBUG;
+
+  FLog.applyConfigurations(config);
 
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => balanceModel),
