@@ -87,7 +87,7 @@ class CfdOrderDetail extends StatelessWidget {
 
                                     context.go(CfdTrading.route);
                                   },
-                                  child: const Text('Close')),
+                                  child: const Text('Settle')),
                             )
                           ],
                         ),
