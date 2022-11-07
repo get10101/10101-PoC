@@ -58,7 +58,6 @@ class CfdTradeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final updated = DateFormat('dd.MM.yy-kk:mm').format(order.updated);
-    final pl = order.pl.asSats;
 
     return GestureDetector(
       onTap: () {
@@ -90,9 +89,10 @@ class CfdTradeItem extends StatelessWidget {
                       : const FaIcon(FontAwesomeIcons.arrowTrendDown, color: Colors.red)
                 ]),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  Text(pl.toString(),
+                  Text(order.pl.display(sign: true).value,
                       style: TextStyle(
-                          fontSize: 20, color: pl.isNegative ? Colors.red : Colors.green)),
+                          fontSize: 20,
+                          color: order.pl.asSats.isNegative ? Colors.red : Colors.green)),
                   const SizedBox(width: 5),
                   const Text(
                     'sat',
