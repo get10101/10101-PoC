@@ -62,107 +62,105 @@ class _SeedState extends State<Seed> {
         .toList();
 
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Backup Seed'),
-        ),
-        body: Column(
+      appBar: AppBar(
+        title: const Text('Backup Seed'),
+      ),
+      body: SafeArea(
+          child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
           children: [
-            Container(
-              margin: const EdgeInsets.fromLTRB(30, 30, 30, 30),
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Flexible(
-                  child: RichText(
-                      text: const TextSpan(
-                          style: TextStyle(color: Colors.black, fontSize: 18),
-                          children: [
-                        TextSpan(
-                            text:
-                                "This list of words is your wallet backup. Save it somewhere safe (not on this phone)! "),
-                        TextSpan(
-                            text: "\n\nDo not share it with anyone. Do not lose it. ",
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        TextSpan(
-                            text:
-                                "If you lose your words list and your phone, you've lost your funds.")
-                      ])),
-                )
-              ]),
-            ),
-            Row(
-              children: [
-                Expanded(
-                    child: Container(
-                        margin: const EdgeInsets.fromLTRB(55, 10, 10, 0),
-                        child: Row(children: [
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.start, children: firstColumn)
-                        ]))),
-                Expanded(
-                    child: Container(
-                        margin: const EdgeInsets.fromLTRB(10, 10, 55, 0),
-                        child: Row(children: [
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.start, children: secondColumn)
-                        ]))),
-              ],
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 40),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                      icon: visibility
-                          ? const Icon(Icons.visibility)
-                          : const Icon(Icons.visibility_off),
-                      onPressed: () {
-                        setState(() {
-                          visibility = !visibility;
-                        });
-                      },
-                      tooltip: visibility ? 'Hide Seed' : 'Show Seed'),
-                  Text(visibility ? 'Hide Seed' : 'Show Seed')
-                ],
-              ),
+            Center(
+              child: RichText(
+                  text: const TextSpan(
+                      style: TextStyle(color: Colors.black, fontSize: 18),
+                      children: [
+                    TextSpan(
+                        text:
+                            "This list of words is your wallet backup. Save it somewhere safe (not on this phone)! "),
+                    TextSpan(
+                        text: "\n\nDo not share it with anyone. Do not lose it. ",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextSpan(
+                        text: "If you lose your words list and your phone, you've lost your funds.")
+                  ])),
             ),
             Expanded(
               child: Container(
-                  margin: const EdgeInsets.fromLTRB(0, 0, 20, 30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Row(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: firstColumn),
+                        const SizedBox(width: 10),
+                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: secondColumn)
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Checkbox(
-                              value: checked,
-                              onChanged: (bool? changed) {
+                          IconButton(
+                              icon: visibility
+                                  ? const Icon(Icons.visibility)
+                                  : const Icon(Icons.visibility_off),
+                              onPressed: () {
                                 setState(() {
-                                  checked = changed!;
+                                  visibility = !visibility;
                                 });
-                              }),
-                          const Text('I have made a backup of my seed'),
+                              },
+                              tooltip: visibility ? 'Hide Seed' : 'Show Seed'),
+                          Text(visibility ? 'Hide Seed' : 'Show Seed')
                         ],
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton(
-                              onPressed: checked
-                                  ? () {
-                                      final seedBackupModel = context.read<SeedBackupModel>();
-                                      seedBackupModel.update();
-                                      context.go('/');
-                                    }
-                                  : null,
-                              child: const Text('Done'))
-                        ],
-                      )
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                          value: checked,
+                          onChanged: (bool? changed) {
+                            setState(() {
+                              checked = changed!;
+                            });
+                          }),
+                      const Text('I have made a backup of my seed'),
                     ],
-                  )),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                          onPressed: checked
+                              ? () {
+                                  final seedBackupModel = context.read<SeedBackupModel>();
+                                  seedBackupModel.update();
+                                  context.go('/');
+                                }
+                              : null,
+                          child: const Text('Done'))
+                    ],
+                  )
+                ],
+              ),
             )
           ],
-        ));
+        ),
+      )),
+    );
   }
 }
 
@@ -181,9 +179,12 @@ class SeedWord extends StatelessWidget {
             crossAxisAlignment: visibility ? CrossAxisAlignment.baseline : CrossAxisAlignment.end,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                '#$index',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              SizedBox(
+                width: 25.0,
+                child: Text(
+                  '#$index',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
               ),
               const SizedBox(width: 5),
               visibility
