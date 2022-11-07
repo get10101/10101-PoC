@@ -48,6 +48,7 @@ dependencies:
   uuid: 3.0.6
 
 dev_dependencies:
+  flutter_launcher_icons: "^0.10.0"
   flutter_test:
     sdk: flutter
   integration_test:
@@ -65,6 +66,22 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+# The following section specifies the flutter icons for the different target platforms
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/10101_logo.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  remove_alpha_ios: true
+  web:
+    generate: false
+  macos:
+    generate: true
+    image_path: "assets/10101_logo.png"
+  windows:
+    generate: true
+    image_path: "assets/10101_logo.png"
 
 # The following section is specific to Flutter.
 flutter:
@@ -105,3 +122,4 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
   assets:
     - assets/10101_logo.svg
+    - assets/10101_logo.png
