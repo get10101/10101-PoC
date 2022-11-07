@@ -133,8 +133,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 
   Future<void> _callSync() async {
-    final balance = await api.getBalance();
-    if (mounted) setState(() => balanceModel.update(Amount(balance.confirmed)));
+    try {
+      final balance = await api.getBalance();
+      balanceModel.update(Amount(balance.confirmed));
+      FLog.trace(text: 'Successfully synced wallet');
+    } on FfiException catch (error) {
+      FLog.error(text: 'Failed to sync wallet: Error: ' + error.message, exception: error);
+    }
   }
 
   Future<void> setupRustLogging() async {
