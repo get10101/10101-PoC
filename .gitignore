@@ -9,3 +9,6 @@
 bridge_generated.h
 **/bridge_generated/
 !/rust/src/bridge_generated/mod.rs
+
+// ignore keystores
+*.jks
