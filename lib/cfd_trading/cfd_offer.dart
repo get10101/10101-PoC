@@ -56,8 +56,8 @@ class _CfdOfferState extends State<CfdOffer> {
     final fmtIndex = formatter.format(index);
 
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final fundingRate = order.fundingRate.display(Currency.btc).value.toStringAsFixed(10);
-    final margin = order.margin.display(Currency.btc).value.toStringAsFixed(10);
+    final fundingRate = order.fundingRate.display(currency: Currency.btc).value;
+    final margin = order.margin.display(currency: Currency.btc).value;
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import 'models/payment.model.dart';
 
@@ -24,7 +23,7 @@ class PaymentHistoryListItem extends StatelessWidget {
         break;
     }
 
-    final amountDisplay = data.amount.display();
+    final amountDisplay = data.amount.display(sign: true);
 
     String label;
     switch (data.type) {
@@ -48,8 +47,6 @@ class PaymentHistoryListItem extends StatelessWidget {
         break;
     }
 
-    var formatter = NumberFormat.decimalPattern('en');
-
     return ListTile(
       leading: statusIcon,
       title: Text(label),
@@ -59,7 +56,7 @@ class PaymentHistoryListItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Text(formatter.format(amountDisplay.value),
+          Text(amountDisplay.value,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           Text(amountDisplay.label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
         ],

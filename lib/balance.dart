@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
 import 'models/balance_model.dart';
 
@@ -9,7 +8,6 @@ class Balance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
     return Consumer<BalanceModel>(
       builder: (context, balance, child) {
         var amountDisplay = balance.amount.display();
@@ -23,7 +21,7 @@ class Balance extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(formatter.format(amountDisplay.value),
+                  Text(amountDisplay.value,
                       key: const Key('balance'),
                       style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold)),
                   Text(amountDisplay.label,
