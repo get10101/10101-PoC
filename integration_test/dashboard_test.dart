@@ -5,7 +5,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/dashboard.dart';
+import 'package:ten_ten_one/wallet_lightning.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
@@ -16,7 +16,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
         path: '/',
         builder: (BuildContext context, GoRouterState state) {
-          return const Dashboard();
+          return const WalletLightning();
         },
         routes: [
           GoRoute(
@@ -29,7 +29,7 @@ final GoRouter _router = GoRouter(
   ],
 );
 
-Widget createDashboard(balanceModel, seedBackupModel) => MultiProvider(
+Widget createWallet(balanceModel, seedBackupModel) => MultiProvider(
         providers: [
           ChangeNotifierProvider<BalanceModel>(create: (context) => balanceModel),
           ChangeNotifierProvider<SeedBackupModel>(create: (context) => seedBackupModel)
@@ -41,16 +41,16 @@ Widget createDashboard(balanceModel, seedBackupModel) => MultiProvider(
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Dashboard widget tests', () {
+  group('Wallet widget tests', () {
     testWidgets('test if balance is rendered', (tester) async {
-      await tester.pumpWidget(createDashboard(BalanceModel(), SeedBackupModel()));
+      await tester.pumpWidget(createWallet(BalanceModel(), SeedBackupModel()));
 
       expect(find.byType(Balance), findsOneWidget);
     });
 
     testWidgets('test if balance gets updated', (tester) async {
       final balanceModel = BalanceModel();
-      await tester.pumpWidget(createDashboard(balanceModel, SeedBackupModel()));
+      await tester.pumpWidget(createWallet(balanceModel, SeedBackupModel()));
 
       Text balance = find.byKey(const Key('balance')).evaluate().first.widget as Text;
       // balance is empty on start
@@ -68,7 +68,7 @@ void main() {
       // is not needed for that test.
 
       final seedBackupModel = SeedBackupModel();
-      await tester.pumpWidget(createDashboard(BalanceModel(), seedBackupModel));
+      await tester.pumpWidget(createWallet(BalanceModel(), seedBackupModel));
 
       expect(find.byType(BackupSeedCard), findsOneWidget);
 
@@ -91,7 +91,7 @@ void main() {
       // this test will log an error as the wallet is not initialised. This can be ignored as the wallet
       // is not needed for that test.
       final seedBackupModel = SeedBackupModel();
-      await tester.pumpWidget(createDashboard(BalanceModel(), seedBackupModel));
+      await tester.pumpWidget(createWallet(BalanceModel(), seedBackupModel));
 
       expect(find.byType(BackupSeedCard), findsOneWidget);
 

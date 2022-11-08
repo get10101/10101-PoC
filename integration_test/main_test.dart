@@ -15,7 +15,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('end-to-end test', () {
-    testWidgets('test if the app loads the dashboard', (WidgetTester tester) async {
+    testWidgets('test if the app loads the wallet', (WidgetTester tester) async {
       app.main();
       await tester.pumpAndSettle();
       // run many times to see memory leaks or other problems

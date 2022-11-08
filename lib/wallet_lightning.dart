@@ -16,14 +16,14 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import 'mocks/payment_history.dart';
 
-class Dashboard extends StatefulWidget {
-  const Dashboard({Key? key}) : super(key: key);
+class WalletLightning extends StatefulWidget {
+  const WalletLightning({Key? key}) : super(key: key);
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  State<WalletLightning> createState() => _WalletLightningState();
 }
 
-class _DashboardState extends State<Dashboard> {
+class _WalletLightningState extends State<WalletLightning> {
   @override
   void initState() {
     super.initState();
