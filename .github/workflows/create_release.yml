@@ -39,12 +39,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           architecture: x64
 
-      - name: Install FFI bindings
-        run: cargo install flutter_rust_bridge_codegen
-
-      - name: Generate FFI bindings
-        run: make gen
-
       - uses: actions/cache@v3
         id: cache-deps
         with:
@@ -55,6 +49,13 @@ jobs:
             ~/.cargo/git/db/
             ./rust/target
           key: ${{ runner.os }}-cargo-integrate-android-${{ hashFiles('**/Cargo.lock') }}-${{ steps.checkout.outputs.rustc_hash }}
+
+      - name: Install FFI bindings
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: cargo install flutter_rust_bridge_codegen
+
+      - name: Generate FFI bindings
+        run: make gen
 
       - name: Add Rust targets
         run: rustup target add armv7-linux-androideabi aarch64-linux-android
