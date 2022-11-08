@@ -1,6 +1,9 @@
-name: Release Android APK
+name: "Create release"
 
-on: workflow_dispatch
+on:
+  pull_request:
+    types:
+      - closed
 
 env:
   FLUTTER_VERSION: "3.3.1"
@@ -8,6 +11,9 @@ env:
 jobs:
   build:
     runs-on: macos-latest
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    outputs:
+      ANDROID_APK_NAME: ${{ steps.build.outputs.ANDROID_APK_NAME }}
     steps:
       - uses: actions/checkout@v2
 
@@ -30,7 +36,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: "3.3.1"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           architecture: x64
 
       - name: Install FFI bindings
@@ -77,15 +83,56 @@ jobs:
           BUILD_NUMBER=$(git rev-list HEAD --count)
           flutter build apk --build-name=$BUILD_NAME --build-number=$BUILD_NUMBER --release
           mv build/app/outputs/flutter-apk/app.apk build/app/outputs/flutter-apk/tentenone-$BUILD_NAME.apk
-          echo "APK_NAME=$(echo tentenone-$BUILD_NAME.apk)" >> $GITHUB_OUTPUT
+          echo "ANDROID_APK_NAME=$(echo tentenone-$BUILD_NAME.apk)" >> $GITHUB_OUTPUT
         env:
-          SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_SIGNING_STORE_PASSWORD }}
           ENCODED_KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
 
       - name: Upload APK to Github Packages
         uses: actions/upload-artifact@v3
         with:
-          name: Build Artifacts
-          path: build/app/outputs/flutter-apk/${{steps.build.outputs.APK_NAME}}
+          name: ${{steps.build.outputs.ANDROID_APK_NAME}}
+          path: build/app/outputs/flutter-apk/${{steps.build.outputs.ANDROID_APK_NAME}}
+
+  release:
+    needs: build
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Extract version from branch name
+        id: extract-version
+        shell: python
+        run: |
+          branch_name = "${{ github.event.pull_request.head.ref }}"
+          version = branch_name.split("/")[1]
+
+          print(f"::set-output name=version::{version}")
+
+      - name: Extract changelog section for release
+        id: changelog
+        uses: coditory/changelog-parser@v1
+        with:
+          version: ${{ steps.extract-version.outputs.version }}
+
+      - name: Create tag
+        uses: rickstaa/action-create-tag@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
+        with:
+          tag: ${{ steps.extract-version.outputs.version }}
+          message: ${{ steps.changelog.outputs.description }}
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{ needs.build.outputs.ANDROID_APK_NAME }}
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
+        with:
+          files: ${{ needs.build.outputs.ANDROID_APK_NAME }}
