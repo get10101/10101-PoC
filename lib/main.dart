@@ -12,7 +12,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/dashboard.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/receive.dart';
@@ -40,7 +40,7 @@ void main() {
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => balanceModel),
     ChangeNotifierProvider(create: (context) => seedBackupModel),
-    ChangeNotifierProvider(create: (context) => CfdTradingService()),
+    ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier()),
   ], child: const TenTenOneApp()));
 }
 

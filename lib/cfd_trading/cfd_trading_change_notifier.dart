@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ten_ten_one/models/order.dart';
 
 /// Responsible for managing the state across the different Cfd Trading screens.
-class CfdTradingService extends ChangeNotifier {
+class CfdTradingChangeNotifier extends ChangeNotifier {
   final List<Order> _orders = [];
   List<Order> listOrders() => _orders;
 

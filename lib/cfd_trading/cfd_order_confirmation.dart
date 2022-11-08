@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 
@@ -21,7 +21,7 @@ class CfdOrderConfirmation extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    final cfdTradingService = context.read<CfdTradingService>();
+    final cfdTradingService = context.read<CfdTradingChangeNotifier>();
     Order order = this.order!;
 
     final openPrice = formatter.format(order.openPrice);

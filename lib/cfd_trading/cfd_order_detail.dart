@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
@@ -28,7 +28,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    final cfdTradingService = context.watch<CfdTradingService>();
+    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
     Order order = widget.order!;
 
     final openPrice = formatter.format(order.openPrice);

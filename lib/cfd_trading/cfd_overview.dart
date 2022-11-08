@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -20,7 +20,7 @@ class CfdOverview extends StatefulWidget {
 class _CfdOverviewState extends State<CfdOverview> {
   @override
   Widget build(BuildContext context) {
-    final cfdTradingService = context.watch<CfdTradingService>();
+    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
     final orders = cfdTradingService.listOrders();
     orders.sort((a, b) => b.updated.compareTo(a.updated));
 

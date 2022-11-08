@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/order.dart';
@@ -31,7 +31,7 @@ class _CfdOfferState extends State<CfdOffer> {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    final cfdTradingService = context.watch<CfdTradingService>();
+    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
 
     // mock data
     cfdTradingService.draftOrder ??= Order(
