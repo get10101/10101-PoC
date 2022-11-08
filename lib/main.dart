@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
+import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +30,11 @@ void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
   };
+
+  final config = FLog.getDefaultConfigurations();
+  config.activeLogLevel = foundation.kReleaseMode ? LogLevel.INFO : LogLevel.DEBUG;
+
+  FLog.applyConfigurations(config);
 
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => balanceModel),
@@ -127,8 +133,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 
   Future<void> _callSync() async {
-    final balance = await api.getBalance();
-    if (mounted) setState(() => balanceModel.update(Amount(balance.confirmed)));
+    try {
+      final balance = await api.getBalance();
+      balanceModel.update(Amount(balance.confirmed));
+      FLog.trace(text: 'Successfully synced wallet');
+    } on FfiException catch (error) {
+      FLog.error(text: 'Failed to sync wallet: Error: ' + error.message, exception: error);
+    }
   }
 
   Future<void> setupRustLogging() async {
