@@ -217,7 +217,7 @@ packages:
       name: ffigen
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "6.1.2"
+    version: "7.2.0"
   file:
     dependency: transitive
     description:
@@ -255,7 +255,7 @@ packages:
       name: flutter_rust_bridge
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.49.0"
+    version: "1.49.1"
   flutter_speed_dial:
     dependency: "direct main"
     description:
@@ -785,6 +785,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.1"
+  yaml_edit:
+    dependency: transitive
+    description:
+      name: yaml_edit
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.3"
 sdks:
   dart: ">=2.18.0 <3.0.0"
   flutter: ">=3.3.0"
