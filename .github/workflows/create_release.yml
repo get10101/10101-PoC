@@ -91,7 +91,7 @@ jobs:
           SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_SIGNING_STORE_PASSWORD }}
           ENCODED_KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
 
-      - name: Upload APK to Github Packages
+      - name: Upload APK to job
         uses: actions/upload-artifact@v3
         with:
           name: ${{steps.build.outputs.ANDROID_APK_NAME}}
@@ -119,21 +119,14 @@ jobs:
         with:
           version: ${{ steps.extract-version.outputs.version }}
 
-      - name: Create tag
-        uses: rickstaa/action-create-tag@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
-        with:
-          tag: ${{ steps.extract-version.outputs.version }}
-          message: ${{ steps.changelog.outputs.description }}
-
       - uses: actions/download-artifact@v3
         with:
           name: ${{ needs.build.outputs.ANDROID_APK_NAME }}
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          files: ${{ needs.build.outputs.ANDROID_APK_NAME }}
+          artifacts: ${{ needs.build.outputs.ANDROID_APK_NAME }}
+          body: ${{ steps.changelog.outputs.description }}
+          token: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
+          tag: ${{ steps.extract-version.outputs.version }}
