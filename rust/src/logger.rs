@@ -3,6 +3,7 @@ use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use state::Storage;
 use time::macros::format_description;
+use tracing_subscriber::filter::Directive;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::fmt::time::UtcTime;
 use tracing_subscriber::layer::SubscriberExt;
@@ -10,41 +11,14 @@ use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::Layer;
 
-pub fn init_tracing(level: LevelFilter, json_format: bool) -> Result<()> {
-    if level == LevelFilter::OFF {
-        return Ok(());
-    }
+const RUST_LOG_ENV: &str = "RUST_LOG";
 
-    let is_terminal = atty::is(atty::Stream::Stderr);
-
-    let filter = EnvFilter::from_default_env()
-        .add_directive(level.to_string().parse()?)
+// Tracing log directives config
+fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> {
+    let filter = env
+        .add_directive(Directive::from(level))
         .add_directive("bdk=warn".parse()?); // bdk is quite spamy on debug
-
-    let fmt_layer = tracing_subscriber::fmt::layer()
-        .with_writer(std::io::stderr)
-        .with_ansi(is_terminal);
-
-    let fmt_layer = if json_format {
-        fmt_layer.json().with_timer(UtcTime::rfc_3339()).boxed()
-    } else {
-        fmt_layer
-            .with_timer(UtcTime::new(format_description!(
-                "[year]-[month]-[day] [hour]:[minute]:[second]"
-            )))
-            .boxed()
-    };
-
-    tracing_subscriber::registry()
-        .with(filter)
-        .with(DartSendLayer)
-        .with(fmt_layer)
-        .try_init()
-        .context("Failed to init tracing")?;
-
-    tracing::info!("Initialized logger");
-
-    Ok(())
+    Ok(filter)
 }
 
 /// Wallet has to be managed by Rust as generics are not support by frb
@@ -89,4 +63,53 @@ where
                 level: metadata.level().to_string(),
             });
     }
+}
+
+// Configure and initalise tracing subsystem
+fn init_tracing(level: LevelFilter, json_format: bool) -> Result<()> {
+    if level == LevelFilter::OFF {
+        return Ok(());
+    }
+
+    let is_terminal = atty::is(atty::Stream::Stderr);
+
+    // Parse additional log directives from env variable
+    let filter = match std::env::var_os(RUST_LOG_ENV).map(|s| s.into_string()) {
+        Some(Ok(env)) => {
+            let mut filter = log_base_directives(EnvFilter::new(""), level)?;
+            for directive in env.split(',') {
+                match directive.parse() {
+                    Ok(d) => filter = filter.add_directive(d),
+                    Err(e) => println!("WARN ignoring log directive: `{directive}`: {e}"),
+                };
+            }
+            filter
+        }
+        _ => log_base_directives(EnvFilter::from_env(RUST_LOG_ENV), level)?,
+    };
+
+    let fmt_layer = tracing_subscriber::fmt::layer()
+        .with_writer(std::io::stderr)
+        .with_ansi(is_terminal);
+
+    let fmt_layer = if json_format {
+        fmt_layer.json().with_timer(UtcTime::rfc_3339()).boxed()
+    } else {
+        fmt_layer
+            .with_timer(UtcTime::new(format_description!(
+                "[year]-[month]-[day] [hour]:[minute]:[second]"
+            )))
+            .boxed()
+    };
+
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(DartSendLayer)
+        .with(fmt_layer)
+        .try_init()
+        .context("Failed to init tracing")?;
+
+    tracing::info!("Initialized logger");
+
+    Ok(())
 }
