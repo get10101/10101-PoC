@@ -10,7 +10,7 @@ import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
 
-class CfdOrderDetail extends StatelessWidget {
+class CfdOrderDetail extends StatefulWidget {
   static const subRouteName = 'cfd-order-detail';
 
   final Order? order;
@@ -18,11 +18,18 @@ class CfdOrderDetail extends StatelessWidget {
   const CfdOrderDetail({this.order, super.key});
 
   @override
+  State<CfdOrderDetail> createState() => _CfdOrderDetailState();
+}
+
+class _CfdOrderDetailState extends State<CfdOrderDetail> {
+  bool confirm = false;
+
+  @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
     final cfdTradingService = context.watch<CfdTradingService>();
-    Order order = this.order!;
+    Order order = widget.order!;
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
@@ -53,30 +60,54 @@ class CfdOrderDetail extends StatelessWidget {
                       color: Colors.orange,
                     ))),
                 const SizedBox(height: 35),
-                TtoTable([
-                  TtoRow(
-                      label: 'Position', value: order.position == Position.long ? 'Long' : 'Short'),
-                  TtoRow(label: 'Opening Price', value: '\$ $openPrice'),
-                  TtoRow(
-                      label: 'Unrealized P/L', value: unrealizedPL, icon: Icons.currency_bitcoin),
-                  TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
-                  TtoRow(label: 'Expiry', value: expiry),
-                  TtoRow(label: 'Liquidation Price', value: '\$ $liquidationPrice'),
-                  TtoRow(label: 'Quantity', value: quantity),
-                  TtoRow(
-                      label: 'Estimated fees', value: estimatedFees, icon: Icons.currency_bitcoin)
-                ]),
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(0, 0, 20, 30),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
+                  child: TtoTable([
+                    TtoRow(
+                        label: 'Position',
+                        value: order.position == Position.long ? 'Long' : 'Short'),
+                    TtoRow(label: 'Opening Price', value: '\$ $openPrice'),
+                    TtoRow(
+                        label: 'Unrealized P/L', value: unrealizedPL, icon: Icons.currency_bitcoin),
+                    TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
+                    TtoRow(label: 'Expiry', value: expiry),
+                    TtoRow(label: 'Liquidation Price', value: '\$ $liquidationPrice'),
+                    TtoRow(label: 'Quantity', value: quantity),
+                    TtoRow(
+                        label: 'Estimated fees', value: estimatedFees, icon: Icons.currency_bitcoin)
+                  ]),
+                ),
+                Container(
+                  margin: const EdgeInsets.fromLTRB(0, 0, 0, 30),
+                  child: Row(
+                    children: [
+                      Visibility(
+                          visible: confirm,
+                          child: OutlinedButton(
+                              onPressed: () {
+                                setState(() {
+                                  confirm = false;
+                                });
+                              },
+                              style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(width: 1.0, color: Colors.orange),
+                                  backgroundColor: Colors.white),
+                              child: const Text('Cancel'))),
+                      Expanded(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Visibility(
-                              visible: OrderStatus.open == order.status,
+                              visible: OrderStatus.open == order.status && !confirm,
+                              child: ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      confirm = true;
+                                    });
+                                  },
+                                  child: const Text('Settle')),
+                            ),
+                            Visibility(
+                              visible: confirm,
                               child: ElevatedButton(
                                   onPressed: () {
                                     // mock cfd has been closed.
@@ -87,12 +118,12 @@ class CfdOrderDetail extends StatelessWidget {
 
                                     context.go(CfdTrading.route);
                                   },
-                                  child: const Text('Settle')),
+                                  child: const Text('Confirm')),
                             )
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 )
               ])),
