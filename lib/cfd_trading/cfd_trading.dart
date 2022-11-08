@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_overview.dart';
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_service.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 
 class CfdTrading extends StatefulWidget {
   static const route = '/cfd-trading';
@@ -31,7 +31,7 @@ class _CfdTradingState extends State<CfdTrading> {
 
   @override
   Widget build(BuildContext context) {
-    CfdTradingService cfdTradingService = context.watch<CfdTradingService>();
+    CfdTradingChangeNotifier cfdTradingService = context.watch<CfdTradingChangeNotifier>();
 
     return Scaffold(
         appBar: AppBar(
