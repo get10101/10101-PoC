@@ -61,7 +61,7 @@ class _CfdOfferState extends State<CfdOffer> {
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
-        const Balance(),
+        const Balance(balanceSelector: BalanceSelector.lightning),
         const Divider(),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:go_router/go_router.dart';
 
-import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
+import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 class Seed extends StatefulWidget {
   const Seed({Key? key}) : super(key: key);

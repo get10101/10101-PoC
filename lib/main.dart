@@ -9,22 +9,24 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/wallet_lightning.dart';
+import 'package:ten_ten_one/wallet/wallet.dart';
+import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
-import 'package:ten_ten_one/receive.dart';
-import 'package:ten_ten_one/seed.dart';
+import 'package:ten_ten_one/wallet/receive.dart';
+import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ten_ten_one/send.dart';
+import 'package:ten_ten_one/wallet/send.dart';
 
 import 'bridge_generated/bridge_definitions.dart';
 
 import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
-BalanceModel balanceModel = BalanceModel();
+LightningBalance lightningBalanceModel = LightningBalance();
+BitcoinBalance bitcoinBalanceModel = BitcoinBalance();
 SeedBackupModel seedBackupModel = SeedBackupModel();
 
 void main() {
@@ -38,9 +40,11 @@ void main() {
   FLog.applyConfigurations(config);
 
   runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(create: (context) => balanceModel),
+    ChangeNotifierProvider(create: (context) => lightningBalanceModel),
+    ChangeNotifierProvider(create: (context) => bitcoinBalanceModel),
     ChangeNotifierProvider(create: (context) => seedBackupModel),
     ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier()),
+    ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
   ], child: const TenTenOneApp()));
 }
 
@@ -80,7 +84,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
       GoRoute(
           path: '/',
           builder: (BuildContext context, GoRouterState state) {
-            return const WalletLightning();
+            return const Wallet();
           },
           routes: [
             GoRoute(
@@ -137,10 +141,10 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Future<void> _callSync() async {
     try {
       final balance = await api.getBalance();
-      balanceModel.update(Amount(balance.confirmed));
-      FLog.trace(text: 'Successfully synced wallet');
+      bitcoinBalanceModel.update(Amount(balance.confirmed));
+      FLog.trace(text: 'Successfully synced Bitcoin wallet');
     } on FfiException catch (error) {
-      FLog.error(text: 'Failed to sync wallet: Error: ' + error.message, exception: error);
+      FLog.error(text: 'Failed to sync Bitcoin wallet: Error: ' + error.message, exception: error);
     }
   }
 

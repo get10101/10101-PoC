@@ -24,7 +24,10 @@ class _CfdOverviewState extends State<CfdOverview> {
     final orders = cfdTradingService.listOrders();
     orders.sort((a, b) => b.updated.compareTo(a.updated));
 
-    List<Widget> widgets = [const Balance(), const Divider()];
+    List<Widget> widgets = [
+      const Balance(balanceSelector: BalanceSelector.lightning),
+      const Divider()
+    ];
     widgets.addAll(orders
         .where((order) => [OrderStatus.open, OrderStatus.pending].contains(order.status))
         .map((order) => CfdTradeItem(order: order))

@@ -5,11 +5,12 @@ import 'package:integration_test/integration_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/wallet_lightning.dart';
+import 'package:ten_ten_one/wallet/wallet_dashboard.dart';
+import 'package:ten_ten_one/wallet/wallet_lightning.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
-import 'package:ten_ten_one/seed.dart';
+import 'package:ten_ten_one/wallet/seed.dart';
 
 final GoRouter _router = GoRouter(
   routes: <GoRoute>[
@@ -31,7 +32,7 @@ final GoRouter _router = GoRouter(
 
 Widget createWallet(balanceModel, seedBackupModel) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<BalanceModel>(create: (context) => balanceModel),
+          ChangeNotifierProvider<LightningBalance>(create: (context) => balanceModel),
           ChangeNotifierProvider<SeedBackupModel>(create: (context) => seedBackupModel)
         ],
         child: MaterialApp.router(
@@ -43,22 +44,22 @@ void main() {
 
   group('Wallet widget tests', () {
     testWidgets('test if balance is rendered', (tester) async {
-      await tester.pumpWidget(createWallet(BalanceModel(), SeedBackupModel()));
+      await tester.pumpWidget(createWallet(LightningBalance(), SeedBackupModel()));
 
       expect(find.byType(Balance), findsOneWidget);
     });
 
-    testWidgets('test if balance gets updated', (tester) async {
-      final balanceModel = BalanceModel();
+    testWidgets('test if Bitcoin balance gets updated', (tester) async {
+      final balanceModel = LightningBalance();
       await tester.pumpWidget(createWallet(balanceModel, SeedBackupModel()));
 
-      Text balance = find.byKey(const Key('balance')).evaluate().first.widget as Text;
+      Text balance = find.byKey(const Key('bitcoinBalance')).evaluate().first.widget as Text;
       // balance is empty on start
       expect(balance.data, '0');
       balanceModel.update(Amount(1001));
       await tester.pumpAndSettle();
 
-      balance = find.byKey(const Key('balance')).evaluate().first.widget as Text;
+      balance = find.byKey(const Key('bitcoinBalance')).evaluate().first.widget as Text;
       expect(balance.data, '1,001');
     });
 
@@ -68,7 +69,7 @@ void main() {
       // is not needed for that test.
 
       final seedBackupModel = SeedBackupModel();
-      await tester.pumpWidget(createWallet(BalanceModel(), seedBackupModel));
+      await tester.pumpWidget(createWallet(LightningBalance(), seedBackupModel));
 
       expect(find.byType(BackupSeedCard), findsOneWidget);
 
@@ -91,7 +92,7 @@ void main() {
       // this test will log an error as the wallet is not initialised. This can be ignored as the wallet
       // is not needed for that test.
       final seedBackupModel = SeedBackupModel();
-      await tester.pumpWidget(createWallet(BalanceModel(), seedBackupModel));
+      await tester.pumpWidget(createWallet(LightningBalance(), seedBackupModel));
 
       expect(find.byType(BackupSeedCard), findsOneWidget);
 
