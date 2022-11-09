@@ -43,14 +43,16 @@ impl From<Network> for bitcoin::Network {
 }
 
 impl Wallet {
-    pub fn new(network: Network) -> Result<Wallet> {
+    pub fn new(network: Network, data_dir: &Path) -> Result<Wallet> {
         let electrum_url = match network {
             Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
             _ => bail!("Only public networks are supported"),
         };
 
-        let seed = Bip39Seed::new()?;
+        let mut path = data_dir.to_owned();
+        path.push("seed");
+        let seed = Bip39Seed::initialize(&path)?;
         let ext_priv_key = seed.derive_extended_priv_key(network.into())?;
 
         let client = Client::new(electrum_url)?;
@@ -91,7 +93,7 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(Wallet::new(network)?));
+    WALLET.set(Mutex::new(Wallet::new(network, data_dir)?));
     Ok(())
 }
 
