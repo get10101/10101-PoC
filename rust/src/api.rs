@@ -3,6 +3,7 @@ use crate::wallet;
 use crate::wallet::Network;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
+use std::path::Path;
 
 pub struct Balance {
     pub confirmed: u64,
@@ -14,8 +15,8 @@ impl Balance {
     }
 }
 
-pub fn init_wallet(network: Network) -> Result<()> {
-    wallet::init_wallet(network)
+pub fn init_wallet(network: Network, path: String) -> Result<()> {
+    wallet::init_wallet(network, Path::new(path.as_str()))
 }
 
 pub fn get_balance() -> Result<Balance> {

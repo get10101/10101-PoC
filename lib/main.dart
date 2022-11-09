@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
 // import 'package:flutter/foundation.dart' as foundation;
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
@@ -126,7 +127,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
   );
 
   Future<void> _callInitWallet() async {
-    await api.initWallet(network: Network.Testnet);
+    final appSupportDir = await getApplicationSupportDirectory();
+    await api.initWallet(network: Network.Testnet, path: appSupportDir.path);
 
     // initial sync
     _callSync();

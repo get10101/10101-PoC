@@ -10,6 +10,7 @@ use bdk::electrum_client::Client;
 use bdk::KeychainKind;
 use bdk::SyncOptions;
 use state::Storage;
+use std::path::Path;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 
@@ -88,7 +89,8 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: Network) -> Result<()> {
+pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
+    tracing::debug!(?data_dir, "Wallet will be stored on disk");
     WALLET.set(Mutex::new(Wallet::new(network)?));
     Ok(())
 }
@@ -105,14 +107,19 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
 
 #[cfg(test)]
 mod tests {
+
+    use std::env::temp_dir;
+
     use crate::wallet;
 
     use super::Network;
 
     #[test]
     fn wallet_support_for_different_bitcoin_networks() {
-        wallet::init_wallet(Network::Mainnet).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Testnet).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Regtest).expect_err("wallet should not succeed to initialize");
+        let temp = temp_dir();
+        wallet::init_wallet(Network::Mainnet, &temp).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Testnet, &temp).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Regtest, &temp)
+            .expect_err("wallet should not succeed to initialize");
     }
 }
