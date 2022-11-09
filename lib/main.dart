@@ -146,7 +146,11 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   Future<void> setupRustLogging() async {
     api.initLogging().listen((event) {
-      FLog.logThis(text: 'log from rust: ${event.msg}', type: LogLevel.DEBUG);
+      // Only log to Dart file in release mode - in debug mode it's easier to
+      // use stdout
+      if (foundation.kReleaseMode) {
+        FLog.logThis(text: '${event.target}: ${event.msg}', type: LogLevel.DEBUG);
+      }
     });
   }
 }
