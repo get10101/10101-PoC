@@ -50,10 +50,13 @@ impl Wallet {
             _ => bail!("Only public networks are supported"),
         };
 
-        let mut path = data_dir.to_owned();
-        path.push("seed");
-        let seed = Bip39Seed::initialize(&path)?;
-        let ext_priv_key = seed.derive_extended_priv_key(network.into())?;
+        let network: bitcoin::Network = network.into();
+        let network_str = network.to_string();
+        std::fs::create_dir(data_dir.join(&network_str))
+            .context(format!("Could not create data dir for {network}"))?;
+        let seed_path = data_dir.join(network_str).join("seed");
+        let seed = Bip39Seed::initialize(&seed_path)?;
+        let ext_priv_key = seed.derive_extended_priv_key(network)?;
 
         let client = Client::new(electrum_url)?;
         let blockchain = ElectrumBlockchain::from(client);
@@ -118,10 +121,9 @@ mod tests {
 
     #[test]
     fn wallet_support_for_different_bitcoin_networks() {
-        let temp = temp_dir();
-        wallet::init_wallet(Network::Mainnet, &temp).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Testnet, &temp).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Regtest, &temp)
+        wallet::init_wallet(Network::Mainnet, &temp_dir()).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Testnet, &temp_dir()).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Regtest, &temp_dir())
             .expect_err("wallet should not succeed to initialize");
     }
 }
