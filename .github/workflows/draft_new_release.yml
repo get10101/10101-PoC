@@ -19,15 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          token: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
+          token: ${{ secrets.ITCHY_GITHUB_TOKEN }}
 
       - name: Create release branch
         run: git checkout -b ${{ env.RELEASE_BRANCH }}
 
       - name: Initialize mandatory git config
         run: |
-          git config user.name "${{ secrets.TENTENONE_NAME }}"
-          git config user.email ${{ secrets.TENTENONE_EMAIL }}
+          git config user.name "${{ secrets.ITCHY_NAME }}"
+          git config user.email ${{ secrets.ITCHY_EMAIL }}
 
       - name: Update changelog
         uses: thomaseizinger/keep-a-changelog-new-release@v1
