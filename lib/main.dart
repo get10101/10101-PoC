@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
-// import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter/foundation.dart' as foundation;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
@@ -33,9 +33,7 @@ void main() {
   };
 
   final config = FLog.getDefaultConfigurations();
-  // TODO: Rethink whether we need to show Rust logs from Flutter natively or
-  // via Flutter
-  // config.activeLogLevel = foundation.kReleaseMode ? LogLevel.INFO : LogLevel.DEBUG;
+  config.activeLogLevel = foundation.kReleaseMode ? LogLevel.INFO : LogLevel.DEBUG;
 
   FLog.applyConfigurations(config);
 
