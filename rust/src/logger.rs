@@ -2,6 +2,7 @@ use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use state::Storage;
+use std::sync::Once;
 use time::macros::format_description;
 use tracing_subscriber::filter::Directive;
 use tracing_subscriber::filter::LevelFilter;
@@ -13,6 +14,11 @@ use tracing_subscriber::Layer;
 
 const RUST_LOG_ENV: &str = "RUST_LOG";
 
+static INIT_LOGGER_ONCE: Once = Once::new();
+
+/// Wallet has to be managed by Rust as generics are not support by frb
+static LOG_STREAM_SINK: Storage<StreamSink<LogEntry>> = Storage::new();
+
 // Tracing log directives config
 fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> {
     let filter = env
@@ -20,9 +26,6 @@ fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> 
         .add_directive("bdk=warn".parse()?); // bdk is quite spamy on debug
     Ok(filter)
 }
-
-/// Wallet has to be managed by Rust as generics are not support by frb
-static LOG_STREAM_SINK: Storage<StreamSink<LogEntry>> = Storage::new();
 
 /// Struct to expose logs from Rust to Flutter
 pub struct LogEntry {
@@ -33,9 +36,10 @@ pub struct LogEntry {
 }
 
 pub fn create_log_stream(sink: StreamSink<LogEntry>) {
-    // TODO: Move in a different spot
     LOG_STREAM_SINK.set(sink);
-    init_tracing(LevelFilter::DEBUG, false).expect("Logger to initialise");
+    INIT_LOGGER_ONCE.call_once(|| {
+        init_tracing(LevelFilter::DEBUG, false).expect("Logger to initialise");
+    });
 }
 
 /// Tracing layer responsible for sending tracing events into
