@@ -1,5 +1,7 @@
 use crate::disk;
 use crate::disk::FilesystemLogger;
+use anyhow::anyhow;
+use anyhow::bail;
 use anyhow::Result;
 use bdk::bitcoin;
 use bdk::bitcoin::blockdata::constants::genesis_block;
@@ -24,7 +26,6 @@ use lightning::ln::channelmanager;
 use lightning::ln::channelmanager::ChainParameters;
 use lightning::ln::channelmanager::ChannelManagerReadArgs;
 use lightning::ln::channelmanager::SimpleArcChannelManager;
-use lightning::ln::msgs::NetAddress;
 use lightning::ln::peer_handler::IgnoringMessageHandler;
 use lightning::ln::peer_handler::MessageHandler;
 use lightning::ln::peer_handler::SimpleArcPeerManager;
@@ -65,6 +66,18 @@ pub struct LightningSystem {
     pub wallet: Arc<BdkLdkWallet>,
     chain_monitor: Arc<ChainMonitor>,
     channel_manager: Arc<ChannelManager>,
+    peer_manager: Arc<PeerManager>,
+}
+
+pub struct PeerInfo {
+    pub pubkey: PublicKey,
+    pub peer_addr: SocketAddr,
+}
+
+impl ToString for PeerInfo {
+    fn to_string(&self) -> String {
+        format!("{}@{}", self.pubkey.to_string(), self.peer_addr.to_string())
+    }
 }
 
 impl LightningSystem {
@@ -73,6 +86,35 @@ impl LightningSystem {
             &*self.channel_manager as &dyn chain::Confirm,
             &*self.chain_monitor as &dyn chain::Confirm,
         ]
+    }
+
+    pub async fn open_channel(
+        &self,
+        peer_info: PeerInfo,
+        channel_amount_sat: u64,
+        data_dir: &Path,
+    ) -> Result<()> {
+        connect_peer_if_necessary(
+            peer_info.pubkey,
+            peer_info.peer_addr,
+            self.peer_manager.clone(),
+        )
+        .await?;
+
+        let _temp_channel_id = self
+            .channel_manager
+            .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, None)
+            .map_err(|_| anyhow!("Could not create channel"));
+
+        let peer_data_path = format!(
+            "{}/channel_peer_data",
+            data_dir.to_string_lossy().to_string()
+        );
+        let _ = disk::persist_channel_peer(Path::new(&peer_data_path), &peer_info.to_string());
+
+        tracing::info!("Channel has been successfully created");
+
+        Ok(())
     }
 }
 
@@ -372,7 +414,7 @@ pub fn setup(
     // Step 16: Handle LDK Events
     let event_handler = move |event: &Event| {
         // TODO: check if creating a new runtime for the event handle has any caveats.
-        let rt = Runtime::new()?;
+        let rt = Runtime::new().expect("runtime");
         rt.block_on(handle_ldk_event(event));
     };
 
@@ -432,6 +474,7 @@ pub fn setup(
         wallet: lightning_wallet,
         chain_monitor,
         channel_manager,
+        peer_manager,
     })
 }
 
@@ -461,7 +504,7 @@ pub(crate) async fn connect_peer_if_necessary(
     pubkey: PublicKey,
     peer_addr: SocketAddr,
     peer_manager: Arc<PeerManager>,
-) -> Result<(), ()> {
+) -> Result<()> {
     for node_pubkey in peer_manager.get_peer_node_ids() {
         if node_pubkey == pubkey {
             return Ok(());
@@ -474,8 +517,7 @@ pub(crate) async fn connect_peer_if_necessary(
             loop {
                 match futures::poll!(&mut connection_closed_future) {
                     std::task::Poll::Ready(_) => {
-                        println!("ERROR: Peer disconnected before we finished the handshake");
-                        return Err(());
+                        bail!("ERROR: Peer disconnected before we finished the handshake");
                     }
                     std::task::Poll::Pending => {}
                 }
@@ -491,8 +533,7 @@ pub(crate) async fn connect_peer_if_necessary(
             }
         }
         None => {
-            println!("ERROR: failed to connect to peer");
-            return Err(());
+            bail!("ERROR: failed to connect to peer");
         }
     }
     Ok(())

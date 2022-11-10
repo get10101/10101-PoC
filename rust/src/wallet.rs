@@ -1,5 +1,6 @@
 use crate::lightning;
 use crate::lightning::LightningSystem;
+use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
 use anyhow::anyhow;
 use anyhow::bail;
@@ -119,6 +120,17 @@ pub fn get_balance() -> Result<bdk::Balance> {
 pub fn get_seed_phrase() -> Result<Vec<String>> {
     let seed_phrase = get_wallet()?.seed.get_seed_phrase();
     Ok(seed_phrase)
+}
+
+pub async fn open_channel(
+    peer_info: PeerInfo,
+    channel_amount_sat: u64,
+    data_dir: &Path,
+) -> Result<()> {
+    get_wallet()?
+        .lightning
+        .open_channel(peer_info, channel_amount_sat, data_dir)
+        .await
 }
 
 impl From<Network> for bitcoin::Network {
