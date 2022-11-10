@@ -7,6 +7,7 @@ use bdk::bitcoin;
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
+use bdk::wallet::AddressIndex;
 use bdk::KeychainKind;
 use bdk::SyncOptions;
 use state::Storage;
@@ -84,6 +85,12 @@ impl Wallet {
         tracing::debug!(%balance, "Wallet balance");
         Ok(balance)
     }
+
+    pub fn get_address(&self) -> Result<bitcoin::Address> {
+        let address = self.wallet.get_address(AddressIndex::LastUnused)?;
+        tracing::debug!(%address, "Current wallet address");
+        Ok(address.address)
+    }
 }
 
 fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
@@ -105,6 +112,10 @@ pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
 pub fn get_balance() -> Result<bdk::Balance> {
     tracing::debug!("Wallet sync called");
     get_wallet()?.sync()
+}
+
+pub fn get_address() -> Result<bitcoin::Address> {
+    get_wallet()?.get_address()
 }
 
 pub fn get_seed_phrase() -> Result<Vec<String>> {

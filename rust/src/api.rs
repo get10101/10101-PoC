@@ -9,9 +9,19 @@ pub struct Balance {
     pub confirmed: u64,
 }
 
+pub struct Address {
+    pub address: String,
+}
+
 impl Balance {
     pub fn new(confirmed: u64) -> Balance {
         Balance { confirmed }
+    }
+}
+
+impl Address {
+    pub fn new(address: String) -> Address {
+        Address { address }
     }
 }
 
@@ -21,6 +31,10 @@ pub fn init_wallet(network: Network, path: String) -> Result<()> {
 
 pub fn get_balance() -> Result<Balance> {
     Ok(Balance::new(wallet::get_balance()?.confirmed))
+}
+
+pub fn get_address() -> Result<Address> {
+    Ok(Address::new(wallet::get_address()?.to_string()))
 }
 
 /// Initialise logging infrastructure for Rust

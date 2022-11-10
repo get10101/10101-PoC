@@ -4,10 +4,10 @@ import 'package:intl/intl.dart';
 class Amount {
   Decimal sats = Decimal.zero;
 
-  // We don't expect sat / btc values above 99999 BTC
+  // We don't expect balance above 99,999 BTC
 
-  final formatterSat = NumberFormat("#############", "en");
-  final formatterBtc = NumberFormat("####0.00000000", "en");
+  final formatterSat = NumberFormat("#,###,###,###,###", "en");
+  final formatterBtc = NumberFormat("##,##0.00000000", "en");
 
   Amount(int sats) {
     this.sats = Decimal.fromInt(sats);
