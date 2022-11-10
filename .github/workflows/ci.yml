@@ -83,6 +83,26 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
         working-directory: rust
 
+  cargo-test:
+    needs: changes
+    if: ${{ needs.changes.outputs.rust == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup rust toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@v2.1.0
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - name: Install FFI bindings
+        run: cargo install flutter_rust_bridge_codegen
+      - name: Generate FFI bindings
+        working-directory: .
+        run: make gen
+      - run: cargo test
+        working-directory: rust
+
   lint-flutter:
     needs: changes
     if: ${{ needs.changes.outputs.flutter == 'true' }}
@@ -129,6 +149,7 @@ jobs:
       - formatting
       - lint-commits
       - clippy
+      - cargo-test
       - lint-flutter
     runs-on: ubuntu-latest
     if: ${{ always() && contains(needs.*.result, 'success') && !(contains(needs.*.result, 'failure')) }}
