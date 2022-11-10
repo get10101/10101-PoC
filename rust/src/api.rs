@@ -21,7 +21,8 @@ impl Balance {
 }
 
 pub fn init_wallet(network: Network, path: String) -> Result<()> {
-    wallet::init_wallet(network, Path::new(path.as_str()), 9735)
+    let rt = Runtime::new()?;
+    rt.block_on(async { wallet::init_wallet(network, Path::new(path.as_str()), 9735).await })
 }
 
 pub fn get_balance() -> Result<Balance> {
@@ -76,4 +77,24 @@ pub(crate) fn parse_peer_info(peer_pubkey_and_ip_addr: String) -> Result<PeerInf
         pubkey: pubkey.unwrap(),
         peer_addr: peer_addr.unwrap().unwrap(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::api::init_wallet;
+    use std::env::temp_dir;
+
+    use super::Network;
+
+    #[test]
+    fn wallet_support_for_different_bitcoin_networks() {
+        // TODO: we should rethink these tests, as they aren't simple unit tests anymore.
+        init_wallet(Network::Mainnet, temp_dir().to_string_lossy().to_string())
+            .expect("wallet to be initialized");
+        init_wallet(Network::Testnet, temp_dir().to_string_lossy().to_string())
+            .expect("wallet to be initialized");
+        init_wallet(Network::Regtest, temp_dir().to_string_lossy().to_string())
+            .expect_err("wallet should not succeed to initialize");
+    }
 }

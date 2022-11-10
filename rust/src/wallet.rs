@@ -34,7 +34,7 @@ pub struct Wallet {
 }
 
 impl Wallet {
-    pub fn new(network: Network, data_dir: &Path, listening_port: u16) -> Result<Wallet> {
+    pub async fn new(network: Network, data_dir: &Path, listening_port: u16) -> Result<Wallet> {
         let electrum_url = match network {
             Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
@@ -72,7 +72,8 @@ impl Wallet {
             &data_dir,
             lightning_seed,
             listening_port,
-        )?;
+        )
+        .await?;
 
         Ok(Wallet { lightning, seed })
     }
@@ -106,9 +107,11 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: Network, data_dir: &Path, listening_port: u16) -> Result<()> {
+pub async fn init_wallet(network: Network, data_dir: &Path, listening_port: u16) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(Wallet::new(network, data_dir, listening_port)?));
+    WALLET.set(Mutex::new(
+        Wallet::new(network, data_dir, listening_port).await?,
+    ));
     Ok(())
 }
 
@@ -140,24 +143,5 @@ impl From<Network> for bitcoin::Network {
             Network::Testnet => bitcoin::Network::Testnet,
             Network::Regtest => bitcoin::Network::Regtest,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use std::env::temp_dir;
-
-    use crate::wallet;
-
-    use super::Network;
-
-    #[test]
-    fn wallet_support_for_different_bitcoin_networks() {
-        // TODO: we should rethink these tests, as they aren't simple unit tests anymore.
-        wallet::init_wallet(Network::Mainnet, &temp_dir(), 9735).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Testnet, &temp_dir(), 9735).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Regtest, &temp_dir(), 9735)
-            .expect_err("wallet should not succeed to initialize");
     }
 }

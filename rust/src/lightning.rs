@@ -187,7 +187,7 @@ type OnionMessenger = SimpleArcOnionMessenger<FilesystemLogger>;
 /// Set up lightning network system
 ///
 /// Heavily based on the sample project, including comments
-pub fn setup(
+pub async fn setup(
     lightning_wallet: BdkLdkWallet,
     network: bitcoin::Network,
     ldk_data_dir: &Path,
@@ -383,12 +383,10 @@ pub fn setup(
 
     // ## Running LDK
     // Step 14: Initialize networking
-    let rt = Runtime::new()?;
-
     let peer_manager_connection_handler = peer_manager.clone();
     let stop_listen_connect = Arc::new(AtomicBool::new(false));
     let stop_listen = Arc::clone(&stop_listen_connect);
-    rt.spawn(async move {
+    tokio::spawn(async move {
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", listening_port))
             .await
             .expect("Failed to bind to listen port - is something else already listening on it?");
@@ -413,9 +411,7 @@ pub fn setup(
 
     // Step 16: Handle LDK Events
     let event_handler = move |event: &Event| {
-        // TODO: check if creating a new runtime for the event handle has any caveats.
-        let rt = Runtime::new().expect("runtime");
-        rt.block_on(handle_ldk_event(event));
+        block_on(handle_ldk_event(event));
     };
 
     // Step 17: Initialize routing ProbabilisticScorer
