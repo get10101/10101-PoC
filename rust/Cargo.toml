@@ -11,12 +11,24 @@ crate-type = ["cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticl
 anyhow = { version = "1", features = ["backtrace"] }
 atty = "0.2"
 bdk = "0.24.0"
+bdk-ldk = "0.1.0"
 bip39 = "1.0.1"
+chrono = "0.4.22" # TODO: Remove this dependency to use `time` crate instead
 flutter_rust_bridge = "1.49.1"
 hkdf = "0.12"
+lightning = { version = "0.0.112", features = ["max_level_trace"] }
+lightning-background-processor = { version = "0.0.112" }
+lightning-block-sync = { version = "0.0.112", features = ["rpc-client"] }
+lightning-invoice = "0.20.0"
+lightning-net-tokio = { version = "0.0.112" }
+lightning-persister = { version = "0.0.112" }
+lightning-rapid-gossip-sync = { version = "0.0.112" }
 rand = "^0.6.0"
 sha2 = "0.10"
 state = "0.5.3"
 time = { version = "0.3", features = ["serde", "parsing", "std", "formatting", "macros", "serde-well-known"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi", "env-filter", "time", "tracing-log", "json"] }
+
+[patch.crates-io]
+bdk-ldk = { git = "https://github.com/itchysats/bdk-ldk", rev = "d6e7e357b864ddb8a53c7ab5b2b38a7fc05d8dc7" } # unreleased

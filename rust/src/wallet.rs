@@ -1,3 +1,5 @@
+use crate::lightning;
+use crate::lightning::LightningSystem;
 use crate::seed::Bip39Seed;
 use anyhow::anyhow;
 use anyhow::bail;
@@ -8,7 +10,6 @@ use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::KeychainKind;
-use bdk::SyncOptions;
 use state::Storage;
 use std::path::Path;
 use std::sync::Mutex;
@@ -27,19 +28,8 @@ pub enum Network {
 }
 
 pub struct Wallet {
-    blockchain: ElectrumBlockchain,
-    wallet: bdk::Wallet<MemoryDatabase>,
     seed: Bip39Seed,
-}
-
-impl From<Network> for bitcoin::Network {
-    fn from(network: Network) -> Self {
-        match network {
-            Network::Mainnet => bitcoin::Network::Bitcoin,
-            Network::Testnet => bitcoin::Network::Testnet,
-            Network::Regtest => bitcoin::Network::Regtest,
-        }
-    }
+    lightning: LightningSystem,
 }
 
 impl Wallet {
@@ -51,34 +41,48 @@ impl Wallet {
         };
 
         let network: bitcoin::Network = network.into();
-        let network_str = network.to_string();
-        std::fs::create_dir(data_dir.join(&network_str))
-            .context(format!("Could not create data dir for {network}"))?;
-        let seed_path = data_dir.join(network_str).join("seed");
+        let data_dir = data_dir.join(&network.to_string());
+        if !data_dir.exists() {
+            std::fs::create_dir(&data_dir)
+                .context(format!("Could not create data dir for {network}"))?;
+        }
+        let seed_path = data_dir.join("seed");
         let seed = Bip39Seed::initialize(&seed_path)?;
         let ext_priv_key = seed.derive_extended_priv_key(network)?;
 
         let client = Client::new(electrum_url)?;
         let blockchain = ElectrumBlockchain::from(client);
 
-        let wallet = bdk::Wallet::new(
+        let bdk_wallet = bdk::Wallet::new(
             bdk::template::Bip84(ext_priv_key, KeychainKind::External),
             Some(bdk::template::Bip84(ext_priv_key, KeychainKind::Internal)),
             ext_priv_key.network,
             MemoryDatabase::new(),
         )?;
 
-        Ok(Wallet {
-            blockchain,
-            wallet,
-            seed,
-        })
+        let lightning_wallet = bdk_ldk::LightningWallet::new(Box::new(blockchain), bdk_wallet);
+
+        // Lightning seed needs to be shorter
+        let lightning_seed = &seed.seed()[0..32].try_into()?;
+        let lightning = lightning::setup(lightning_wallet, network, &data_dir, lightning_seed)?;
+
+        Ok(Wallet { lightning, seed })
     }
 
     pub fn sync(&self) -> Result<bdk::Balance> {
-        self.wallet.sync(&self.blockchain, SyncOptions::default())?;
+        self.lightning
+            .wallet
+            .sync(self.lightning.confirmables())
+            .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
+        self.get_balance()
+    }
 
-        let balance = self.wallet.get_balance()?;
+    fn get_balance(&self) -> Result<bdk::Balance> {
+        let balance = self
+            .lightning
+            .wallet
+            .get_balance()
+            .map_err(|_| anyhow!("Could not retrieve bdk wallet balance"))?;
         tracing::debug!(%balance, "Wallet balance");
         Ok(balance)
     }
@@ -108,6 +112,16 @@ pub fn get_balance() -> Result<bdk::Balance> {
 pub fn get_seed_phrase() -> Result<Vec<String>> {
     let seed_phrase = get_wallet()?.seed.get_seed_phrase();
     Ok(seed_phrase)
+}
+
+impl From<Network> for bitcoin::Network {
+    fn from(network: Network) -> Self {
+        match network {
+            Network::Mainnet => bitcoin::Network::Bitcoin,
+            Network::Testnet => bitcoin::Network::Testnet,
+            Network::Regtest => bitcoin::Network::Regtest,
+        }
+    }
 }
 
 #[cfg(test)]
