@@ -51,10 +51,12 @@ impl Wallet {
         };
 
         let network: bitcoin::Network = network.into();
-        let network_str = network.to_string();
-        std::fs::create_dir(data_dir.join(&network_str))
-            .context(format!("Could not create data dir for {network}"))?;
-        let seed_path = data_dir.join(network_str).join("seed");
+        let data_dir = data_dir.join(&network.to_string());
+        if !data_dir.exists() {
+            std::fs::create_dir(&data_dir)
+                .context(format!("Could not create data dir for {network}"))?;
+        }
+        let seed_path = data_dir.join("seed");
         let seed = Bip39Seed::initialize(&seed_path)?;
         let ext_priv_key = seed.derive_extended_priv_key(network)?;
 
