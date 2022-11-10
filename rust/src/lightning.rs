@@ -428,26 +428,6 @@ pub fn setup(
         }
     }
 
-    // Regularly broadcast our node_announcement. This is only required (or possible) if we have
-    // some public channels, and is only useful if we have public listen address(es) to announce.
-    // In a production environment, this should occur only after the announcement of new channels
-    // to avoid churn in the global network graph.
-    let peer_man = Arc::clone(&peer_manager);
-    rt.spawn(async move {
-        let addresses = vec![NetAddress::IPv4 {
-            addr: [0, 0, 0, 0],
-            port: listening_port,
-        }];
-        let mut interval = tokio::time::interval(Duration::from_secs(60));
-        let node_name = "taker";
-        let mut bytes = [0; 32];
-        bytes[..node_name.len()].copy_from_slice(node_name.as_bytes());
-        loop {
-            interval.tick().await;
-            peer_man.broadcast_node_announcement([0; 3], bytes, addresses.to_vec());
-        }
-    });
-
     Ok(LightningSystem {
         wallet: lightning_wallet,
         chain_monitor,
