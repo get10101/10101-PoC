@@ -33,7 +33,7 @@ pub struct Wallet {
 }
 
 impl Wallet {
-    pub fn new(network: Network, data_dir: &Path) -> Result<Wallet> {
+    pub fn new(network: Network, data_dir: &Path, listening_port: u16) -> Result<Wallet> {
         let electrum_url = match network {
             Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
@@ -64,7 +64,14 @@ impl Wallet {
 
         // Lightning seed needs to be shorter
         let lightning_seed = &seed.seed()[0..32].try_into()?;
-        let lightning = lightning::setup(lightning_wallet, network, &data_dir, lightning_seed)?;
+
+        let lightning = lightning::setup(
+            lightning_wallet,
+            network,
+            &data_dir,
+            lightning_seed,
+            listening_port,
+        )?;
 
         Ok(Wallet { lightning, seed })
     }
@@ -98,9 +105,9 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
+pub fn init_wallet(network: Network, data_dir: &Path, listening_port: u16) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(Wallet::new(network, data_dir)?));
+    WALLET.set(Mutex::new(Wallet::new(network, data_dir, listening_port)?));
     Ok(())
 }
 
@@ -135,9 +142,10 @@ mod tests {
 
     #[test]
     fn wallet_support_for_different_bitcoin_networks() {
-        wallet::init_wallet(Network::Mainnet, &temp_dir()).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Testnet, &temp_dir()).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Regtest, &temp_dir())
+        // TODO: we should rethink these tests, as they aren't simple unit tests anymore.
+        wallet::init_wallet(Network::Mainnet, &temp_dir(), 9735).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Testnet, &temp_dir(), 9735).expect("wallet to be initialized");
+        wallet::init_wallet(Network::Regtest, &temp_dir(), 9735)
             .expect_err("wallet should not succeed to initialize");
     }
 }

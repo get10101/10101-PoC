@@ -1,14 +1,20 @@
+use crate::disk;
 use crate::disk::FilesystemLogger;
 use anyhow::Result;
 use bdk::bitcoin;
+use bdk::bitcoin::blockdata::constants::genesis_block;
+use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::bitcoin::BlockHash;
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
+use futures::executor::block_on;
 use lightning::chain;
 use lightning::chain::chainmonitor;
 use lightning::chain::channelmonitor::ChannelMonitor;
 use lightning::chain::keysinterface::InMemorySigner;
+use lightning::chain::keysinterface::KeysInterface;
 use lightning::chain::keysinterface::KeysManager;
+use lightning::chain::keysinterface::Recipient;
 use lightning::chain::BestBlock;
 use lightning::chain::ChannelMonitorUpdateStatus;
 use lightning::chain::Confirm;
@@ -18,25 +24,40 @@ use lightning::ln::channelmanager;
 use lightning::ln::channelmanager::ChainParameters;
 use lightning::ln::channelmanager::ChannelManagerReadArgs;
 use lightning::ln::channelmanager::SimpleArcChannelManager;
+use lightning::ln::msgs::NetAddress;
+use lightning::ln::peer_handler::IgnoringMessageHandler;
+use lightning::ln::peer_handler::MessageHandler;
 use lightning::ln::peer_handler::SimpleArcPeerManager;
 use lightning::ln::PaymentHash;
 use lightning::ln::PaymentPreimage;
 use lightning::ln::PaymentSecret;
+use lightning::onion_message::SimpleArcOnionMessenger;
 use lightning::routing::gossip::NetworkGraph;
+use lightning::routing::gossip::P2PGossipSync;
 use lightning::routing::scoring::ProbabilisticScorer;
 use lightning::util::config::UserConfig;
+use lightning::util::events::Event;
 use lightning::util::ser::ReadableArgs;
+use lightning_background_processor::BackgroundProcessor;
+use lightning_background_processor::GossipSync;
 use lightning_invoice::payment;
 use lightning_invoice::utils::DefaultRouter;
 use lightning_net_tokio::SocketDescriptor;
 use lightning_persister::FilesystemPersister;
+use rand::thread_rng;
+use rand::RngCore;
 use std::collections::HashMap;
 use std::fmt;
 use std::iter;
+use std::net::SocketAddr;
 use std::path::Path;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::time::Duration;
 use std::time::SystemTime;
+use tokio::runtime::Runtime;
 
 pub struct LightningSystem {
     // TODO: do we really need all these Arcs? I'm just following examples for
@@ -119,6 +140,8 @@ type ConfirmableMonitor = (
     Arc<FilesystemLogger>,
 );
 
+type OnionMessenger = SimpleArcOnionMessenger<FilesystemLogger>;
+
 /// Set up lightning network system
 ///
 /// Heavily based on the sample project, including comments
@@ -127,6 +150,7 @@ pub fn setup(
     network: bitcoin::Network,
     ldk_data_dir: &Path,
     seed: &[u8; 32],
+    listening_port: u16,
 ) -> Result<LightningSystem> {
     let lightning_wallet = Arc::new(lightning_wallet);
     let ldk_data_dir = ldk_data_dir.to_string_lossy().to_string();
@@ -275,9 +299,221 @@ pub fn setup(
         );
     }
 
+    // Step 12: Optional: Initialize the P2PGossipSync
+    let genesis = genesis_block(network).header.block_hash();
+    let network_graph_path = format!("{}/network_graph", ldk_data_dir.clone());
+    let network_graph = Arc::new(disk::read_network(
+        Path::new(&network_graph_path),
+        genesis,
+        logger.clone(),
+    ));
+    let gossip_sync = Arc::new(P2PGossipSync::new(
+        Arc::clone(&network_graph),
+        None::<Arc<dyn chain::Access + Send + Sync>>,
+        logger.clone(),
+    ));
+
+    // Step 13: Initialize the PeerManager
+    let onion_messenger: Arc<OnionMessenger> = Arc::new(OnionMessenger::new(
+        Arc::clone(&keys_manager),
+        Arc::clone(&logger),
+        IgnoringMessageHandler {},
+    ));
+    let mut ephemeral_bytes = [0; 32];
+    let current_time = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    thread_rng().fill_bytes(&mut ephemeral_bytes);
+    let lightning_msg_handler = MessageHandler {
+        chan_handler: channel_manager.clone(),
+        route_handler: gossip_sync.clone(),
+        onion_message_handler: onion_messenger.clone(),
+    };
+    let peer_manager: Arc<PeerManager> = Arc::new(PeerManager::new(
+        lightning_msg_handler,
+        keys_manager.get_node_secret(Recipient::Node).unwrap(),
+        current_time.try_into().unwrap(),
+        &ephemeral_bytes,
+        logger.clone(),
+        IgnoringMessageHandler {},
+    ));
+
+    // ## Running LDK
+    // Step 14: Initialize networking
+    let rt = Runtime::new()?;
+
+    let peer_manager_connection_handler = peer_manager.clone();
+    let stop_listen_connect = Arc::new(AtomicBool::new(false));
+    let stop_listen = Arc::clone(&stop_listen_connect);
+    rt.spawn(async move {
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", listening_port))
+            .await
+            .expect("Failed to bind to listen port - is something else already listening on it?");
+        loop {
+            let peer_mgr = peer_manager_connection_handler.clone();
+            let tcp_stream = listener.accept().await.unwrap().0;
+            if stop_listen.load(Ordering::Acquire) {
+                return;
+            }
+            tokio::spawn(async move {
+                lightning_net_tokio::setup_inbound(
+                    peer_mgr.clone(),
+                    tcp_stream.into_std().unwrap(),
+                )
+                .await;
+            });
+        }
+    });
+
+    // TODO: Check if its ok to skip step 15 as the sync will be already triggered regularly from
+    // flutter.
+
+    // Step 16: Handle LDK Events
+    let event_handler = move |event: &Event| {
+        // TODO: check if creating a new runtime for the event handle has any caveats.
+        let rt = Runtime::new()?;
+        rt.block_on(handle_ldk_event(event));
+    };
+
+    // Step 17: Initialize routing ProbabilisticScorer
+    let scorer_path = format!("{}/scorer", ldk_data_dir.clone());
+    let scorer = Arc::new(Mutex::new(disk::read_scorer(
+        Path::new(&scorer_path),
+        Arc::clone(&network_graph),
+        Arc::clone(&logger),
+    )));
+
+    // Step 18: Create InvoicePayer
+    let router = DefaultRouter::new(
+        network_graph.clone(),
+        logger.clone(),
+        keys_manager.get_secure_random_bytes(),
+        scorer.clone(),
+    );
+    let invoice_payer = Arc::new(InvoicePayer::new(
+        channel_manager.clone(),
+        router,
+        logger.clone(),
+        event_handler,
+        payment::Retry::Timeout(Duration::from_secs(10)),
+    ));
+
+    // Step 19: Background Processing
+    // TODO: Do we need to stop the background processor on the wallet, or will it be sufficient to
+    // simple kill it with the app.
+    let _background_processor = BackgroundProcessor::start(
+        persister,
+        invoice_payer.clone(),
+        chain_monitor.clone(),
+        channel_manager.clone(),
+        GossipSync::p2p(gossip_sync.clone()),
+        peer_manager.clone(),
+        logger.clone(),
+        Some(scorer.clone()),
+    );
+
+    // Reconnect to channel peers if possible.
+    let peer_data_path = format!("{}/channel_peer_data", ldk_data_dir.clone());
+    let mut info = disk::read_channel_peer_data(Path::new(&peer_data_path))?;
+
+    for (pubkey, peer_addr) in info.drain() {
+        for chan_info in channel_manager.list_channels() {
+            if pubkey == chan_info.counterparty.node_id {
+                block_on(async {
+                    let _ =
+                        connect_peer_if_necessary(pubkey, peer_addr, peer_manager.clone()).await;
+                });
+            }
+        }
+    }
+
+    // Regularly broadcast our node_announcement. This is only required (or possible) if we have
+    // some public channels, and is only useful if we have public listen address(es) to announce.
+    // In a production environment, this should occur only after the announcement of new channels
+    // to avoid churn in the global network graph.
+    let peer_man = Arc::clone(&peer_manager);
+    rt.spawn(async move {
+        let addresses = vec![NetAddress::IPv4 {
+            addr: [0, 0, 0, 0],
+            port: listening_port,
+        }];
+        let mut interval = tokio::time::interval(Duration::from_secs(60));
+        let node_name = "taker";
+        let mut bytes = [0; 32];
+        bytes[..node_name.len()].copy_from_slice(node_name.as_bytes());
+        loop {
+            interval.tick().await;
+            peer_man.broadcast_node_announcement([0; 3], bytes, addresses.to_vec());
+        }
+    });
+
     Ok(LightningSystem {
         wallet: lightning_wallet,
         chain_monitor,
         channel_manager,
     })
+}
+
+pub async fn handle_ldk_event(event: &Event) {
+    match event {
+        Event::FundingGenerationReady { .. } => {} // insert handling code
+        Event::PaymentReceived { .. } => {}        // insert handling code
+        Event::PaymentClaimed { .. } => {}         // insert handling code
+        Event::PaymentSent { .. } => {}            // insert handling code
+        Event::PaymentFailed { .. } => {}          // insert handling code
+        Event::PaymentPathSuccessful { .. } => {}  // insert handling code
+        Event::PaymentPathFailed { .. } => {}      // insert handling code
+        Event::ProbeSuccessful { .. } => {}        // insert handling code
+        Event::ProbeFailed { .. } => {}            // insert handling code
+        Event::HTLCHandlingFailed { .. } => {}     // insert handling code
+        Event::PendingHTLCsForwardable { .. } => {} // insert handling code
+        Event::SpendableOutputs { .. } => {}       // insert handling code
+        Event::OpenChannelRequest { .. } => {}     // insert handling code
+        Event::PaymentForwarded { .. } => {}       // insert handling code
+        Event::ChannelClosed { .. } => {}          // insert handling code
+        Event::DiscardFunding { .. } => {}         // insert handling code
+    }
+}
+
+// taken from the ldk-bdk-sample (cli)
+pub(crate) async fn connect_peer_if_necessary(
+    pubkey: PublicKey,
+    peer_addr: SocketAddr,
+    peer_manager: Arc<PeerManager>,
+) -> Result<(), ()> {
+    for node_pubkey in peer_manager.get_peer_node_ids() {
+        if node_pubkey == pubkey {
+            return Ok(());
+        }
+    }
+    match lightning_net_tokio::connect_outbound(Arc::clone(&peer_manager), pubkey, peer_addr).await
+    {
+        Some(connection_closed_future) => {
+            let mut connection_closed_future = Box::pin(connection_closed_future);
+            loop {
+                match futures::poll!(&mut connection_closed_future) {
+                    std::task::Poll::Ready(_) => {
+                        println!("ERROR: Peer disconnected before we finished the handshake");
+                        return Err(());
+                    }
+                    std::task::Poll::Pending => {}
+                }
+                // Avoid blocking the tokio context by sleeping a bit
+                match peer_manager
+                    .get_peer_node_ids()
+                    .iter()
+                    .find(|id| **id == pubkey)
+                {
+                    Some(_) => break,
+                    None => tokio::time::sleep(Duration::from_millis(10)).await,
+                }
+            }
+        }
+        None => {
+            println!("ERROR: failed to connect to peer");
+            return Err(());
+        }
+    }
+    Ok(())
 }

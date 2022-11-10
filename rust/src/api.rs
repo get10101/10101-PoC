@@ -16,7 +16,7 @@ impl Balance {
 }
 
 pub fn init_wallet(network: Network, path: String) -> Result<()> {
-    wallet::init_wallet(network, Path::new(path.as_str()))
+    wallet::init_wallet(network, Path::new(path.as_str()), 9735)
 }
 
 pub fn get_balance() -> Result<Balance> {
