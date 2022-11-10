@@ -93,4 +93,8 @@ clippy: FORCE
 lint-flutter:
 	flutter analyze --fatal-infos .
 
+## test: Run tests
+test: FORCE
+	cd rust && cargo test
+
 FORCE: ;
