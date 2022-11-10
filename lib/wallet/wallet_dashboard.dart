@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
+import 'package:ten_ten_one/wallet/deposit.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
@@ -32,6 +34,8 @@ class _WalletDashboardState extends State<WalletDashboard> {
   @override
   Widget build(BuildContext context) {
     final seedBackupModel = context.watch<SeedBackupModel>();
+    final bitcoinBalance = context.watch<BitcoinBalance>();
+
     List<Widget> widgets = [
       const Balance(balanceSelector: BalanceSelector.both),
       const Divider(),
@@ -41,6 +45,10 @@ class _WalletDashboardState extends State<WalletDashboard> {
 
     if (!seedBackupModel.backup) {
       widgets.add(const BackupSeedCard());
+    }
+
+    if (bitcoinBalance.amount.asSats == 0) {
+      widgets.add(const DepositBitcoinCard());
     }
 
     final paymentHistory = mockPaymentHistory(10);
@@ -101,6 +109,30 @@ class BackupSeedCard extends StatelessWidget {
                 title: Text('Create Wallet Backup'),
                 subtitle:
                     Text('You have not backed up your wallet yet, make sure you create a backup!'),
+              ),
+            ],
+          ),
+        ));
+  }
+}
+
+class DepositBitcoinCard extends StatelessWidget {
+  const DepositBitcoinCard({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+        onTap: () => {GoRouter.of(context).go(Deposit.route)},
+        child: Card(
+          shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const <Widget>[
+              ListTile(
+                leading: Icon(Icons.currency_bitcoin),
+                title: Text('Deposit Bitcoin'),
+                subtitle: Text(
+                    'Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning'),
               ),
             ],
           ),

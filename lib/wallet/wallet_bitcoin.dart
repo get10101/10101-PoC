@@ -5,11 +5,12 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/mocks/payment_history.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
-import 'package:ten_ten_one/wallet/receive.dart';
-import 'package:ten_ten_one/wallet/send.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:ten_ten_one/wallet/withdraw.dart';
+
+import 'deposit.dart';
 
 class WalletBitcoin extends StatefulWidget {
   const WalletBitcoin({Key? key}) : super(key: key);
@@ -74,7 +75,7 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
             foregroundColor: Colors.white,
             label: 'Deposit',
             labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(Receive.route),
+            onTap: () => GoRouter.of(context).go(Deposit.route),
           ),
           SpeedDialChild(
             child: const Icon(Icons.upload_sharp),
@@ -82,7 +83,7 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
             foregroundColor: Colors.white,
             label: 'Withdraw',
             labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(Send.route),
+            onTap: () => GoRouter.of(context).go(Withdraw.route),
           ),
         ],
       ),
