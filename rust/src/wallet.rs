@@ -1,3 +1,6 @@
+use crate::lightning;
+use crate::lightning::LightningSystem;
+use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
 use anyhow::anyhow;
 use anyhow::bail;
@@ -9,7 +12,6 @@ use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::wallet::AddressIndex;
 use bdk::KeychainKind;
-use bdk::SyncOptions;
 use state::Storage;
 use std::path::Path;
 use std::sync::Mutex;
@@ -28,23 +30,12 @@ pub enum Network {
 }
 
 pub struct Wallet {
-    blockchain: ElectrumBlockchain,
-    wallet: bdk::Wallet<MemoryDatabase>,
     seed: Bip39Seed,
-}
-
-impl From<Network> for bitcoin::Network {
-    fn from(network: Network) -> Self {
-        match network {
-            Network::Mainnet => bitcoin::Network::Bitcoin,
-            Network::Testnet => bitcoin::Network::Testnet,
-            Network::Regtest => bitcoin::Network::Regtest,
-        }
-    }
+    lightning: LightningSystem,
 }
 
 impl Wallet {
-    pub fn new(network: Network, data_dir: &Path) -> Result<Wallet> {
+    pub async fn new(network: Network, data_dir: &Path, listening_port: u16) -> Result<Wallet> {
         let electrum_url = match network {
             Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
@@ -64,30 +55,48 @@ impl Wallet {
         let client = Client::new(electrum_url)?;
         let blockchain = ElectrumBlockchain::from(client);
 
-        let wallet = bdk::Wallet::new(
+        let bdk_wallet = bdk::Wallet::new(
             bdk::template::Bip84(ext_priv_key, KeychainKind::External),
             Some(bdk::template::Bip84(ext_priv_key, KeychainKind::Internal)),
             ext_priv_key.network,
             MemoryDatabase::new(),
         )?;
 
-        Ok(Wallet {
-            blockchain,
-            wallet,
-            seed,
-        })
+        let lightning_wallet = bdk_ldk::LightningWallet::new(Box::new(blockchain), bdk_wallet);
+
+        // Lightning seed needs to be shorter
+        let lightning_seed = &seed.seed()[0..32].try_into()?;
+
+        let lightning = lightning::setup(lightning_wallet, network, &data_dir, lightning_seed)?;
+        lightning::run_ldk(&lightning, listening_port, &data_dir).await?;
+
+        Ok(Wallet { lightning, seed })
     }
 
     pub fn sync(&self) -> Result<bdk::Balance> {
-        self.wallet.sync(&self.blockchain, SyncOptions::default())?;
+        self.lightning
+            .wallet
+            .sync(self.lightning.confirmables())
+            .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
+        self.get_balance()
+    }
 
-        let balance = self.wallet.get_balance()?;
+    fn get_balance(&self) -> Result<bdk::Balance> {
+        let balance = self
+            .lightning
+            .wallet
+            .get_balance()
+            .map_err(|_| anyhow!("Could not retrieve bdk wallet balance"))?;
         tracing::debug!(%balance, "Wallet balance");
         Ok(balance)
     }
 
     pub fn get_address(&self) -> Result<bitcoin::Address> {
-        let address = self.wallet.get_address(AddressIndex::LastUnused)?;
+        let address = self
+            .lightning
+            .wallet
+            .get_wallet()
+            .get_address(AddressIndex::LastUnused)?;
         tracing::debug!(%address, "Current wallet address");
         Ok(address.address)
     }
@@ -103,9 +112,11 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
+pub async fn init_wallet(network: Network, data_dir: &Path, listening_port: u16) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(Wallet::new(network, data_dir)?));
+    WALLET.set(Mutex::new(
+        Wallet::new(network, data_dir, listening_port).await?,
+    ));
     Ok(())
 }
 
@@ -123,20 +134,35 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
     Ok(seed_phrase)
 }
 
-#[cfg(test)]
-mod tests {
+pub async fn open_channel(
+    peer_info: PeerInfo,
+    channel_amount_sat: u64,
+    data_dir: &Path,
+) -> Result<()> {
+    let (peer_manager, channel_manager) = {
+        let lightning = &get_wallet()?.lightning;
+        (
+            lightning.peer_manager.clone(),
+            lightning.channel_manager.clone(),
+        )
+    };
 
-    use std::env::temp_dir;
+    lightning::open_channel(
+        peer_manager,
+        channel_manager,
+        peer_info,
+        channel_amount_sat,
+        data_dir,
+    )
+    .await
+}
 
-    use crate::wallet;
-
-    use super::Network;
-
-    #[test]
-    fn wallet_support_for_different_bitcoin_networks() {
-        wallet::init_wallet(Network::Mainnet, &temp_dir()).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Testnet, &temp_dir()).expect("wallet to be initialized");
-        wallet::init_wallet(Network::Regtest, &temp_dir())
-            .expect_err("wallet should not succeed to initialize");
+impl From<Network> for bitcoin::Network {
+    fn from(network: Network) -> Self {
+        match network {
+            Network::Mainnet => bitcoin::Network::Bitcoin,
+            Network::Testnet => bitcoin::Network::Testnet,
+            Network::Regtest => bitcoin::Network::Regtest,
+        }
     }
 }
