@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart' hide Divider;
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
-import 'package:ten_ten_one/payment_history_list_item.dart';
-import 'package:ten_ten_one/receive.dart';
-import 'package:ten_ten_one/seed.dart';
-import 'package:ten_ten_one/send.dart';
-import 'package:ten_ten_one/service_card.dart';
+import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
+import 'package:ten_ten_one/wallet/receive.dart';
+import 'package:ten_ten_one/wallet/send.dart';
+import 'package:ten_ten_one/wallet/service_card.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
-import 'mocks/payment_history.dart';
+import '../mocks/payment_history.dart';
 
-class Dashboard extends StatefulWidget {
-  const Dashboard({Key? key}) : super(key: key);
+class WalletLightning extends StatefulWidget {
+  const WalletLightning({Key? key}) : super(key: key);
+
+  static const name = "Lightning Wallet";
+  static const navigationLabel = "Lightning";
+  static const icon = Icons.bolt;
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  State<WalletLightning> createState() => _WalletLightningState();
 }
 
-class _DashboardState extends State<Dashboard> {
+class _WalletLightningState extends State<WalletLightning> {
   @override
   void initState() {
     super.initState();
@@ -31,17 +31,10 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final seedBackupModel = context.watch<SeedBackupModel>();
     List<Widget> widgets = [
-      const Balance(),
+      const Balance(balanceSelector: BalanceSelector.lightning),
       const Divider(),
-      const ServiceNavigation(),
-      const Divider()
     ];
-
-    if (!seedBackupModel.backup) {
-      widgets.add(const BackupSeedCard());
-    }
 
     final paymentHistory = mockPaymentHistory(10);
 
@@ -58,10 +51,6 @@ class _DashboardState extends State<Dashboard> {
     widgets.add(paymentHistoryList);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(ServiceGroup.wallet.label),
-      ),
-      drawer: const Menu(),
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
       floatingActionButton: SpeedDial(
         icon: Icons.import_export,
@@ -120,29 +109,5 @@ class ServiceNavigation extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class BackupSeedCard extends StatelessWidget {
-  const BackupSeedCard({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () => {GoRouter.of(context).go(Seed.route)},
-        child: Card(
-          shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const <Widget>[
-              ListTile(
-                leading: Icon(Icons.warning),
-                title: Text('Create Wallet Backup'),
-                subtitle:
-                    Text('You have not backed up your wallet yet, make sure you create a backup!'),
-              ),
-            ],
-          ),
-        ));
   }
 }

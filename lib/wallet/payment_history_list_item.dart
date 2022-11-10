@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'models/payment.model.dart';
+import '../models/payment.model.dart';
 
 @immutable
 class PaymentHistoryListItem extends StatelessWidget {
-  final PaymentHistoryItem data;
+  final PaymentHistoryItemItem data;
 
   const PaymentHistoryListItem({
     super.key,
@@ -27,6 +27,18 @@ class PaymentHistoryListItem extends StatelessWidget {
 
     String label;
     switch (data.type) {
+      case PaymentType.deposit:
+        label = "Deposit Bitcoin";
+        break;
+      case PaymentType.withdraw:
+        label = "Withdraw Bitcoin";
+        break;
+      case PaymentType.channelOpen:
+        label = "Channel Opened";
+        break;
+      case PaymentType.channelClose:
+        label = "Channel Closed";
+        break;
       case PaymentType.send:
         label = "Payment Sent";
         break;
