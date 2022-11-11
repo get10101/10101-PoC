@@ -2,6 +2,7 @@ use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use state::Storage;
+use std::collections::BTreeMap;
 use std::sync::Once;
 use time::macros::format_description;
 use tracing_subscriber::filter::Directive;
@@ -54,18 +55,62 @@ where
         event: &tracing::Event<'_>,
         _ctx: tracing_subscriber::layer::Context<'_, S>,
     ) {
-        let metadata = event.metadata();
+        let mut fields = BTreeMap::new();
+        let mut visitor = Visitor(&mut fields);
+        event.record(&mut visitor);
 
-        let msg = format!("{}: {}", metadata.name(), metadata.fields());
+        let fmt_fields = fields
+            .iter()
+            .map(|field| format!("{}: {}", field.0, field.1))
+            .collect::<Vec<String>>()
+            .join(",");
+        let msg = format!("{}: {}", event.metadata().name(), fmt_fields);
 
         LOG_STREAM_SINK
             .try_get()
             .expect("StreamSink from Flutter to be initialised")
             .add(LogEntry {
                 msg,
-                target: metadata.target().to_string(),
-                level: metadata.level().to_string(),
+                target: event.metadata().target().to_string(),
+                level: event.metadata().level().to_string(),
             });
+    }
+}
+
+struct Visitor<'a>(&'a mut BTreeMap<String, String>);
+
+impl<'a> tracing::field::Visit for Visitor<'a> {
+    fn record_f64(&mut self, field: &tracing::field::Field, value: f64) {
+        self.0.insert(field.name().to_string(), value.to_string());
+    }
+
+    fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
+        self.0.insert(field.name().to_string(), value.to_string());
+    }
+
+    fn record_u64(&mut self, field: &tracing::field::Field, value: u64) {
+        self.0.insert(field.name().to_string(), value.to_string());
+    }
+
+    fn record_bool(&mut self, field: &tracing::field::Field, value: bool) {
+        self.0.insert(field.name().to_string(), value.to_string());
+    }
+
+    fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
+        self.0.insert(field.name().to_string(), value.to_string());
+    }
+
+    fn record_error(
+        &mut self,
+        field: &tracing::field::Field,
+        value: &(dyn std::error::Error + 'static),
+    ) {
+        self.0.insert(field.name().to_string(), value.to_string());
+    }
+
+    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
+        self.0
+            .insert(field.name().to_string(), format!("{:?}", value));
     }
 }
 
