@@ -25,7 +25,7 @@ use std::net::ToSocketAddrs;
 use std::path::Path;
 use std::sync::Arc;
 
-pub(crate) struct FilesystemLogger {
+pub struct FilesystemLogger {
     data_dir: String,
 }
 impl FilesystemLogger {
@@ -46,7 +46,7 @@ impl Logger for FilesystemLogger {
             // precision for message-receipt information as it makes log entries a target for
             // deanonymization attacks. For testing, however, its quite useful.
             Utc::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-            record.level.to_string(),
+            record.level,
             record.module_path,
             record.line,
             raw_log

@@ -2,6 +2,7 @@ use crate::disk;
 use crate::disk::FilesystemLogger;
 use anyhow::anyhow;
 use anyhow::bail;
+use anyhow::Context;
 use anyhow::Result;
 use bdk::bitcoin;
 use bdk::bitcoin::blockdata::constants::genesis_block;
@@ -29,9 +30,6 @@ use lightning::ln::channelmanager::SimpleArcChannelManager;
 use lightning::ln::peer_handler::IgnoringMessageHandler;
 use lightning::ln::peer_handler::MessageHandler;
 use lightning::ln::peer_handler::SimpleArcPeerManager;
-use lightning::ln::PaymentHash;
-use lightning::ln::PaymentPreimage;
-use lightning::ln::PaymentSecret;
 use lightning::onion_message::SimpleArcOnionMessenger;
 use lightning::routing::gossip::NetworkGraph;
 use lightning::routing::gossip::P2PGossipSync;
@@ -47,7 +45,6 @@ use lightning_net_tokio::SocketDescriptor;
 use lightning_persister::FilesystemPersister;
 use rand::thread_rng;
 use rand::RngCore;
-use std::collections::HashMap;
 use std::fmt;
 use std::iter;
 use std::net::SocketAddr;
@@ -58,15 +55,14 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::time::SystemTime;
-use tokio::runtime::Runtime;
 
 pub struct LightningSystem {
     // TODO: do we really need all these Arcs? I'm just following examples for
     // now, but it might be an overkill here
     pub wallet: Arc<BdkLdkWallet>,
-    chain_monitor: Arc<ChainMonitor>,
-    channel_manager: Arc<ChannelManager>,
-    peer_manager: Arc<PeerManager>,
+    pub chain_monitor: Arc<ChainMonitor>,
+    pub channel_manager: Arc<ChannelManager>,
+    pub peer_manager: Arc<PeerManager>,
 }
 
 pub struct PeerInfo {
@@ -76,7 +72,7 @@ pub struct PeerInfo {
 
 impl ToString for PeerInfo {
     fn to_string(&self) -> String {
-        format!("{}@{}", self.pubkey.to_string(), self.peer_addr.to_string())
+        format!("{}@{}", self.pubkey, self.peer_addr)
     }
 }
 
@@ -87,41 +83,28 @@ impl LightningSystem {
             &*self.chain_monitor as &dyn chain::Confirm,
         ]
     }
-
-    pub async fn open_channel(
-        &self,
-        peer_info: PeerInfo,
-        channel_amount_sat: u64,
-        data_dir: &Path,
-    ) -> Result<()> {
-        connect_peer_if_necessary(
-            peer_info.pubkey,
-            peer_info.peer_addr,
-            self.peer_manager.clone(),
-        )
-        .await?;
-
-        let _temp_channel_id = self
-            .channel_manager
-            .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, None)
-            .map_err(|_| anyhow!("Could not create channel"));
-
-        let peer_data_path = format!(
-            "{}/channel_peer_data",
-            data_dir.to_string_lossy().to_string()
-        );
-        let _ = disk::persist_channel_peer(Path::new(&peer_data_path), &peer_info.to_string());
-
-        tracing::info!("Channel has been successfully created");
-
-        Ok(())
-    }
 }
 
-pub(crate) enum HTLCStatus {
-    Pending,
-    Succeeded,
-    Failed,
+pub async fn open_channel(
+    peer_manager: Arc<PeerManager>,
+    channel_manager: Arc<ChannelManager>,
+    peer_info: PeerInfo,
+    channel_amount_sat: u64,
+    data_dir: &Path,
+) -> Result<()> {
+    connect_peer_if_necessary(peer_info.pubkey, peer_info.peer_addr, peer_manager).await?;
+
+    let _temp_channel_id = channel_manager
+        .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, None)
+        .map_err(|_| anyhow!("Could not create channel"))?;
+
+    let path = data_dir.join("channel_peer_data");
+    disk::persist_channel_peer(&path, &peer_info.to_string())
+        .context("could not persist channel peer")?;
+
+    tracing::info!("Channel has been successfully created");
+
+    Ok(())
 }
 
 pub(crate) struct MillisatAmount(Option<u64>);
@@ -134,15 +117,6 @@ impl fmt::Display for MillisatAmount {
         }
     }
 }
-
-pub(crate) struct PaymentInfo {
-    preimage: Option<PaymentPreimage>,
-    secret: Option<PaymentSecret>,
-    status: HTLCStatus,
-    amt_msat: MillisatAmount,
-}
-
-pub(crate) type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
 
 pub(crate) type BdkLdkWallet = bdk_ldk::LightningWallet<ElectrumBlockchain, MemoryDatabase>;
 
@@ -260,7 +234,7 @@ pub async fn setup(
         .force_announced_channel_preference = false;
 
     let (_channel_manager_blockhash, channel_manager) = {
-        if let Ok(mut f) = std::fs::File::open(format!("{}/manager", ldk_data_dir.clone())) {
+        if let Ok(mut f) = std::fs::File::open(format!("{ldk_data_dir}/manager")) {
             let mut channel_monitor_mut_references = Vec::new();
             for (_, channel_monitor) in channelmonitors.iter_mut() {
                 channel_monitor_mut_references.push(channel_monitor);
@@ -343,7 +317,7 @@ pub async fn setup(
 
     // Step 12: Optional: Initialize the P2PGossipSync
     let genesis = genesis_block(network).header.block_hash();
-    let network_graph_path = format!("{}/network_graph", ldk_data_dir.clone());
+    let network_graph_path = format!("{ldk_data_dir}/network_graph");
     let network_graph = Arc::new(disk::read_network(
         Path::new(&network_graph_path),
         genesis,
@@ -370,7 +344,7 @@ pub async fn setup(
     let lightning_msg_handler = MessageHandler {
         chan_handler: channel_manager.clone(),
         route_handler: gossip_sync.clone(),
-        onion_message_handler: onion_messenger.clone(),
+        onion_message_handler: onion_messenger,
     };
     let peer_manager: Arc<PeerManager> = Arc::new(PeerManager::new(
         lightning_msg_handler,
@@ -387,7 +361,7 @@ pub async fn setup(
     let stop_listen_connect = Arc::new(AtomicBool::new(false));
     let stop_listen = Arc::clone(&stop_listen_connect);
     tokio::spawn(async move {
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", listening_port))
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{listening_port}"))
             .await
             .expect("Failed to bind to listen port - is something else already listening on it?");
         loop {
@@ -415,7 +389,8 @@ pub async fn setup(
     };
 
     // Step 17: Initialize routing ProbabilisticScorer
-    let scorer_path = format!("{}/scorer", ldk_data_dir.clone());
+    let scorer_path = format!("{ldk_data_dir}/scorer");
+
     let scorer = Arc::new(Mutex::new(disk::read_scorer(
         Path::new(&scorer_path),
         Arc::clone(&network_graph),
@@ -424,7 +399,7 @@ pub async fn setup(
 
     // Step 18: Create InvoicePayer
     let router = DefaultRouter::new(
-        network_graph.clone(),
+        network_graph,
         logger.clone(),
         keys_manager.get_secure_random_bytes(),
         scorer.clone(),
@@ -447,12 +422,12 @@ pub async fn setup(
         channel_manager.clone(),
         GossipSync::p2p(gossip_sync.clone()),
         peer_manager.clone(),
-        logger.clone(),
-        Some(scorer.clone()),
+        logger,
+        Some(scorer),
     );
 
     // Reconnect to channel peers if possible.
-    let peer_data_path = format!("{}/channel_peer_data", ldk_data_dir.clone());
+    let peer_data_path = format!("{ldk_data_dir}/channel_peer_data");
     let mut info = disk::read_channel_peer_data(Path::new(&peer_data_path))?;
 
     for (pubkey, peer_addr) in info.drain() {
@@ -475,6 +450,7 @@ pub async fn setup(
 }
 
 pub async fn handle_ldk_event(event: &Event) {
+    tracing::debug!(?event, "Received lightning event");
     match event {
         Event::FundingGenerationReady { .. } => {} // insert handling code
         Event::PaymentReceived { .. } => {}        // insert handling code

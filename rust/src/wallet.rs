@@ -130,10 +130,22 @@ pub async fn open_channel(
     channel_amount_sat: u64,
     data_dir: &Path,
 ) -> Result<()> {
-    get_wallet()?
-        .lightning
-        .open_channel(peer_info, channel_amount_sat, data_dir)
-        .await
+    let (peer_manager, channel_manager) = {
+        let lightning = &get_wallet()?.lightning;
+        (
+            lightning.peer_manager.clone(),
+            lightning.channel_manager.clone(),
+        )
+    };
+
+    lightning::open_channel(
+        peer_manager,
+        channel_manager,
+        peer_info,
+        channel_amount_sat,
+        data_dir,
+    )
+    .await
 }
 
 impl From<Network> for bitcoin::Network {
