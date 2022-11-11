@@ -1,4 +1,5 @@
-use std::path::Path;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use anyhow::bail;
 use anyhow::Result;
@@ -12,23 +13,24 @@ use sha2::Sha256;
 
 #[derive(Clone)]
 pub struct Bip39Seed {
+    path: PathBuf,
     mnemonic: Mnemonic,
 }
 
 impl Bip39Seed {
-    pub fn new() -> Result<Self> {
+    pub fn new(path: PathBuf) -> Result<Self> {
         let mut rng = rand::thread_rng();
         let mnemonic = Mnemonic::generate_in_with(&mut rng, Language::English, 12)?;
-        Ok(Self { mnemonic })
+        Ok(Self { mnemonic, path })
     }
 
     /// Initialise a [`Seed`] from a path.
     /// Generates new seed if there was no seed found in the given path
-    pub fn initialize(seed_file: &Path) -> Result<Self> {
+    pub fn initialize(seed_file: PathBuf) -> Result<Self> {
         let seed = if !seed_file.exists() {
             tracing::info!("No seed found. Generating new seed");
-            let seed = Self::new()?;
-            seed.write_to(seed_file)?;
+            let seed = Self::new(seed_file)?;
+            seed.write(false)?;
             seed
         } else {
             Bip39Seed::read_from(seed_file)?
@@ -40,6 +42,14 @@ impl Bip39Seed {
         // passing an empty string here is the expected argument if the seed should not be
         // additionally password protected (according to https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki#from-mnemonic-to-seed)
         self.mnemonic.to_seed_normalized("")
+    }
+
+    pub fn restore(&mut self, mnemonic: String) -> Result<()> {
+        // TODO: we should probably think about creating a backup of the existing seed instead of
+        // simply overwriting it.
+        self.mnemonic = Mnemonic::from_str(&mnemonic)?;
+        self.write(true)?;
+        Ok(())
     }
 
     pub fn derive_extended_priv_key(&self, network: Network) -> Result<ExtendedPrivKey> {
@@ -58,31 +68,21 @@ impl Bip39Seed {
     }
 
     // Read the entropy used to generate Mnemonic from disk
-    fn read_from(path: &Path) -> Result<Self> {
-        let bytes = std::fs::read(path)?;
-
-        let seed: Bip39Seed = TryInto::try_into(bytes)
-            .map_err(|_| anyhow::anyhow!("Cannot read the stored entropy"))?;
-        Ok(seed)
+    fn read_from(path: PathBuf) -> Result<Self> {
+        let bytes = std::fs::read(path.clone())?;
+        let mnemonic = Mnemonic::from_entropy(&bytes)?;
+        Ok(Bip39Seed { mnemonic, path })
     }
 
     // Store the entropy used to generate Mnemonic on disk
-    fn write_to(&self, path: &Path) -> Result<()> {
-        if path.exists() {
-            let path = path.display();
+    fn write(&self, restore: bool) -> Result<()> {
+        if self.path.exists() && !restore {
+            let path = self.path.display();
             bail!("Refusing to overwrite file at {path}")
         }
-        std::fs::write(path, &self.mnemonic.to_entropy())?;
+        std::fs::write(self.path.as_path(), &self.mnemonic.to_entropy())?;
 
         Ok(())
-    }
-}
-
-impl TryFrom<Vec<u8>> for Bip39Seed {
-    type Error = anyhow::Error;
-    fn try_from(bytes: Vec<u8>) -> Result<Self, Self::Error> {
-        let mnemonic = Mnemonic::from_entropy(&bytes)?;
-        Ok(Bip39Seed { mnemonic })
     }
 }
 
@@ -94,7 +94,8 @@ mod tests {
 
     #[test]
     fn create_bip39_seed() {
-        let seed = Bip39Seed::new().expect("seed to be generated");
+        let path = temp_dir();
+        let seed = Bip39Seed::new(path).expect("seed to be generated");
         let phrase = seed.get_seed_phrase();
         assert_eq!(12, phrase.len());
     }
@@ -103,8 +104,8 @@ mod tests {
     fn reinitialised_seed_is_the_same() {
         let mut path = temp_dir();
         path.push("seed");
-        let seed_1 = Bip39Seed::initialize(&path).unwrap();
-        let seed_2 = Bip39Seed::initialize(&path).unwrap();
+        let seed_1 = Bip39Seed::initialize(path.clone()).unwrap();
+        let seed_2 = Bip39Seed::initialize(path).unwrap();
         assert_eq!(
             seed_1.mnemonic, seed_2.mnemonic,
             "Reinitialised wallet should contain the same mnemonic"
