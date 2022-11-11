@@ -78,10 +78,10 @@ impl Wallet {
             .wallet
             .sync(self.lightning.confirmables())
             .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
-        self.get_balance()
+        self.get_bdk_balance()
     }
 
-    fn get_balance(&self) -> Result<bdk::Balance> {
+    fn get_bdk_balance(&self) -> Result<bdk::Balance> {
         let balance = self
             .lightning
             .wallet
