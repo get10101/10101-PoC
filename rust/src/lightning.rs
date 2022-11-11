@@ -49,6 +49,7 @@ use std::fmt;
 use std::iter;
 use std::net::SocketAddr;
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -67,6 +68,7 @@ pub struct LightningSystem {
     pub keys_manager: Arc<KeysManager>,
     pub persister: Arc<FilesystemPersister>,
     pub gossip_sync: Arc<LdkGossipSync>,
+    pub data_dir: PathBuf,
 }
 
 pub struct PeerInfo {
@@ -372,17 +374,14 @@ pub fn setup(
         keys_manager,
         persister,
         gossip_sync,
+        data_dir: Path::new(&ldk_data_dir).to_path_buf(),
     };
 
     Ok(system)
 }
 
-pub async fn run_ldk(
-    system: &LightningSystem,
-    listening_port: u16,
-    ldk_data_dir: &Path,
-) -> Result<()> {
-    let ldk_data_dir = ldk_data_dir.to_string_lossy().to_string();
+pub async fn run_ldk(system: &LightningSystem, listening_port: u16) -> Result<()> {
+    let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
     let peer_manager_connection_handler = system.peer_manager.clone();
     let stop_listen_connect = Arc::new(AtomicBool::new(false));
     let stop_listen = Arc::clone(&stop_listen_connect);

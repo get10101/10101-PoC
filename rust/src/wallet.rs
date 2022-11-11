@@ -68,7 +68,7 @@ impl Wallet {
         let lightning_seed = &seed.seed()[0..32].try_into()?;
 
         let lightning = lightning::setup(lightning_wallet, network, &data_dir, lightning_seed)?;
-        lightning::run_ldk(&lightning, listening_port, &data_dir).await?;
+        lightning::run_ldk(&lightning, listening_port).await?;
 
         Ok(Wallet { lightning, seed })
     }
@@ -134,16 +134,13 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
     Ok(seed_phrase)
 }
 
-pub async fn open_channel(
-    peer_info: PeerInfo,
-    channel_amount_sat: u64,
-    data_dir: &Path,
-) -> Result<()> {
-    let (peer_manager, channel_manager) = {
+pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Result<()> {
+    let (peer_manager, channel_manager, data_dir) = {
         let lightning = &get_wallet()?.lightning;
         (
             lightning.peer_manager.clone(),
             lightning.channel_manager.clone(),
+            lightning.data_dir.clone(),
         )
     };
 
@@ -152,7 +149,7 @@ pub async fn open_channel(
         channel_manager,
         peer_info,
         channel_amount_sat,
-        data_dir,
+        data_dir.as_path(),
     )
     .await
 }

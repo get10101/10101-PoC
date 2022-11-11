@@ -42,16 +42,10 @@ pub fn get_balance() -> Result<Balance> {
 pub fn get_address() -> Result<Address> {
     Ok(Address::new(wallet::get_address()?.to_string()))
 }
-pub fn open_channel(
-    peer_pubkey_and_ip_addr: String,
-    channel_amount_sat: u64,
-    path: String,
-) -> Result<()> {
+pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) -> Result<()> {
     let peer_info = parse_peer_info(peer_pubkey_and_ip_addr)?;
     let rt = Runtime::new()?;
-    rt.block_on(async {
-        wallet::open_channel(peer_info, channel_amount_sat, Path::new(path.as_str())).await
-    })
+    rt.block_on(async { wallet::open_channel(peer_info, channel_amount_sat).await })
 }
 
 /// Initialise logging infrastructure for Rust
