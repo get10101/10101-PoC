@@ -37,6 +37,7 @@ impl FilesystemLogger {
         }
     }
 }
+
 impl Logger for FilesystemLogger {
     fn log(&self, record: &Record) {
         let raw_log = record.args.to_string();

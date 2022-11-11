@@ -56,13 +56,17 @@ use std::sync::Mutex;
 use std::time::Duration;
 use std::time::SystemTime;
 
+/// Container to keep all the components of the lightning network in one place
 pub struct LightningSystem {
-    // TODO: do we really need all these Arcs? I'm just following examples for
-    // now, but it might be an overkill here
     pub wallet: Arc<BdkLdkWallet>,
     pub chain_monitor: Arc<ChainMonitor>,
     pub channel_manager: Arc<ChannelManager>,
     pub peer_manager: Arc<PeerManager>,
+    pub network_graph: Arc<NetGraph>,
+    pub logger: Arc<FilesystemLogger>,
+    pub keys_manager: Arc<KeysManager>,
+    pub persister: Arc<FilesystemPersister>,
+    pub gossip_sync: Arc<LdkGossipSync>,
 }
 
 pub struct PeerInfo {
@@ -120,6 +124,9 @@ impl fmt::Display for MillisatAmount {
 
 pub(crate) type BdkLdkWallet = bdk_ldk::LightningWallet<ElectrumBlockchain, MemoryDatabase>;
 
+type LdkGossipSync =
+    P2PGossipSync<Arc<NetGraph>, Arc<dyn chain::Access + Send + Sync>, Arc<FilesystemLogger>>;
+
 type ChainMonitor = chainmonitor::ChainMonitor<
     InMemorySigner,
     Arc<dyn Filter + Send + Sync>,
@@ -161,12 +168,11 @@ type OnionMessenger = SimpleArcOnionMessenger<FilesystemLogger>;
 /// Set up lightning network system
 ///
 /// Heavily based on the sample project, including comments
-pub async fn setup(
+pub fn setup(
     lightning_wallet: BdkLdkWallet,
     network: bitcoin::Network,
     ldk_data_dir: &Path,
     seed: &[u8; 32],
-    listening_port: u16,
 ) -> Result<LightningSystem> {
     let lightning_wallet = Arc::new(lightning_wallet);
     let ldk_data_dir = ldk_data_dir.to_string_lossy().to_string();
@@ -323,6 +329,7 @@ pub async fn setup(
         genesis,
         logger.clone(),
     ));
+
     let gossip_sync = Arc::new(P2PGossipSync::new(
         Arc::clone(&network_graph),
         None::<Arc<dyn chain::Access + Send + Sync>>,
@@ -355,9 +362,28 @@ pub async fn setup(
         IgnoringMessageHandler {},
     ));
 
-    // ## Running LDK
-    // Step 14: Initialize networking
-    let peer_manager_connection_handler = peer_manager.clone();
+    let system = LightningSystem {
+        wallet: lightning_wallet,
+        chain_monitor,
+        channel_manager,
+        peer_manager,
+        network_graph,
+        logger,
+        keys_manager,
+        persister,
+        gossip_sync,
+    };
+
+    Ok(system)
+}
+
+pub async fn run_ldk(
+    system: &LightningSystem,
+    listening_port: u16,
+    ldk_data_dir: &Path,
+) -> Result<()> {
+    let ldk_data_dir = ldk_data_dir.to_string_lossy().to_string();
+    let peer_manager_connection_handler = system.peer_manager.clone();
     let stop_listen_connect = Arc::new(AtomicBool::new(false));
     let stop_listen = Arc::clone(&stop_listen_connect);
     tokio::spawn(async move {
@@ -390,24 +416,23 @@ pub async fn setup(
 
     // Step 17: Initialize routing ProbabilisticScorer
     let scorer_path = format!("{ldk_data_dir}/scorer");
-
     let scorer = Arc::new(Mutex::new(disk::read_scorer(
         Path::new(&scorer_path),
-        Arc::clone(&network_graph),
-        Arc::clone(&logger),
+        Arc::clone(&system.network_graph),
+        Arc::clone(&system.logger),
     )));
 
     // Step 18: Create InvoicePayer
     let router = DefaultRouter::new(
-        network_graph,
-        logger.clone(),
-        keys_manager.get_secure_random_bytes(),
+        system.network_graph.clone(),
+        system.logger.clone(),
+        system.keys_manager.get_secure_random_bytes(),
         scorer.clone(),
     );
     let invoice_payer = Arc::new(InvoicePayer::new(
-        channel_manager.clone(),
+        system.channel_manager.clone(),
         router,
-        logger.clone(),
+        system.logger.clone(),
         event_handler,
         payment::Retry::Timeout(Duration::from_secs(10)),
     ));
@@ -416,37 +441,30 @@ pub async fn setup(
     // TODO: Do we need to stop the background processor on the wallet, or will it be sufficient to
     // simple kill it with the app.
     let _background_processor = BackgroundProcessor::start(
-        persister,
+        system.persister.clone(),
         invoice_payer.clone(),
-        chain_monitor.clone(),
-        channel_manager.clone(),
-        GossipSync::p2p(gossip_sync.clone()),
-        peer_manager.clone(),
-        logger,
+        system.chain_monitor.clone(),
+        system.channel_manager.clone(),
+        GossipSync::p2p(system.gossip_sync.clone()),
+        system.peer_manager.clone(),
+        system.logger.clone(),
         Some(scorer),
     );
-
-    // Reconnect to channel peers if possible.
     let peer_data_path = format!("{ldk_data_dir}/channel_peer_data");
     let mut info = disk::read_channel_peer_data(Path::new(&peer_data_path))?;
-
     for (pubkey, peer_addr) in info.drain() {
-        for chan_info in channel_manager.list_channels() {
+        for chan_info in system.channel_manager.list_channels() {
             if pubkey == chan_info.counterparty.node_id {
                 block_on(async {
                     let _ =
-                        connect_peer_if_necessary(pubkey, peer_addr, peer_manager.clone()).await;
+                        connect_peer_if_necessary(pubkey, peer_addr, system.peer_manager.clone())
+                            .await;
                 });
             }
         }
     }
-
-    Ok(LightningSystem {
-        wallet: lightning_wallet,
-        chain_monitor,
-        channel_manager,
-        peer_manager,
-    })
+    tracing::info!("Lightning network started");
+    Ok(())
 }
 
 pub async fn handle_ldk_event(event: &Event) {

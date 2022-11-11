@@ -66,14 +66,8 @@ impl Wallet {
         // Lightning seed needs to be shorter
         let lightning_seed = &seed.seed()[0..32].try_into()?;
 
-        let lightning = lightning::setup(
-            lightning_wallet,
-            network,
-            &data_dir,
-            lightning_seed,
-            listening_port,
-        )
-        .await?;
+        let lightning = lightning::setup(lightning_wallet, network, &data_dir, lightning_seed)?;
+        lightning::run_ldk(&lightning, listening_port, &data_dir).await?;
 
         Ok(Wallet { lightning, seed })
     }
