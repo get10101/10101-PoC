@@ -13,6 +13,7 @@ import 'package:ten_ten_one/wallet/service_card.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 
 import '../mocks/payment_history.dart';
+import 'open_channel.dart';
 
 class WalletDashboard extends StatefulWidget {
   const WalletDashboard({Key? key}) : super(key: key);
@@ -35,6 +36,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
   Widget build(BuildContext context) {
     final seedBackupModel = context.watch<SeedBackupModel>();
     final bitcoinBalance = context.watch<BitcoinBalance>();
+    final lightningBalance = context.watch<LightningBalance>();
 
     List<Widget> widgets = [
       const Balance(balanceSelector: BalanceSelector.both),
@@ -49,6 +51,10 @@ class _WalletDashboardState extends State<WalletDashboard> {
 
     if (bitcoinBalance.amount.asSats == 0) {
       widgets.add(const DepositBitcoinCard());
+    }
+
+    if (bitcoinBalance.amount.asSats != 0 && lightningBalance.amount.asSats == 0) {
+      widgets.add(const OpenChannelCard());
     }
 
     final paymentHistory = mockPaymentHistory(10);
@@ -133,6 +139,29 @@ class DepositBitcoinCard extends StatelessWidget {
                 title: Text('Deposit Bitcoin'),
                 subtitle: Text(
                     'Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning'),
+              ),
+            ],
+          ),
+        ));
+  }
+}
+
+class OpenChannelCard extends StatelessWidget {
+  const OpenChannelCard({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+        onTap: () => {GoRouter.of(context).go(OpenChannel.route)},
+        child: Card(
+          shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const <Widget>[
+              ListTile(
+                leading: Icon(Icons.launch),
+                title: Text('Open Channel'),
+                subtitle: Text('Open a channel to enable trading on Lightning'),
               ),
             ],
           ),

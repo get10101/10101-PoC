@@ -10,6 +10,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/wallet/deposit.dart';
+import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
 import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
@@ -117,6 +118,12 @@ class _TenTenOneState extends State<TenTenOneApp> {
               path: Withdraw.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
                 return const Withdraw();
+              },
+            ),
+            GoRoute(
+              path: OpenChannel.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const OpenChannel();
               },
             ),
           ]),
