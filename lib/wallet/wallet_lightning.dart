@@ -15,10 +15,6 @@ import '../mocks/payment_history.dart';
 class WalletLightning extends StatefulWidget {
   const WalletLightning({Key? key}) : super(key: key);
 
-  static const name = "Lightning Wallet";
-  static const navigationLabel = "Lightning";
-  static const icon = Icons.bolt;
-
   @override
   State<WalletLightning> createState() => _WalletLightningState();
 }
@@ -51,6 +47,7 @@ class _WalletLightningState extends State<WalletLightning> {
     widgets.add(paymentHistoryList);
 
     return Scaffold(
+      appBar: AppBar(title: const Text('Lightning Wallet')),
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
       floatingActionButton: SpeedDial(
         icon: Icons.import_export,

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
@@ -23,9 +24,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/wallet/send.dart';
 import 'package:ten_ten_one/wallet/withdraw.dart';
 
-import 'bridge_generated/bridge_definitions.dart';
-
-import 'ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
+import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 LightningBalance lightningBalanceModel = LightningBalance();
 BitcoinBalance bitcoinBalanceModel = BitcoinBalance();
