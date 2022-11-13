@@ -25,43 +25,9 @@ class PaymentHistoryListItem extends StatelessWidget {
 
     final amountDisplay = data.amount.display(sign: true);
 
-    String label;
-    switch (data.type) {
-      case PaymentType.deposit:
-        label = "Deposit Bitcoin";
-        break;
-      case PaymentType.withdraw:
-        label = "Withdraw Bitcoin";
-        break;
-      case PaymentType.channelOpen:
-        label = "Channel Opened";
-        break;
-      case PaymentType.channelClose:
-        label = "Channel Closed";
-        break;
-      case PaymentType.send:
-        label = "Payment Sent";
-        break;
-      case PaymentType.receive:
-        label = "Payment Received";
-        break;
-      case PaymentType.cfdOpen:
-        label = "CFD Opened";
-        break;
-      case PaymentType.cfdClose:
-        label = "CFD Closed";
-        break;
-      case PaymentType.sportsbetOpen:
-        label = "Sports Bet Started";
-        break;
-      case PaymentType.sportsbetClose:
-        label = "Sports Bet Ended";
-        break;
-    }
-
     return ListTile(
       leading: statusIcon,
-      title: Text(label),
+      title: Text(data.type.display),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,

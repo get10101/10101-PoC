@@ -18,10 +18,6 @@ import 'open_channel.dart';
 class WalletDashboard extends StatefulWidget {
   const WalletDashboard({Key? key}) : super(key: key);
 
-  static const name = "Dashboard";
-  static const navigationLabel = "Dashboard";
-  static const icon = Icons.home;
-
   @override
   State<WalletDashboard> createState() => _WalletDashboardState();
 }
@@ -72,6 +68,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
     widgets.add(paymentHistoryList);
 
     return Scaffold(
+      appBar: AppBar(title: const Text('Dashboard')),
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
     );
   }
