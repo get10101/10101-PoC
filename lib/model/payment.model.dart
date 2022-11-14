@@ -1,4 +1,4 @@
-import 'package:ten_ten_one/model/amount.model.dart';
+import 'package:ten_ten_one/model/amount.dart';
 
 class PaymentHistoryItem {
   PaymentType type;

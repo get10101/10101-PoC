@@ -1,6 +1,6 @@
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/model/amount.model.dart';
+import 'package:ten_ten_one/model/amount.dart';
 import 'package:uuid/uuid.dart';
 
 enum Position {

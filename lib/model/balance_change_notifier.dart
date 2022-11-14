@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/model/amount.model.dart';
+import 'package:ten_ten_one/model/amount.dart';
 
 class LightningBalance extends ChangeNotifier {
   Amount amount = Amount.zero;

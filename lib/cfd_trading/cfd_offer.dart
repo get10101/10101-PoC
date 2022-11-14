@@ -9,7 +9,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
-import 'package:ten_ten_one/model/amount.model.dart';
+import 'package:ten_ten_one/model/amount.dart';
 import 'package:ten_ten_one/model/order.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';

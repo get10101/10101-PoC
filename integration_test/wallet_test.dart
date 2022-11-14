@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/wallet/wallet_dashboard.dart';
 import 'package:ten_ten_one/wallet/wallet_lightning.dart';
-import 'package:ten_ten_one/model/amount.model.dart';
+import 'package:ten_ten_one/model/amount.dart';
 import 'package:ten_ten_one/model/balance_change_notifier.dart';
 import 'package:ten_ten_one/model/seed_backup_model.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
