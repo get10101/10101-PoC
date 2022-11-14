@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/models/order.dart';
+import 'package:ten_ten_one/model/order.dart';
 
 class PositionSelection extends StatefulWidget {
   final ValueChanged<Position?>? onChange;

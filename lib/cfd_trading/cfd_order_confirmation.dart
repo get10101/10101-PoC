@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/models/amount.model.dart';
+import 'package:ten_ten_one/model/amount.model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
-import 'package:ten_ten_one/models/order.dart';
+import 'package:ten_ten_one/model/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 
 class CfdOrderConfirmation extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'models/balance_model.dart';
+import 'model/balance_model.dart';
 
 enum BalanceSelector { bitcoin, lightning, both }
 

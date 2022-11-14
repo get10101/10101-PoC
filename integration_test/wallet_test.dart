@@ -7,9 +7,9 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/wallet/wallet_dashboard.dart';
 import 'package:ten_ten_one/wallet/wallet_lightning.dart';
-import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
-import 'package:ten_ten_one/models/seed_backup_model.dart';
+import 'package:ten_ten_one/model/amount.model.dart';
+import 'package:ten_ten_one/model/balance_model.dart';
+import 'package:ten_ten_one/model/seed_backup_model.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 
 final GoRouter _router = GoRouter(

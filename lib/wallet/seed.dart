@@ -2,7 +2,7 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
-import 'package:ten_ten_one/models/seed_backup_model.dart';
+import 'package:ten_ten_one/model/seed_backup_model.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';

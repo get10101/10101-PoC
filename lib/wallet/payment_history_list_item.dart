@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/payment.model.dart';
+import '../model/payment.model.dart';
 
 @immutable
 class PaymentHistoryListItem extends StatelessWidget {

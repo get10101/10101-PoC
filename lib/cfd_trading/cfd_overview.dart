@@ -8,7 +8,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:ten_ten_one/models/order.dart';
+import 'package:ten_ten_one/model/order.dart';
 
 class CfdOverview extends StatefulWidget {
   const CfdOverview({Key? key}) : super(key: key);
