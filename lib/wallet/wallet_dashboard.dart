@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/model/balance_model.dart';
+import 'package:ten_ten_one/model/balance_change_notifier.dart';
 import 'package:ten_ten_one/model/seed_backup_model.dart';
 import 'package:ten_ten_one/model/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';

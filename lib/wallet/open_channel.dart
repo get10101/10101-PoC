@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
-import '../model/balance_model.dart';
+import '../model/balance_change_notifier.dart';
 
 class OpenChannel extends StatefulWidget {
   const OpenChannel({Key? key}) : super(key: key);
