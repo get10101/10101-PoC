@@ -67,10 +67,12 @@ pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) ->
     let peer_info = parse_peer_info(peer_pubkey_and_ip_addr)?;
     let rt = Runtime::new()?;
     rt.block_on(async {
-        let _ = wallet::open_channel(peer_info, channel_amount_sat).await;
+        if let Err(e) = wallet::open_channel(peer_info, channel_amount_sat).await {
+            tracing::error!("Unable to open channel: {e:#}")
+        }
         loop {
             // looping here indefinitely to keep the connection with the maker alive.
-            std::thread::sleep(Duration::from_secs(1000));
+            tokio::time::sleep(Duration::from_secs(1000)).await;
         }
     });
     Ok(())

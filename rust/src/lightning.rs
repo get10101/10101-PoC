@@ -69,10 +69,13 @@ use std::iter;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::time::SystemTime;
+use tokio::task::JoinHandle;
 
 /// Container to keep all the components of the lightning network in one place
 #[derive(Clone)]
@@ -523,6 +526,110 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
 
     tracing::info!("Lightning node started");
     Ok(background_processor)
+}
+
+pub async fn run_ldk_with_port(
+    system: &LightningSystem,
+    listening_port: u16,
+) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+    let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
+    let peer_manager_connection_handler = system.peer_manager.clone();
+    let stop_listen_connect = Arc::new(AtomicBool::new(false));
+    let stop_listen = Arc::clone(&stop_listen_connect);
+    let tcp_handle = tokio::spawn(async move {
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{listening_port}"))
+            .await
+            .expect("Failed to bind to listen port - is something else already listening on it?");
+        loop {
+            let peer_mgr = peer_manager_connection_handler.clone();
+            let tcp_stream = listener.accept().await.unwrap().0;
+            if stop_listen.load(Ordering::Acquire) {
+                return;
+            }
+            tokio::spawn(async move {
+                lightning_net_tokio::setup_inbound(
+                    peer_mgr.clone(),
+                    tcp_stream.into_std().unwrap(),
+                )
+                .await;
+            });
+        }
+    });
+
+    tracing::info!("Listening to 0.0.0.0:{listening_port}");
+
+    let event_handler = {
+        let channel_manager = system.channel_manager.clone();
+        let wallet = system.wallet.clone();
+        let network_graph = system.network_graph.clone();
+        let keys_manager = system.keys_manager.clone();
+        let inbound_payments = system.inbound_payments.clone();
+        let outbound_payments = system.outbound_payments.clone();
+        let network = system.network;
+        {
+            move |event: &Event| {
+                block_on(handle_ldk_events(
+                    channel_manager.clone(),
+                    wallet.clone(),
+                    &network_graph,
+                    keys_manager.clone(),
+                    inbound_payments.clone(),
+                    outbound_payments.clone(),
+                    network,
+                    event,
+                ));
+            }
+        }
+    };
+
+    let scorer_path = format!("{ldk_data_dir}/scorer");
+    let scorer = Arc::new(Mutex::new(disk::read_scorer(
+        Path::new(&scorer_path),
+        Arc::clone(&system.network_graph),
+        Arc::clone(&system.logger),
+    )));
+
+    let router = DefaultRouter::new(
+        system.network_graph.clone(),
+        system.logger.clone(),
+        system.keys_manager.get_secure_random_bytes(),
+        scorer.clone(),
+    );
+    let invoice_payer = Arc::new(InvoicePayer::new(
+        system.channel_manager.clone(),
+        router,
+        system.logger.clone(),
+        event_handler,
+        payment::Retry::Timeout(Duration::from_secs(10)),
+    ));
+
+    let background_processor = BackgroundProcessor::start(
+        system.persister.clone(),
+        invoice_payer.clone(),
+        system.chain_monitor.clone(),
+        system.channel_manager.clone(),
+        GossipSync::p2p(system.gossip_sync.clone()),
+        system.peer_manager.clone(),
+        system.logger.clone(),
+        Some(scorer),
+    );
+    let peer_data_path = format!("{ldk_data_dir}/channel_peer_data");
+    let mut info = disk::read_channel_peer_data(Path::new(&peer_data_path))?;
+    for (pubkey, peer_addr) in info.drain() {
+        for chan_info in system.channel_manager.list_channels() {
+            if pubkey == chan_info.counterparty.node_id {
+                block_on(async {
+                    let _ = connect_peer_if_necessary(
+                        &PeerInfo { pubkey, peer_addr },
+                        system.peer_manager.clone(),
+                    )
+                    .await;
+                });
+            }
+        }
+    }
+    tracing::info!("Lightning network started");
+    Ok((tcp_handle, background_processor))
 }
 
 async fn connect_peer_if_necessary(peer: &PeerInfo, peer_manager: Arc<PeerManager>) -> Result<()> {

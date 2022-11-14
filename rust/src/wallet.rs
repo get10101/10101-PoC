@@ -3,10 +3,10 @@ use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
 use anyhow::anyhow;
-use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
 use bdk::bitcoin;
+use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
@@ -17,6 +17,7 @@ use state::Storage;
 use std::path::Path;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
+use tokio::task::JoinHandle;
 
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
@@ -105,7 +106,7 @@ impl Wallet {
             on_chain: OnChain {
                 trusted_pending: bdk_balance.trusted_pending,
                 untrusted_pending: bdk_balance.untrusted_pending,
-                confirmed: bdk_balance.confirmed
+                confirmed: bdk_balance.confirmed,
             },
             off_chain: ldk_balance,
         })
@@ -145,6 +146,14 @@ impl Wallet {
         lightning::run_ldk(&self.lightning).await
     }
 
+    /// Run the lightning node
+    pub async fn run_ldk_with_port(
+        &self,
+        port: u16,
+    ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+        lightning::run_ldk_with_port(&self.lightning, port).await
+    }
+
     pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
         let tx_history = self
             .lightning
@@ -153,6 +162,10 @@ impl Wallet {
             .list_transactions(false)?;
         tracing::debug!(?tx_history, "Transaction history");
         Ok(tx_history)
+    }
+
+    pub fn get_node_id(&self) -> PublicKey {
+        self.lightning.channel_manager.get_our_node_id()
     }
 }
 
@@ -175,6 +188,16 @@ pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
 pub async fn run_ldk() -> Result<BackgroundProcessor> {
     let wallet = { (*get_wallet()?).clone() };
     wallet.run_ldk().await
+}
+
+pub async fn run_ldk_server(port: u16) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+    let wallet = { (*get_wallet()?).clone() };
+    wallet.run_ldk_with_port(port).await
+}
+
+pub fn node_id() -> Result<PublicKey> {
+    let wallet = { (*get_wallet()?).clone() };
+    Ok(wallet.get_node_id())
 }
 
 pub fn get_balance() -> Result<Balance> {
