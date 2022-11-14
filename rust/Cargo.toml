@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "ten_ten_one"
-crate-type = ["cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticlib
+crate-type = ["lib", "cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticlib
 
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }

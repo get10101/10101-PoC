@@ -1,8 +1,8 @@
 mod api;
 mod bridge_generated;
-mod disk;
+pub mod disk;
 mod hex_utils;
-mod lightning;
-mod logger;
-mod seed;
-mod wallet;
+pub mod lightning;
+pub mod logger;
+pub mod seed;
+pub mod wallet;

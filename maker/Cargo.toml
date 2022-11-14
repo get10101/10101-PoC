@@ -1,0 +1,15 @@
+[package]
+name = "maker"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = { version = "1", features = ["backtrace"] }
+atty = "0.2.14"
+ten_ten_one = { version = "0.1.0", path = "../rust" }
+time = { version = "0.3", features = ["serde", "parsing", "std", "formatting", "macros", "serde-well-known"] }
+tokio = { version = "1", features = ["io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi", "env-filter", "time", "tracing-log", "json"] }
