@@ -79,3 +79,22 @@ flutter run
 note: Flutter might ask you which target you'd like to run.
 
 Running 10101 for `web` target is currently unsupported.
+
+#### Regtest
+
+For regtest you need to run a local electrs server on `localhost:50000`.
+We make use of (nigiri)[https://github.com/vulpemventures/nigiri] for this.
+
+Run
+
+```bash
+nigiri start
+```
+
+To get some money run
+
+```bash
+nigiri faucet <address>
+```
+
+To generate a block, simply call the faucet again.

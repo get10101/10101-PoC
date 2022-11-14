@@ -149,7 +149,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
       await setupRustLogging();
 
       final appSupportDir = await getApplicationSupportDirectory();
-      await api.initWallet(network: Network.Testnet, path: appSupportDir.path);
+      await api.initWallet(network: Network.Regtest, path: appSupportDir.path);
 
       FLog.info(text: "Starting ldk node");
       api

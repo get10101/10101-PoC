@@ -20,6 +20,7 @@ use std::sync::MutexGuard;
 
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
+pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
@@ -46,7 +47,7 @@ impl Wallet {
         let electrum_url = match network {
             Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
-            _ => bail!("Only public networks are supported"),
+            Network::Regtest => REGTEST_ELECTRUM,
         };
 
         let network: bitcoin::Network = network.into();
