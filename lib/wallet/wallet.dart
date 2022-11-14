@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/wallet/wallet_bitcoin.dart';
-import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
+import 'package:ten_ten_one/controller/wallet_change_notifier.dart';
 import 'package:ten_ten_one/wallet/wallet_dashboard.dart';
 import 'package:ten_ten_one/wallet/wallet_lightning.dart';
 
