@@ -181,7 +181,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
       var bph = bitcoinTxHistory
           .map((bitcoinTxHistoryItem) => PaymentHistoryItem(
               bitcoinTxHistoryItem.sent != 0
-                  ? Amount(bitcoinTxHistoryItem.sent)
+                  ? Amount(bitcoinTxHistoryItem.sent * -1)
                   : Amount(bitcoinTxHistoryItem.received),
               bitcoinTxHistoryItem.sent != 0 ? PaymentType.withdraw : PaymentType.deposit,
               bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending))
