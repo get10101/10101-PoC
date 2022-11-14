@@ -10,6 +10,8 @@ import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/models/payment.model.dart';
+import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/wallet/deposit.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -30,6 +32,7 @@ import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 LightningBalance lightningBalance = LightningBalance();
 BitcoinBalance bitcoinBalance = BitcoinBalance();
 SeedBackupModel seedBackup = SeedBackupModel();
+PaymentHistory paymentHistory = PaymentHistory();
 
 void main() {
   FlutterError.onError = (details) {
@@ -45,6 +48,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => lightningBalance),
     ChangeNotifierProvider(create: (context) => bitcoinBalance),
     ChangeNotifierProvider(create: (context) => seedBackup),
+    ChangeNotifierProvider(create: (context) => paymentHistory),
     ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
   ], child: const TenTenOneApp()));
@@ -154,8 +158,10 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
     // initial sync
     _callSync();
+    _callSyncPaymentHistory();
     // consecutive syncs
     runPeriodically(_callSync);
+    runPeriodically(_callSyncPaymentHistory);
   }
 
   Future<void> _callSync() async {
@@ -165,6 +171,26 @@ class _TenTenOneState extends State<TenTenOneApp> {
       FLog.trace(text: 'Successfully synced Bitcoin wallet');
     } on FfiException catch (error) {
       FLog.error(text: 'Failed to sync Bitcoin wallet: Error: ' + error.message, exception: error);
+    }
+  }
+
+  Future<void> _callSyncPaymentHistory() async {
+    try {
+      final bitcoinTxHistory = await api.getBitcoinTxHistory();
+
+      var bph = bitcoinTxHistory
+          .map((bitcoinTxHistoryItem) => PaymentHistoryItem(
+              bitcoinTxHistoryItem.sent != 0
+                  ? Amount(bitcoinTxHistoryItem.sent)
+                  : Amount(bitcoinTxHistoryItem.received),
+              bitcoinTxHistoryItem.sent != 0 ? PaymentType.withdraw : PaymentType.deposit,
+              bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending))
+          .toList();
+
+      paymentHistory.update(bph);
+      FLog.trace(text: 'Successfully synced payment history');
+    } on FfiException catch (error) {
+      FLog.error(text: 'Failed to sync payment history: ' + error.message, exception: error);
     }
   }
 

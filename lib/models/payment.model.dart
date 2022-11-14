@@ -43,5 +43,20 @@ extension PaymentTypeExtension on PaymentType {
     PaymentType.sportsbetClose: "Sports Bet Ended",
   };
 
+  static const displayBitcoin = {
+    PaymentType.deposit: true,
+    PaymentType.withdraw: true,
+    PaymentType.channelOpen: true,
+    PaymentType.channelClose: true,
+    PaymentType.send: false,
+    PaymentType.receive: false,
+    PaymentType.cfdOpen: false,
+    PaymentType.cfdClose: false,
+    PaymentType.sportsbetOpen: false,
+    PaymentType.sportsbetClose: false,
+  };
+
   String get display => displays[this]!;
+
+  bool isBitcoin() => displayBitcoin[this]!;
 }
