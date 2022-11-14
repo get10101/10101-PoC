@@ -79,3 +79,21 @@ flutter run
 note: Flutter might ask you which target you'd like to run.
 
 Running 10101 for `web` target is currently unsupported.
+
+
+## Nigiri Setup
+
+TODO: add how to install
+
+```bash
+nigiri start
+```
+
+```bash
+electrs_address=tcp:://localhost:50000
+```
+
+Faucet: 
+```bash
+nigiri faucet <add-your-address-here>
+```

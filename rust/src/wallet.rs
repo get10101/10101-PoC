@@ -3,11 +3,10 @@ use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
 use anyhow::anyhow;
-use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
 use bdk::bitcoin;
-use bdk::blockchain::ElectrumBlockchain;
+use bdk::blockchain::{ElectrumBlockchain, GetHeight};
 use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::wallet::AddressIndex;
@@ -19,6 +18,7 @@ use std::sync::MutexGuard;
 
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
+pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
@@ -40,7 +40,7 @@ impl Wallet {
         let electrum_url = match network {
             Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
-            _ => bail!("Only public networks are supported"),
+            Network::Regtest => REGTEST_ELECTRUM,
         };
 
         let network: bitcoin::Network = network.into();
@@ -55,6 +55,7 @@ impl Wallet {
 
         let client = Client::new(electrum_url)?;
         let blockchain = ElectrumBlockchain::from(client);
+        let result = blockchain.get_height()?;
 
         let bdk_wallet = bdk::Wallet::new(
             bdk::template::Bip84(ext_priv_key, KeychainKind::External),
