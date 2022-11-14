@@ -47,11 +47,13 @@ flutter-format:
 ## clean: Clean all build artifacts
 clean:
 	flutter clean
+	cargo clean
+	# mobile targets don't build whole workspace, but just ten_ten_one crate 
 	cd rust && cargo clean
 
 ## native: Build Rust library for native target (to run on your desktop)
 native: FORCE
-	cd rust && cargo build
+	cargo build
 
 # Build Rust library for Android native targets
 android-native: FORCE
@@ -68,7 +70,7 @@ android: android-native
 ## ios: Build Rust library for iOS
 ios: FORCE
 	cd rust && cargo lipo
-	cp rust/target/universal/debug/libten_ten_one.a ios/Runner
+	cp target/universal/debug/libten_ten_one.a ios/Runner
 
 ## gen: Run codegen (needs to run before `flutter run`)
 gen: FORCE
@@ -88,13 +90,13 @@ run:
 	flutter run
 
 clippy: FORCE
-	cd rust && cargo clippy --all-targets -- -D warnings
+	cargo clippy --all-targets -- -D warnings
 
 lint-flutter:
 	flutter analyze --fatal-infos .
 
 ## test: Run tests
 test: FORCE
-	cd rust && cargo test
+	cargo test
 
 FORCE: ;

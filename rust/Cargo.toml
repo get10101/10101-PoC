@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "ten_ten_one"
-crate-type = ["cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticlib
+crate-type = ["lib", "cdylib", "staticlib"] # Android needs cdylib, whereas iOS staticlib
 
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }
@@ -32,6 +32,3 @@ time = { version = "0.3", features = ["serde", "parsing", "std", "formatting", "
 tokio = { version = "1", features = ["io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi", "env-filter", "time", "tracing-log", "json"] }
-
-[patch.crates-io]
-bdk-ldk = { git = "https://github.com/itchysats/bdk-ldk", rev = "d6e7e357b864ddb8a53c7ab5b2b38a7fc05d8dc7" } # unreleased

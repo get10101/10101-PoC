@@ -1,23 +1,17 @@
 use anyhow::Context;
 use anyhow::Result;
-use flutter_rust_bridge::StreamSink;
-use state::Storage;
-use std::sync::Once;
 use time::macros::format_description;
+use tracing::metadata::LevelFilter;
 use tracing_subscriber::filter::Directive;
-use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::fmt::time::UtcTime;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::Layer;
 
+// TODO: Share the logging infrastructure (it's just a copy for now for expedience)
+
 const RUST_LOG_ENV: &str = "RUST_LOG";
-
-static INIT_LOGGER_ONCE: Once = Once::new();
-
-/// Wallet has to be managed by Rust as generics are not support by frb
-static LOG_STREAM_SINK: Storage<StreamSink<LogEntry>> = Storage::new();
 
 // Tracing log directives config
 fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> {
@@ -25,48 +19,6 @@ fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> 
         .add_directive(Directive::from(level))
         .add_directive("bdk=warn".parse()?); // bdk is quite spamy on debug
     Ok(filter)
-}
-
-/// Struct to expose logs from Rust to Flutter
-pub struct LogEntry {
-    pub msg: String,
-    pub target: String,
-    // TODO: Use Level enum
-    pub level: String,
-}
-
-pub fn create_log_stream(sink: StreamSink<LogEntry>) {
-    LOG_STREAM_SINK.set(sink);
-    INIT_LOGGER_ONCE.call_once(|| {
-        init_tracing(LevelFilter::DEBUG, false).expect("Logger to initialise");
-    });
-}
-
-/// Tracing layer responsible for sending tracing events into
-struct DartSendLayer;
-
-impl<S> Layer<S> for DartSendLayer
-where
-    S: tracing::Subscriber,
-{
-    fn on_event(
-        &self,
-        event: &tracing::Event<'_>,
-        _ctx: tracing_subscriber::layer::Context<'_, S>,
-    ) {
-        let metadata = event.metadata();
-
-        let msg = format!("{}: {}", metadata.name(), metadata.fields());
-
-        LOG_STREAM_SINK
-            .try_get()
-            .expect("StreamSink from Flutter to be initialised")
-            .add(LogEntry {
-                msg,
-                target: metadata.target().to_string(),
-                level: metadata.level().to_string(),
-            });
-    }
 }
 
 // Configure and initalise tracing subsystem
@@ -108,7 +60,6 @@ pub fn init_tracing(level: LevelFilter, json_format: bool) -> Result<()> {
 
     tracing_subscriber::registry()
         .with(filter)
-        .with(DartSendLayer)
         .with(fmt_layer)
         .try_init()
         .context("Failed to init tracing")?;
