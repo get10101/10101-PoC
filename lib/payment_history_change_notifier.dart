@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'model/payment.model.dart';
+import 'model/payment.dart';
 
 class PaymentHistory extends ChangeNotifier {
   List<PaymentHistoryItem> history = List.empty();

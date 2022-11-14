@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import '../model/amount.dart';
-import '../model/payment.model.dart';
+import '../model/payment.dart';
 
 List<PaymentHistoryItem> mockPaymentHistory(int count) {
   return List<PaymentHistoryItem>.generate(count, (index) => mockPaymentHistoryItem());
