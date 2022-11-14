@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/model/service_model.dart';
+import 'package:ten_ten_one/model/service.dart';
 
 class ServiceCard extends StatelessWidget {
   const ServiceCard(this.service, {Key? key}) : super(key: key);

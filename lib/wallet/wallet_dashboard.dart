@@ -5,7 +5,7 @@ import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/model/balance_change_notifier.dart';
 import 'package:ten_ten_one/model/seed_backup_model.dart';
-import 'package:ten_ten_one/model/service_model.dart';
+import 'package:ten_ten_one/model/service.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/wallet/deposit.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/model/service_model.dart';
+import 'package:ten_ten_one/model/service.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/receive.dart';
 import 'package:ten_ten_one/wallet/send.dart';
