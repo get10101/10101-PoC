@@ -105,6 +105,16 @@ impl Wallet {
     pub async fn run_ldk(&self, listening_port: u16) -> Result<()> {
         lightning::run_ldk(&self.lightning, listening_port).await
     }
+
+    pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
+        let tx_history = self
+            .lightning
+            .wallet
+            .get_wallet()
+            .list_transactions(false)?;
+        tracing::debug!(?tx_history, "Transaction history");
+        Ok(tx_history)
+    }
 }
 
 fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
@@ -135,6 +145,10 @@ pub fn get_balance() -> Result<bdk::Balance> {
 
 pub fn get_address() -> Result<bitcoin::Address> {
     get_wallet()?.get_address()
+}
+
+pub fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
+    get_wallet()?.get_bitcoin_tx_history()
 }
 
 pub fn get_seed_phrase() -> Result<Vec<String>> {

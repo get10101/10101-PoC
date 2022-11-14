@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/mocks/payment_history.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ten_ten_one/wallet/withdraw.dart';
 
+import '../payment_history_change_notifier.dart';
 import 'deposit.dart';
 
 class WalletBitcoin extends StatefulWidget {
@@ -24,20 +25,20 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
 
   @override
   Widget build(BuildContext context) {
+    final history = context.watch<PaymentHistory>();
+
     List<Widget> widgets = [
       const Balance(balanceSelector: BalanceSelector.bitcoin),
       const Divider(),
     ];
 
-    final history = mockPaymentHistoryBitcoin(2);
-
     final txHistoryList = ListView.builder(
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      itemCount: history.length,
+      itemCount: history.bitcoinHistory().length,
       itemBuilder: (context, index) {
-        return PaymentHistoryListItem(data: history[index]);
+        return PaymentHistoryListItem(data: history.bitcoinHistory()[index]);
       },
     );
 

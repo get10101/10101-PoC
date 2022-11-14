@@ -5,6 +5,8 @@ use crate::wallet::Network;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use std::path::Path;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 use tokio::runtime::Runtime;
 
 pub struct Balance {
@@ -13,6 +15,19 @@ pub struct Balance {
 
 pub struct Address {
     pub address: String,
+}
+
+pub struct BitcoinTxHistoryItem {
+    pub sent: u64,
+    pub received: u64,
+    pub txid: String,
+    pub fee: u64,
+    pub is_confirmed: bool,
+    /// Timestamp since epoch
+    ///
+    /// Confirmation timestamp as prt blocktime if confirmed, otherwise current time since epoch is
+    /// returned.
+    pub timestamp: u64,
 }
 
 impl Balance {
@@ -55,6 +70,35 @@ pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) ->
     let peer_info = parse_peer_info(peer_pubkey_and_ip_addr)?;
     let rt = Runtime::new()?;
     rt.block_on(async { wallet::open_channel(peer_info, channel_amount_sat).await })
+}
+
+pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
+    let tx_history = wallet::get_bitcoin_tx_history()?
+        .into_iter()
+        .map(|tx| {
+            let (is_confirmed, timestamp) = match tx.confirmation_time {
+                None => (
+                    false,
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("current timestamp to be valid")
+                        .as_secs(),
+                ),
+                Some(blocktime) => (true, blocktime.timestamp),
+            };
+
+            BitcoinTxHistoryItem {
+                sent: tx.sent,
+                received: tx.received,
+                txid: tx.txid.to_string(),
+                fee: tx.fee.unwrap_or(0),
+                is_confirmed,
+                timestamp,
+            }
+        })
+        .collect();
+
+    Ok(tx_history)
 }
 
 /// Initialise logging infrastructure for Rust

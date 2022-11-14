@@ -6,13 +6,13 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
+import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/wallet/deposit.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 
-import '../mocks/payment_history.dart';
 import 'open_channel.dart';
 
 class WalletDashboard extends StatefulWidget {
@@ -33,6 +33,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
     final seedBackupModel = context.watch<SeedBackupModel>();
     final bitcoinBalance = context.watch<BitcoinBalance>();
     final lightningBalance = context.watch<LightningBalance>();
+    final paymentHistory = context.watch<PaymentHistory>();
 
     List<Widget> widgets = [
       const Balance(balanceSelector: BalanceSelector.both),
@@ -53,15 +54,13 @@ class _WalletDashboardState extends State<WalletDashboard> {
       widgets.add(const OpenChannelCard());
     }
 
-    final paymentHistory = mockPaymentHistory(10);
-
     final paymentHistoryList = ListView.builder(
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      itemCount: paymentHistory.length,
+      itemCount: paymentHistory.history.length,
       itemBuilder: (context, index) {
-        return PaymentHistoryListItem(data: paymentHistory[index]);
+        return PaymentHistoryListItem(data: paymentHistory.history[index]);
       },
     );
 

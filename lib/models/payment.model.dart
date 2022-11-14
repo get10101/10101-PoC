@@ -1,11 +1,11 @@
 import 'package:ten_ten_one/models/amount.model.dart';
 
-class PaymentHistoryItemItem {
+class PaymentHistoryItem {
   PaymentType type;
   PaymentStatus status;
   Amount amount;
 
-  PaymentHistoryItemItem(this.amount, this.type, this.status);
+  PaymentHistoryItem(this.amount, this.type, this.status);
 }
 
 enum PaymentStatus { pending, finalized }
@@ -31,8 +31,8 @@ enum PaymentType {
 
 extension PaymentTypeExtension on PaymentType {
   static const displays = {
-    PaymentType.deposit: "Deposit Bitcoin",
-    PaymentType.withdraw: "Withdraw Bitcoin",
+    PaymentType.deposit: "Bitcoin Deposited",
+    PaymentType.withdraw: "Bitcoin Withdrawn",
     PaymentType.channelOpen: "Channel Opened",
     PaymentType.channelClose: "Channel Closed",
     PaymentType.send: "Payment Sent",
@@ -43,5 +43,20 @@ extension PaymentTypeExtension on PaymentType {
     PaymentType.sportsbetClose: "Sports Bet Ended",
   };
 
+  static const displayBitcoin = {
+    PaymentType.deposit: true,
+    PaymentType.withdraw: true,
+    PaymentType.channelOpen: true,
+    PaymentType.channelClose: true,
+    PaymentType.send: false,
+    PaymentType.receive: false,
+    PaymentType.cfdOpen: false,
+    PaymentType.cfdClose: false,
+    PaymentType.sportsbetOpen: false,
+    PaymentType.sportsbetClose: false,
+  };
+
   String get display => displays[this]!;
+
+  bool isBitcoin() => displayBitcoin[this]!;
 }
