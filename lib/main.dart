@@ -176,7 +176,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Future<void> _callSync() async {
     try {
       final balance = await api.getBalance();
-      bitcoinBalance.update(Amount(balance.onChain));
+      bitcoinBalance.update(Amount(balance.onChain.confirmed));
       lightningBalance.update(Amount(balance.offChain));
       FLog.trace(text: 'Successfully synced Bitcoin wallet');
     } on FfiException catch (error) {
