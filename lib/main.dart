@@ -20,7 +20,7 @@ import 'package:ten_ten_one/model/amount.dart';
 import 'package:ten_ten_one/model/balance_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/model/order.dart';
-import 'package:ten_ten_one/model/seed_backup_model.dart';
+import 'package:ten_ten_one/model/seed_backup_change_notifier.dart';
 import 'package:ten_ten_one/wallet/receive.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:go_router/go_router.dart';
