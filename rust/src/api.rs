@@ -70,7 +70,7 @@ pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) ->
         let _ = wallet::open_channel(peer_info, channel_amount_sat).await;
         loop {
             // looping here indefinitely to keep the connection with the maker alive.
-            std::thread::sleep(Duration::new(u64::MAX, u32::MAX));
+            std::thread::sleep(Duration::from_secs(1000));
         }
     });
     Ok(())
