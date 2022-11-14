@@ -28,11 +28,19 @@ impl Address {
 }
 
 pub fn init_wallet(network: Network, path: String) -> Result<()> {
+    wallet::init_wallet(network, Path::new(path.as_str()))?;
+
     let rt = Runtime::new()?;
     let listening_port = 9735; // TODO: Why is this hard-coded?
-    rt.block_on(async {
-        wallet::init_wallet(network, Path::new(path.as_str()), listening_port).await
-    })
+    rt.block_on(async move {
+        match wallet::run_ldk(listening_port).await {
+            Ok(()) => {}
+            Err(err) => {
+                tracing::error!("Error running LDK: {err}");
+            }
+        }
+    });
+    Ok(())
 }
 
 pub fn get_balance() -> Result<Balance> {
@@ -42,6 +50,7 @@ pub fn get_balance() -> Result<Balance> {
 pub fn get_address() -> Result<Address> {
     Ok(Address::new(wallet::get_address()?.to_string()))
 }
+
 pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) -> Result<()> {
     let peer_info = parse_peer_info(peer_pubkey_and_ip_addr)?;
     let rt = Runtime::new()?;
