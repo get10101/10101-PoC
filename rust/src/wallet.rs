@@ -29,13 +29,14 @@ pub enum Network {
     Regtest,
 }
 
+#[derive(Clone)]
 pub struct Wallet {
     seed: Bip39Seed,
     lightning: LightningSystem,
 }
 
 impl Wallet {
-    pub async fn new(network: Network, data_dir: &Path, listening_port: u16) -> Result<Wallet> {
+    pub fn new(network: Network, data_dir: &Path) -> Result<Wallet> {
         let electrum_url = match network {
             Network::Mainnet => MAINNET_ELECTRUM,
             Network::Testnet => TESTNET_ELECTRUM,
@@ -68,7 +69,6 @@ impl Wallet {
         let lightning_seed = &seed.seed()[0..32].try_into()?;
 
         let lightning = lightning::setup(lightning_wallet, network, &data_dir, lightning_seed)?;
-        lightning::run_ldk(&lightning, listening_port).await?;
 
         Ok(Wallet { lightning, seed })
     }
@@ -100,6 +100,11 @@ impl Wallet {
         tracing::debug!(%address, "Current wallet address");
         Ok(address.address)
     }
+
+    /// Run the lightning node
+    pub async fn run_ldk(&self, listening_port: u16) -> Result<()> {
+        lightning::run_ldk(&self.lightning, listening_port).await
+    }
 }
 
 fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
@@ -112,12 +117,15 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub async fn init_wallet(network: Network, data_dir: &Path, listening_port: u16) -> Result<()> {
+pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(
-        Wallet::new(network, data_dir, listening_port).await?,
-    ));
+    WALLET.set(Mutex::new(Wallet::new(network, data_dir)?));
     Ok(())
+}
+
+pub async fn run_ldk(listening_port: u16) -> Result<()> {
+    let wallet = { (*get_wallet()?).clone() };
+    wallet.run_ldk(listening_port).await
 }
 
 pub fn get_balance() -> Result<bdk::Balance> {

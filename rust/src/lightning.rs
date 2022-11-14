@@ -73,6 +73,7 @@ use std::time::Duration;
 use std::time::SystemTime;
 
 /// Container to keep all the components of the lightning network in one place
+#[derive(Clone)]
 pub struct LightningSystem {
     pub wallet: Arc<BdkLdkWallet>,
     pub chain_monitor: Arc<ChainMonitor>,
