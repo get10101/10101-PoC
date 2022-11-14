@@ -81,7 +81,7 @@ jobs:
         working-directory: .
         run: make gen
       - run: cargo clippy --all-targets -- -D warnings
-        working-directory: rust
+        working-directory: .
 
   cargo-test:
     needs: changes
@@ -101,7 +101,7 @@ jobs:
         working-directory: .
         run: make gen
       - run: cargo test
-        working-directory: rust
+        working-directory: .
 
   lint-flutter:
     needs: changes
