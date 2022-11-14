@@ -2,7 +2,7 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
-import 'package:ten_ten_one/controller/seed_backup_change_notifier.dart';
+import 'package:ten_ten_one/change_notifier/seed_backup_change_notifier.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';

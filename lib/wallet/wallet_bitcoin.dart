@@ -7,7 +7,7 @@ import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ten_ten_one/wallet/withdraw.dart';
 
-import '../controller/payment_history_change_notifier.dart';
+import '../change_notifier/payment_history_change_notifier.dart';
 import 'deposit.dart';
 
 class WalletBitcoin extends StatefulWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'controller/balance_change_notifier.dart';
+import 'change_notifier/balance_change_notifier.dart';
 
 enum BalanceSelector { bitcoin, lightning, both }
 
