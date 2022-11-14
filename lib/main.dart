@@ -18,7 +18,7 @@ import 'package:ten_ten_one/wallet/wallet.dart';
 import 'package:ten_ten_one/controller/wallet_change_notifier.dart';
 import 'package:ten_ten_one/model/amount.dart';
 import 'package:ten_ten_one/controller/balance_change_notifier.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
+import 'package:ten_ten_one/controller/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/model/order.dart';
 import 'package:ten_ten_one/controller/seed_backup_change_notifier.dart';
 import 'package:ten_ten_one/wallet/receive.dart';

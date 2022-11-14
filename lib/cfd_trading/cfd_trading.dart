@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_overview.dart';
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
+import 'package:ten_ten_one/controller/cfd_trading_change_notifier.dart';
 
 class CfdTrading extends StatefulWidget {
   static const route = '/cfd-trading';

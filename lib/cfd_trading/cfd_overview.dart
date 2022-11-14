@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
+import 'package:ten_ten_one/controller/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
