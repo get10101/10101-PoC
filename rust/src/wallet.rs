@@ -12,6 +12,7 @@ use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::wallet::AddressIndex;
 use bdk::KeychainKind;
+use lightning_background_processor::BackgroundProcessor;
 use state::Storage;
 use std::path::Path;
 use std::sync::Mutex;
@@ -33,6 +34,11 @@ pub enum Network {
 pub struct Wallet {
     seed: Bip39Seed,
     lightning: LightningSystem,
+}
+
+pub struct Balance {
+    pub on_chain: u64,
+    pub off_chain: u64,
 }
 
 impl Wallet {
@@ -73,12 +79,20 @@ impl Wallet {
         Ok(Wallet { lightning, seed })
     }
 
-    pub fn sync(&self) -> Result<bdk::Balance> {
+    pub fn sync(&self) -> Result<Balance> {
         self.lightning
             .wallet
             .sync(self.lightning.confirmables())
             .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
-        self.get_bdk_balance()
+
+        let bdk_balance = self.get_bdk_balance()?;
+        let ldk_balance = self.get_ldk_balance()?;
+        Ok(Balance {
+            // subtract the ldk balance from the bdk balance as this balance is locked in the
+            // off chain wallet.
+            on_chain: bdk_balance.confirmed,
+            off_chain: ldk_balance,
+        })
     }
 
     fn get_bdk_balance(&self) -> Result<bdk::Balance> {
@@ -89,6 +103,15 @@ impl Wallet {
             .map_err(|_| anyhow!("Could not retrieve bdk wallet balance"))?;
         tracing::debug!(%balance, "Wallet balance");
         Ok(balance)
+    }
+
+    fn get_ldk_balance(&self) -> Result<u64> {
+        let channels = self.lightning.channel_manager.list_channels();
+        if channels.len() == 1 {
+            return Ok(channels.first().expect("Opened channel").balance_msat / 1000);
+        }
+        tracing::warn!("Expected exactly 1 channel but found {}", channels.len());
+        Ok(0)
     }
 
     pub fn get_address(&self) -> Result<bitcoin::Address> {
@@ -102,8 +125,8 @@ impl Wallet {
     }
 
     /// Run the lightning node
-    pub async fn run_ldk(&self, listening_port: u16) -> Result<()> {
-        lightning::run_ldk(&self.lightning, listening_port).await
+    pub async fn run_ldk(&self) -> Result<BackgroundProcessor> {
+        lightning::run_ldk(&self.lightning).await
     }
 
     pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
@@ -133,12 +156,12 @@ pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn run_ldk(listening_port: u16) -> Result<()> {
+pub async fn run_ldk() -> Result<BackgroundProcessor> {
     let wallet = { (*get_wallet()?).clone() };
-    wallet.run_ldk(listening_port).await
+    wallet.run_ldk().await
 }
 
-pub fn get_balance() -> Result<bdk::Balance> {
+pub fn get_balance() -> Result<Balance> {
     tracing::debug!("Wallet sync called");
     get_wallet()?.sync()
 }

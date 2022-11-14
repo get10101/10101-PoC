@@ -65,15 +65,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
   @override
   void initState() {
     super.initState();
-    setupRustLogging();
-    try {
-      _callInitWallet();
-      FLog.info(text: "Successfully initialised wallet");
-    } on FfiException catch (error) {
-      FLog.error(text: "Wallet failed to initialise: Error: " + error.message, exception: error);
-    } catch (error) {
-      FLog.error(text: "Wallet failed to initialise: Unknown error");
-    }
+    init();
   }
 
   @override
@@ -152,13 +144,30 @@ class _TenTenOneState extends State<TenTenOneApp> {
     ],
   );
 
-  Future<void> _callInitWallet() async {
-    final appSupportDir = await getApplicationSupportDirectory();
-    await api.initWallet(network: Network.Testnet, path: appSupportDir.path);
+  Future<void> init() async {
+    try {
+      await setupRustLogging();
+
+      final appSupportDir = await getApplicationSupportDirectory();
+      await api.initWallet(network: Network.Testnet, path: appSupportDir.path);
+
+      FLog.info(text: "Starting ldk node");
+      api
+          .runLdk()
+          .then((value) => FLog.info(text: "ldk node stopped."))
+          .catchError((error) => FLog.error(text: "ldk stopped with an error", exception: error));
+
+      FLog.info(text: "Successfully initialised wallet");
+    } on FfiException catch (error) {
+      FLog.error(text: "Wallet failed to initialise: Error: " + error.message, exception: error);
+    } catch (error) {
+      FLog.error(text: "Wallet failed to initialise: Unknown error");
+    }
 
     // initial sync
     _callSync();
     _callSyncPaymentHistory();
+
     // consecutive syncs
     runPeriodically(_callSync);
     runPeriodically(_callSyncPaymentHistory);
@@ -167,7 +176,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Future<void> _callSync() async {
     try {
       final balance = await api.getBalance();
-      bitcoinBalance.update(Amount(balance.confirmed));
+      bitcoinBalance.update(Amount(balance.onChain));
+      lightningBalance.update(Amount(balance.offChain));
       FLog.trace(text: 'Successfully synced Bitcoin wallet');
     } on FfiException catch (error) {
       FLog.error(text: 'Failed to sync Bitcoin wallet: Error: ' + error.message, exception: error);

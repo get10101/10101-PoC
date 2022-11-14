@@ -1,12 +1,11 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
-
-import '../models/balance_model.dart';
+import 'package:ten_ten_one/models/balance_model.dart';
 
 class OpenChannel extends StatefulWidget {
   const OpenChannel({Key? key}) : super(key: key);
@@ -14,45 +13,24 @@ class OpenChannel extends StatefulWidget {
   static const route = '/' + subRouteName;
   static const subRouteName = 'open-channel';
 
-  static const makerNodeId =
-      "029c33cbd0dd3a3c957e3e9933a4d29cdc03853caeb63e861c0dea3cbb240cea2e"; // TODO: plug in public maker pubkey
-  static const makerNodeName = "10101";
-  static const makerIpAddress = "127.0.0.1"; // TODO: plug in public maker node ip
-  static const makerPort = "9745"; //TODO: reset to default port 9735
-
   @override
   State<OpenChannel> createState() => _OpenChannelState();
 }
 
 class _OpenChannelState extends State<OpenChannel> {
   int channelCapacity = 0;
+  String peerPubkeyAndIpAddr = "";
 
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<void> _callOpenChannel() async {
-    try {
-      FLog.info(text: "Opening Channel with capacity " + channelCapacity.toString());
-
-      await api.openChannel(
-          peerPubkeyAndIpAddr: OpenChannel.makerNodeId +
-              "@" +
-              OpenChannel.makerIpAddress +
-              ":" +
-              OpenChannel.makerPort,
-          channelAmountSat: channelCapacity);
-    } on FfiException catch (error) {
-      FLog.error(text: "Failed to fetch address phrase: Error: " + error.message, exception: error);
-    }
+    final bitcoinBalance = context.read<BitcoinBalance>();
+    channelCapacity = bitcoinBalance.amount.asSats;
   }
 
   @override
   Widget build(BuildContext context) {
     final bitcoinBalance = context.watch<BitcoinBalance>();
-    channelCapacity = bitcoinBalance.amount.asSats;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Open Channel'),
@@ -63,11 +41,22 @@ class _OpenChannelState extends State<OpenChannel> {
         child: Column(
           children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text("Node ID", style: TextStyle(color: Colors.grey)),
+              const Text("P2P Endpoint", style: TextStyle(color: Colors.grey)),
               const SizedBox(
                 height: 5.0,
               ),
-              const SelectableText(OpenChannel.makerNodeId, style: TextStyle(fontSize: 20)),
+              TextFormField(
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  initialValue: peerPubkeyAndIpAddr,
+                  decoration: const InputDecoration(
+                      border: UnderlineInputBorder(), hintText: "pubkey@host:port"),
+                  onChanged: (text) {
+                    setState(() {
+                      peerPubkeyAndIpAddr = text;
+                    });
+                  },
+                  style: const TextStyle(fontSize: 20)),
               const SizedBox(
                 height: 10.0,
               ),
@@ -75,7 +64,7 @@ class _OpenChannelState extends State<OpenChannel> {
               const SizedBox(
                 height: 5.0,
               ),
-              const SelectableText(OpenChannel.makerNodeName, style: TextStyle(fontSize: 20)),
+              const SelectableText('10101', style: TextStyle(fontSize: 20)),
               const SizedBox(
                 height: 10.0,
               ),
@@ -92,11 +81,16 @@ class _OpenChannelState extends State<OpenChannel> {
               // TODO: Likely we cannot use the whole balance
               // TODO: Form validation
               TextFormField(
-                initialValue: bitcoinBalance.amount.asSats.toString(),
+                initialValue: channelCapacity.toString(),
                 keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                ),
                 inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
                 onChanged: (text) {
-                  channelCapacity = int.parse(text);
+                  setState(() {
+                    channelCapacity = text != "" ? int.parse(text) : 0;
+                  });
                 },
               )
             ]),
@@ -112,11 +106,15 @@ class _OpenChannelState extends State<OpenChannel> {
               alignment: Alignment.bottomRight,
               child: ElevatedButton(
                   onPressed: () async {
-                    await _callOpenChannel();
+                    FLog.info(text: "Opening Channel with capacity " + channelCapacity.toString());
 
+                    api.openChannel(
+                        peerPubkeyAndIpAddr: peerPubkeyAndIpAddr,
+                        channelAmountSat: channelCapacity);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("Call open channel returned"),
+                      content: Text("Waiting for channel to get established"),
                     ));
+                    context.go('/');
                   },
                   child: const Text('Open Channel')),
             )

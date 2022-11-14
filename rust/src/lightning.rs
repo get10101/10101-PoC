@@ -45,6 +45,8 @@ use lightning::routing::gossip::NetworkGraph;
 use lightning::routing::gossip::NodeId;
 use lightning::routing::gossip::P2PGossipSync;
 use lightning::routing::scoring::ProbabilisticScorer;
+use lightning::util::config::ChannelHandshakeConfig;
+use lightning::util::config::ChannelHandshakeLimits;
 use lightning::util::config::UserConfig;
 use lightning::util::events::Event;
 use lightning::util::events::PaymentPurpose;
@@ -61,12 +63,12 @@ use rand::RngCore;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt;
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::iter;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::path::PathBuf;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -96,9 +98,9 @@ pub struct PeerInfo {
     pub peer_addr: SocketAddr,
 }
 
-impl ToString for PeerInfo {
-    fn to_string(&self) -> String {
-        format!("{}@{}", self.pubkey, self.peer_addr)
+impl Display for PeerInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        format!("{}@{}", self.pubkey, self.peer_addr).fmt(f)
     }
 }
 
@@ -118,11 +120,28 @@ pub async fn open_channel(
     channel_amount_sat: u64,
     data_dir: &Path,
 ) -> Result<()> {
+    tracing::debug!("Connection with {peer_info}");
     connect_peer_if_necessary(&peer_info, peer_manager).await?;
+    tracing::debug!("Connected to {peer_info}");
+
+    let config = UserConfig {
+        channel_handshake_limits: ChannelHandshakeLimits {
+            // lnd's max to_self_delay is 2016, so we want to be compatible.
+            their_to_self_delay: 2016,
+            ..Default::default()
+        },
+        channel_handshake_config: ChannelHandshakeConfig {
+            announced_channel: false,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
 
     let _temp_channel_id = channel_manager
-        .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, None)
-        .map_err(|_| anyhow!("Could not create channel"))?;
+        .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, Some(config))
+        .map_err(|_| anyhow!("Could not create channel with {peer_info}"))?;
+
+    tracing::debug!("Created channel with {peer_info}");
 
     let path = data_dir.join("channel_peer_data");
     disk::persist_channel_peer(&path, &peer_info.to_string())
@@ -421,33 +440,8 @@ pub fn setup(
     Ok(system)
 }
 
-pub async fn run_ldk(system: &LightningSystem, listening_port: u16) -> Result<()> {
+pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
     let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
-    let peer_manager_connection_handler = system.peer_manager.clone();
-    let stop_listen_connect = Arc::new(AtomicBool::new(false));
-    let stop_listen = Arc::clone(&stop_listen_connect);
-    tokio::spawn(async move {
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{listening_port}"))
-            .await
-            .expect("Failed to bind to listen port - is something else already listening on it?");
-        loop {
-            let peer_mgr = peer_manager_connection_handler.clone();
-            let tcp_stream = listener.accept().await.unwrap().0;
-            if stop_listen.load(Ordering::Acquire) {
-                return;
-            }
-            tokio::spawn(async move {
-                lightning_net_tokio::setup_inbound(
-                    peer_mgr.clone(),
-                    tcp_stream.into_std().unwrap(),
-                )
-                .await;
-            });
-        }
-    });
-
-    // TODO: Check if its ok to skip step 15 as the sync will be already triggered regularly from
-    // flutter.
 
     // Step 16: Handle LDK Events
     let event_handler = {
@@ -500,7 +494,7 @@ pub async fn run_ldk(system: &LightningSystem, listening_port: u16) -> Result<()
     // Step 19: Background Processing
     // TODO: Do we need to stop the background processor on the wallet, or will it be sufficient to
     // simple kill it with the app.
-    let _background_processor = BackgroundProcessor::start(
+    let background_processor = BackgroundProcessor::start(
         system.persister.clone(),
         invoice_payer.clone(),
         system.chain_monitor.clone(),
@@ -510,6 +504,7 @@ pub async fn run_ldk(system: &LightningSystem, listening_port: u16) -> Result<()
         system.logger.clone(),
         Some(scorer),
     );
+
     let peer_data_path = format!("{ldk_data_dir}/channel_peer_data");
     let mut info = disk::read_channel_peer_data(Path::new(&peer_data_path))?;
     for (pubkey, peer_addr) in info.drain() {
@@ -525,8 +520,9 @@ pub async fn run_ldk(system: &LightningSystem, listening_port: u16) -> Result<()
             }
         }
     }
-    tracing::info!("Lightning network started");
-    Ok(())
+
+    tracing::info!("Lightning node started");
+    Ok(background_processor)
 }
 
 async fn connect_peer_if_necessary(peer: &PeerInfo, peer_manager: Arc<PeerManager>) -> Result<()> {
@@ -580,6 +576,7 @@ async fn handle_ldk_events(
     network: Network,
     event: &Event,
 ) {
+    tracing::debug!("Received {:?}", event);
     match event {
         Event::FundingGenerationReady {
             temporary_channel_id,

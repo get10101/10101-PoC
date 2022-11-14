@@ -1,17 +1,15 @@
 use crate::disk::parse_peer_info;
 use crate::logger;
 use crate::wallet;
+use crate::wallet::Balance;
 use crate::wallet::Network;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use std::path::Path;
+use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use tokio::runtime::Runtime;
-
-pub struct Balance {
-    pub confirmed: u64,
-}
 
 pub struct Address {
     pub address: String,
@@ -30,12 +28,6 @@ pub struct BitcoinTxHistoryItem {
     pub timestamp: u64,
 }
 
-impl Balance {
-    pub fn new(confirmed: u64) -> Balance {
-        Balance { confirmed }
-    }
-}
-
 impl Address {
     pub fn new(address: String) -> Address {
         Address { address }
@@ -43,13 +35,18 @@ impl Address {
 }
 
 pub fn init_wallet(network: Network, path: String) -> Result<()> {
-    wallet::init_wallet(network, Path::new(path.as_str()))?;
+    wallet::init_wallet(network, Path::new(path.as_str()))
+}
 
+pub fn run_ldk() -> Result<()> {
+    tracing::debug!("Starting ldk node");
     let rt = Runtime::new()?;
-    let listening_port = 9735; // TODO: Why is this hard-coded?
     rt.block_on(async move {
-        match wallet::run_ldk(listening_port).await {
-            Ok(()) => {}
+        match wallet::run_ldk().await {
+            Ok(background_processor) => {
+                // await background processor here as otherwise the spawned thread gets dropped
+                let _ = background_processor.join();
+            }
             Err(err) => {
                 tracing::error!("Error running LDK: {err}");
             }
@@ -59,7 +56,7 @@ pub fn init_wallet(network: Network, path: String) -> Result<()> {
 }
 
 pub fn get_balance() -> Result<Balance> {
-    Ok(Balance::new(wallet::get_balance()?.confirmed))
+    wallet::get_balance()
 }
 
 pub fn get_address() -> Result<Address> {
@@ -69,7 +66,14 @@ pub fn get_address() -> Result<Address> {
 pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) -> Result<()> {
     let peer_info = parse_peer_info(peer_pubkey_and_ip_addr)?;
     let rt = Runtime::new()?;
-    rt.block_on(async { wallet::open_channel(peer_info, channel_amount_sat).await })
+    rt.block_on(async {
+        let _ = wallet::open_channel(peer_info, channel_amount_sat).await;
+        loop {
+            // looping here indefinitely to keep the connection with the maker alive.
+            std::thread::sleep(Duration::new(u64::MAX, u32::MAX));
+        }
+    });
+    Ok(())
 }
 
 pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
