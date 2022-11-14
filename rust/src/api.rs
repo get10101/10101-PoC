@@ -73,7 +73,7 @@ pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) ->
 }
 
 pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
-    let tx_history = wallet::get_bitcoin_tx_history()?
+    let mut tx_history = wallet::get_bitcoin_tx_history()?
         .into_iter()
         .map(|tx| {
             let (is_confirmed, timestamp) = match tx.confirmation_time {
@@ -96,7 +96,9 @@ pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
                 timestamp,
             }
         })
-        .collect();
+        .collect::<Vec<_>>();
+
+    tx_history.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
 
     Ok(tx_history)
 }
