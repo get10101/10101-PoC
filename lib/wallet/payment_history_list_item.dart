@@ -4,7 +4,7 @@ import '../models/payment.model.dart';
 
 @immutable
 class PaymentHistoryListItem extends StatelessWidget {
-  final PaymentHistoryItemItem data;
+  final PaymentHistoryItem data;
 
   const PaymentHistoryListItem({
     super.key,

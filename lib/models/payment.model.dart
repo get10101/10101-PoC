@@ -1,11 +1,11 @@
 import 'package:ten_ten_one/models/amount.model.dart';
 
-class PaymentHistoryItemItem {
+class PaymentHistoryItem {
   PaymentType type;
   PaymentStatus status;
   Amount amount;
 
-  PaymentHistoryItemItem(this.amount, this.type, this.status);
+  PaymentHistoryItem(this.amount, this.type, this.status);
 }
 
 enum PaymentStatus { pending, finalized }
