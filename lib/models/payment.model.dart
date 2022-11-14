@@ -31,8 +31,8 @@ enum PaymentType {
 
 extension PaymentTypeExtension on PaymentType {
   static const displays = {
-    PaymentType.deposit: "Deposit Bitcoin",
-    PaymentType.withdraw: "Withdraw Bitcoin",
+    PaymentType.deposit: "Bitcoin Deposited",
+    PaymentType.withdraw: "Bitcoin Withdrawn",
     PaymentType.channelOpen: "Channel Opened",
     PaymentType.channelClose: "Channel Closed",
     PaymentType.send: "Payment Sent",
