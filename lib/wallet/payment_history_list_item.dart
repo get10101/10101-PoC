@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'dart:math' as math;
 
 import '../models/payment.model.dart';
@@ -63,9 +64,7 @@ class PaymentHistoryListItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Text(amountDisplay.value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(amountDisplay.label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          AmountItem(text: amountDisplay.value, unit: AmountUnit.satoshi, iconColor: Colors.grey)
         ],
       ),
     );
