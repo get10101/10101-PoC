@@ -11,6 +11,7 @@ use chrono::Utc;
 use lightning::routing::gossip::NetworkGraph;
 use lightning::routing::scoring::ProbabilisticScorer;
 use lightning::routing::scoring::ProbabilisticScoringParameters;
+use lightning::util::logger::Level as LoggerLevel;
 use lightning::util::logger::Logger;
 use lightning::util::logger::Record;
 use lightning::util::ser::ReadableArgs;
@@ -24,6 +25,7 @@ use std::net::SocketAddr;
 use std::net::ToSocketAddrs;
 use std::path::Path;
 use std::sync::Arc;
+use tracing::Level;
 
 pub struct FilesystemLogger {
     data_dir: String,
@@ -35,6 +37,17 @@ impl FilesystemLogger {
         Self {
             data_dir: logs_path,
         }
+    }
+}
+
+fn to_tracing_log_level(log_level: LoggerLevel) -> Level {
+    match log_level {
+        LoggerLevel::Gossip => Level::TRACE,
+        LoggerLevel::Trace => Level::TRACE,
+        LoggerLevel::Debug => Level::DEBUG,
+        LoggerLevel::Info => Level::INFO,
+        LoggerLevel::Warn => Level::WARN,
+        LoggerLevel::Error => Level::ERROR,
     }
 }
 
@@ -52,6 +65,19 @@ impl Logger for FilesystemLogger {
             record.line,
             raw_log
         );
+
+        let log_level = to_tracing_log_level(record.level);
+
+        // TODO: Distinguish between the log levels instead of logging
+        // everything on trace
+        tracing::debug!(
+            target: "ldk",
+            ?log_level,
+            module_path = record.module_path,
+            line = record.line,
+            raw_log
+        );
+
         let logs_file_path = format!("{}/logs.txt", self.data_dir.clone());
         fs::OpenOptions::new()
             .create(true)
