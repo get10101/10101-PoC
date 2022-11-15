@@ -171,6 +171,26 @@ pub async fn open_channel(
     Ok(())
 }
 
+/// Force-closes the _first_ channel with a peer.
+pub async fn force_close_channel(
+    channel_manager: Arc<ChannelManager>,
+    remote_node_id: PublicKey,
+) -> Result<()> {
+    let channel_list = channel_manager.list_channels();
+    let channel = channel_list
+        .iter()
+        .find(|details| details.counterparty.node_id == remote_node_id)
+        .context("No channel with peer")?;
+
+    channel_manager
+        .force_close_broadcasting_latest_txn(&channel.channel_id, &channel.counterparty.node_id)
+        .map_err(|e| anyhow!("Could not force-close channel: {e:?}"))?;
+
+    tracing::info!("Channel has been successfully force-closed");
+
+    Ok(())
+}
+
 pub(crate) enum HTLCStatus {
     // Pending, FIXME: Never constructed in the example
     Succeeded,

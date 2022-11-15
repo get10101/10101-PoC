@@ -1,7 +1,9 @@
 use http_api_problem::HttpApiProblem;
+use http_api_problem::StatusCode;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::serde::Serialize;
+use ten_ten_one::wallet::force_close_channel;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Price(u64);
@@ -49,4 +51,21 @@ pub async fn get_offers() -> Result<Json<Offers>, HttpApiProblem> {
     };
 
     Ok(Json(offers))
+}
+
+#[rocket::post("/channel/<remote_node_id>")]
+pub async fn post_force_close_channel(remote_node_id: String) -> Result<(), HttpApiProblem> {
+    let remote_node_id = remote_node_id.parse().map_err(|e| {
+        HttpApiProblem::new(StatusCode::BAD_REQUEST)
+            .title("Failed to force-close channel")
+            .detail(format!("Could not parse remote node ID: {e:#}"))
+    })?;
+
+    force_close_channel(remote_node_id).await.map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to force-close channel")
+            .detail(format!("{e:#}"))
+    })?;
+
+    Ok(())
 }
