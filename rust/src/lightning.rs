@@ -227,11 +227,11 @@ type OnionMessenger = SimpleArcOnionMessenger<FilesystemLogger>;
 pub fn setup(
     lightning_wallet: BdkLdkWallet,
     network: bitcoin::Network,
-    ldk_data_dir: &Path,
+    data_dir: &Path,
     seed: &[u8; 32],
 ) -> Result<LightningSystem> {
     let lightning_wallet = Arc::new(lightning_wallet);
-    let ldk_data_dir = ldk_data_dir.to_string_lossy().to_string();
+    let ldk_data_dir = data_dir.join("ldk").to_string_lossy().to_string();
 
     // ## Setup
     // Step 1: Initialize the FeeEstimator
