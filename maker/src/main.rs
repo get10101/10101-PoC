@@ -18,7 +18,9 @@ async fn main() {
     let public_key = wallet::node_id().expect("To get node id for maker");
     let listening_address = format!("{public_key}@127.0.0.1:{port}");
     tracing::info!(listening_address, "Listening on");
-    let address = wallet::get_address().expect("To get a new address").to_string();
+    let address = wallet::get_address()
+        .expect("To get a new address")
+        .to_string();
     tracing::info!(address, "New address");
 
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;

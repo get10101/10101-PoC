@@ -147,10 +147,7 @@ impl Wallet {
     }
 
     /// Run the lightning node
-    pub async fn run_ldk_server(
-        &self,
-        port: u16,
-    ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+    pub async fn run_ldk_server(&self, port: u16) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
         lightning::run_ldk_server(&self.lightning, port).await
     }
 
