@@ -8,8 +8,8 @@ use rocket::serde::Serialize;
 use rocket::State;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use tokio::sync::watch;
 use ten_ten_one::wallet::force_close_channel;
+use tokio::sync::watch;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Offer {

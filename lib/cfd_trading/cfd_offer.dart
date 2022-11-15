@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
@@ -32,6 +33,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final formatter = NumberFormat.decimalPattern('en');
 
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
+    final cfdOffersChangeNotifer = context.watch<CfdOfferChangeNotifier>();
 
     // mock data
     cfdTradingService.draftOrder ??= Order(
@@ -46,18 +48,19 @@ class _CfdOfferState extends State<CfdOffer> {
 
     order = cfdTradingService.draftOrder!;
 
-    // mock data
-    const bid = 19000;
-    const ask = 19200;
-    const index = 19100;
+    final liquidationPrice = formatter.format(order.liquidationPrice);
+    final fundingRate = order.fundingRate.display(currency: Currency.btc).value;
+    final margin = order.margin.display(currency: Currency.btc).value;
+
+    final offer = cfdOffersChangeNotifer.offer!;
+
+    final bid = offer.bid;
+    final ask = offer.ask;
+    final index = offer.index;
 
     final fmtBid = formatter.format(bid);
     final fmtAsk = formatter.format(ask);
     final fmtIndex = formatter.format(index);
-
-    final liquidationPrice = formatter.format(order.liquidationPrice);
-    final fundingRate = order.fundingRate.display(currency: Currency.btc).value;
-    final margin = order.margin.display(currency: Currency.btc).value;
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
@@ -74,7 +77,9 @@ class _CfdOfferState extends State<CfdOffer> {
         const SizedBox(height: 30),
         PositionSelection(
             onChange: (position) {
-              order.position = position!;
+              setState(() {
+                order.position = position!;
+              });
             },
             value: order.position),
         const SizedBox(height: 15),

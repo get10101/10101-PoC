@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
@@ -33,6 +34,7 @@ LightningBalance lightningBalance = LightningBalance();
 BitcoinBalance bitcoinBalance = BitcoinBalance();
 SeedBackupModel seedBackup = SeedBackupModel();
 PaymentHistory paymentHistory = PaymentHistory();
+CfdOfferChangeNotifier cfdOffersChangeNotifier = CfdOfferChangeNotifier();
 
 void main() {
   FlutterError.onError = (details) {
@@ -51,6 +53,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => paymentHistory),
     ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
+    ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
   ], child: const TenTenOneApp()));
 }
 
@@ -171,6 +174,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
     // consecutive syncs
     runPeriodically(_callSync);
     runPeriodically(_callSyncPaymentHistory);
+    runPeriodically(_callGetOffers);
   }
 
   Future<void> _callSync() async {
@@ -181,6 +185,16 @@ class _TenTenOneState extends State<TenTenOneApp> {
       FLog.trace(text: 'Successfully synced Bitcoin wallet');
     } on FfiException catch (error) {
       FLog.error(text: 'Failed to sync Bitcoin wallet: Error: ' + error.message, exception: error);
+    }
+  }
+
+  Future<void> _callGetOffers() async {
+    try {
+      final offer = await api.getOffer();
+      cfdOffersChangeNotifier.update(offer);
+      FLog.trace(text: 'Successfully fetched offers');
+    } on FfiException catch (error) {
+      FLog.error(text: 'Failed to get offers: Error: ' + error.message, exception: error);
     }
   }
 

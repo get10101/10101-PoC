@@ -1,5 +1,7 @@
 use crate::disk::parse_peer_info;
 use crate::logger;
+use crate::offer;
+use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::Balance;
 use crate::wallet::Network;
@@ -91,6 +93,11 @@ pub async fn open_cfd(taker_amount: u64, leverage: u64) -> Result<()> {
     wallet::open_cfd(taker_amount, maker_amount).await?;
 
     Ok(())
+}
+
+pub fn get_offer() -> Result<Offer> {
+    let rt = Runtime::new()?;
+    rt.block_on(async { offer::get_offer().await })
 }
 
 pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
