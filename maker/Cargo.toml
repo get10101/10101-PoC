@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }
 atty = "0.2.14"
+rocket = { version = "0.5.0-rc.2", features = ["json", "uuid"] }
 ten_ten_one = { version = "0.1.0", path = "../rust" }
 time = { version = "0.3", features = ["serde", "parsing", "std", "formatting", "macros", "serde-well-known"] }
 tokio = { version = "1", features = ["io-util", "macros", "rt", "rt-multi-thread", "sync", "net", "time"] }
