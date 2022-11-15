@@ -723,8 +723,7 @@ checksum = "fc7fcc620a3bff7cdd7a365be3376c97191aeaccc2a603e600951e452615bf89"
 [[package]]
 name = "lightning"
 version = "0.0.112"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5deb857f23c88083ac09bc31fe4eadccf4b2779fb3c973862691258bff38b0e2"
+source = "git+https://github.com/itchysats/rust-lightning?rev=321848d0911928527ea5d94f88bcaa4587475ab3#321848d0911928527ea5d94f88bcaa4587475ab3"
 dependencies = [
  "bitcoin",
 ]
@@ -732,8 +731,7 @@ dependencies = [
 [[package]]
 name = "lightning-background-processor"
 version = "0.0.112"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "382ee5cabdacb852187c84c86bd47fe6fb29189cddad30546e25ec1731e35c68"
+source = "git+https://github.com/itchysats/rust-lightning?rev=321848d0911928527ea5d94f88bcaa4587475ab3#321848d0911928527ea5d94f88bcaa4587475ab3"
 dependencies = [
  "bitcoin",
  "lightning",
@@ -743,8 +741,7 @@ dependencies = [
 [[package]]
 name = "lightning-block-sync"
 version = "0.0.112"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03590e7bc8b4c622ec3bcec03f7e00c774aafb91c0d6b5e854993e05be677730"
+source = "git+https://github.com/itchysats/rust-lightning?rev=321848d0911928527ea5d94f88bcaa4587475ab3#321848d0911928527ea5d94f88bcaa4587475ab3"
 dependencies = [
  "bitcoin",
  "chunked_transfer",
@@ -757,10 +754,10 @@ dependencies = [
 [[package]]
 name = "lightning-invoice"
 version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fc6ec960257cddce1b85d5ce258821a6138dcd0ae9fd9661b2c3061df588289"
+source = "git+https://github.com/itchysats/rust-lightning?rev=321848d0911928527ea5d94f88bcaa4587475ab3#321848d0911928527ea5d94f88bcaa4587475ab3"
 dependencies = [
  "bech32 0.9.1",
+ "bitcoin",
  "bitcoin_hashes 0.11.0",
  "lightning",
  "num-traits",
@@ -770,8 +767,7 @@ dependencies = [
 [[package]]
 name = "lightning-net-tokio"
 version = "0.0.112"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fb57b9c19e929656d578d1019bb66b1121c1217a101f5ca73f68630f74edb20"
+source = "git+https://github.com/itchysats/rust-lightning?rev=321848d0911928527ea5d94f88bcaa4587475ab3#321848d0911928527ea5d94f88bcaa4587475ab3"
 dependencies = [
  "bitcoin",
  "lightning",
@@ -781,8 +777,7 @@ dependencies = [
 [[package]]
 name = "lightning-persister"
 version = "0.0.112"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5010dc150e128199635af3469ef842e161c0a8630abee3a4ca9cf13bc935cb01"
+source = "git+https://github.com/itchysats/rust-lightning?rev=321848d0911928527ea5d94f88bcaa4587475ab3#321848d0911928527ea5d94f88bcaa4587475ab3"
 dependencies = [
  "bitcoin",
  "libc",
@@ -793,8 +788,7 @@ dependencies = [
 [[package]]
 name = "lightning-rapid-gossip-sync"
 version = "0.0.112"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccd6cea4c9191247d3ed262feaffb3f43814eafede9097364c413aea17cf281b"
+source = "git+https://github.com/itchysats/rust-lightning?rev=321848d0911928527ea5d94f88bcaa4587475ab3#321848d0911928527ea5d94f88bcaa4587475ab3"
 dependencies = [
  "bitcoin",
  "lightning",

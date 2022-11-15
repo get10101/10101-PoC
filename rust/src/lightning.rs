@@ -848,5 +848,7 @@ async fn handle_ldk_events(
             // Unreachable, we don't set manually_accept_inbound_channels
         }
         Event::HTLCHandlingFailed { .. } => {}
+        Event::RemoteSentAddCustomOutputEvent { .. } => todo!(),
+        Event::RemoteSentCustomOutputCommitmentSignature { .. } => todo!(),
     }
 }
