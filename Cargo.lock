@@ -890,6 +890,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "http-api-problem"
+version = "0.55.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a4ac53ed8a1a36055d74e9edd37f5ee313d2f250ceb4203f1af68d1d04c4111"
+dependencies = [
+ "http",
+ "rocket",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "http-body"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1145,7 +1157,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "atty",
+ "http-api-problem",
  "rocket",
+ "serde",
  "ten_ten_one",
  "time 0.3.17",
  "tokio",

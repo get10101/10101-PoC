@@ -1,5 +1,6 @@
 use anyhow::Result;
 use maker::logger;
+use maker::routes;
 use std::env::temp_dir;
 use std::time::Duration;
 use ten_ten_one::wallet;
@@ -35,7 +36,10 @@ async fn main() -> Result<()> {
         }
     });
 
-    let mission_success = rocket::build().launch().await?;
+    let mission_success = rocket::build()
+        .mount("/api", rocket::routes![routes::get_offers])
+        .launch()
+        .await?;
 
     tracing::trace!(?mission_success, "Rocket has landed");
 
