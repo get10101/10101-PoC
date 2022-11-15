@@ -52,6 +52,7 @@ jobs:
             rust:
               - '.github/workflows/**'
               - 'rust/**'
+              - 'rust-toolchain.toml'
             flutter:
               - '.github/workflows/**'
               - 'lib/**'
