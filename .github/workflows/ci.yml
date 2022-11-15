@@ -53,6 +53,10 @@ jobs:
               - '.github/workflows/**'
               - 'rust/**'
               - 'rust-toolchain.toml'
+            maker:
+              - '.github/workflows/**'
+              - 'maker/**'
+              - 'rust-toolchain.toml'
             flutter:
               - '.github/workflows/**'
               - 'lib/**'
@@ -66,7 +70,7 @@ jobs:
               - 'pubspec.*'
   clippy:
     needs: changes
-    if: ${{ needs.changes.outputs.rust == 'true' }}
+    if: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.maker == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -86,7 +90,7 @@ jobs:
 
   cargo-test:
     needs: changes
-    if: ${{ needs.changes.outputs.rust == 'true' }}
+    if: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.maker == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
