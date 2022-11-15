@@ -1,0 +1,50 @@
+name: Build release binary
+description: Builds a release binary
+inputs:
+  target:
+    description: "The Rust target to build for."
+    required: true
+  gh_token:
+    description: "A GITHUB_TOKEN authorized to check out source code and call GH API."
+    required: true
+  binary:
+    description: "The binary to build (maker | taker)."
+    required: true
+outputs:
+  path:
+    description: "The path to the built binary."
+    value: target/${{ inputs.target }}/release/${{ inputs.binary }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install toolchain from `rust-toolchain.toml`
+      shell: bash
+      run: rustup show
+
+    - uses: actions/cache@v3
+      id: cache-deps
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          ./rust/target
+        key: ${{ inputs.target }}-build-release${{ hashFiles('**/Cargo.lock') }}-${{ steps.checkout.outputs.rustc_hash }}
+
+    - name: Install FFI bindings
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+      run: cargo install flutter_rust_bridge_codegen
+
+    # Unfortunately, maker still needs codegen to build, as it depends on that library
+    # TODO: Extract `core` library to drop non-flutter dependency on the codegen
+    - name: Generate FFI bindings
+      run: make gen
+
+    - name: Build ${{ inputs.target }} ${{ matrix.binary }} release binary
+      shell: bash
+      run: cargo build --target=${{ inputs.target }} --release --bin ${{ inputs.binary }}
+
+    - name: Smoke test the binary
+      shell: bash
+      run: target/${{ inputs.target }}/release/${{ inputs.binary }} --help
