@@ -1,4 +1,6 @@
+use crate::disk::parse_peer_info;
 use crate::lightning;
+use crate::lightning::connect_peer_if_necessary;
 use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
@@ -25,6 +27,8 @@ pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
+
+static MAKER_IP_PORT: &str = "127.0.0.1:9045";
 
 pub enum Network {
     Mainnet,
@@ -142,13 +146,16 @@ impl Wallet {
     }
 
     /// Run the lightning node
-    pub async fn run_ldk(&self) -> Result<BackgroundProcessor> {
-        lightning::run_ldk(&self.lightning).await
+    pub async fn run_ldk(&mut self) -> Result<BackgroundProcessor> {
+        lightning::run_ldk(&mut self.lightning).await
     }
 
     /// Run the lightning node
-    pub async fn run_ldk_server(&self, port: u16) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-        lightning::run_ldk_server(&self.lightning, port).await
+    pub async fn run_ldk_server(
+        &mut self,
+        port: u16,
+    ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+        lightning::run_ldk_server(&mut self.lightning, port).await
     }
 
     pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
@@ -183,12 +190,12 @@ pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
 }
 
 pub async fn run_ldk() -> Result<BackgroundProcessor> {
-    let wallet = { (*get_wallet()?).clone() };
+    let mut wallet = { (*get_wallet()?).clone() };
     wallet.run_ldk().await
 }
 
 pub async fn run_ldk_server(port: u16) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-    let wallet = { (*get_wallet()?).clone() };
+    let mut wallet = { (*get_wallet()?).clone() };
     wallet.run_ldk_server(port).await
 }
 
@@ -231,8 +238,72 @@ pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Resul
         peer_info,
         channel_amount_sat,
         data_dir.as_path(),
+        Some(channel_amount_sat.saturating_div(3).saturating_mul(2)),
     )
     .await
+}
+
+pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
+    tracing::info!("Opening CFD with taker amount {taker_amount} maker amount {maker_amount}");
+
+    let (peer_manager, channel_manager) = {
+        let lightning = &get_wallet()?.lightning;
+        (
+            lightning.peer_manager.clone(),
+            lightning.channel_manager.clone(),
+        )
+    };
+
+    let binding = channel_manager.list_channels();
+    tracing::info!("Channels: {binding:?}");
+
+    let channel_details = binding.first().context("No first channel found")?;
+    let channel_id = channel_details
+        .short_channel_id
+        .context("Could not retrieve short channel id")?;
+    let maker_pk = channel_details.counterparty.node_id;
+
+    let maker_connection_str = format!("{maker_pk}@{MAKER_IP_PORT}");
+
+    tracing::info!("Connection str: {maker_connection_str}");
+
+    let peers = peer_manager.get_peer_node_ids();
+    tracing::info!("Peers: {peers:?}");
+
+    let peer_info = parse_peer_info(maker_connection_str)?;
+    tracing::debug!("Connection with {peer_info}");
+    connect_peer_if_necessary(&peer_info, peer_manager.clone()).await?;
+    tracing::debug!("Connected to {peer_info}");
+
+    let peer = *peer_manager.get_peer_node_ids().first().unwrap();
+    tracing::info!("First Peer: {peer}");
+
+    // hardcoded because we are not dealing with force-close scenarios yet
+    let dummy_script = "0020e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        .parse()
+        .expect("static dummy script to always parse");
+    let dummy_cltv_expiry = 40;
+
+    // Convert to msats
+    let taker_amount = taker_amount * 1000;
+    let maker_amount = maker_amount * 1000;
+
+    tracing::info!("Adding custom output");
+    let custom_output_details = channel_manager
+        .add_custom_output(
+            channel_id,
+            maker_pk,
+            taker_amount,
+            maker_amount,
+            dummy_cltv_expiry,
+            dummy_script,
+        )
+        .map_err(|e| anyhow!(e))?;
+    tracing::info!(?custom_output_details, "Added custom output");
+
+    // TODO: Persist custom output for collab close
+
+    Ok(())
 }
 
 impl From<Network> for bitcoin::Network {

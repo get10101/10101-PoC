@@ -49,6 +49,7 @@ use lightning::util::config::ChannelHandshakeConfig;
 use lightning::util::config::ChannelHandshakeLimits;
 use lightning::util::config::UserConfig;
 use lightning::util::events::Event;
+use lightning::util::events::EventHandler;
 use lightning::util::events::PaymentPurpose;
 use lightning::util::ser::ReadableArgs;
 use lightning_background_processor::BackgroundProcessor;
@@ -75,7 +76,10 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::time::SystemTime;
+use tokio::runtime;
 use tokio::task::JoinHandle;
+
+pub use lightning::*;
 
 /// Container to keep all the components of the lightning network in one place
 #[derive(Clone)]
@@ -91,7 +95,7 @@ pub struct LightningSystem {
     pub gossip_sync: Arc<LdkGossipSync>,
     pub inbound_payments: PaymentInfoStorage,
     pub outbound_payments: PaymentInfoStorage,
-    //
+    pub invoice_payer: Option<Arc<BdkLdkInvoicePayer>>,
     pub data_dir: PathBuf,
     pub network: Network,
 }
@@ -122,6 +126,7 @@ pub async fn open_channel(
     peer_info: PeerInfo,
     channel_amount_sat: u64,
     data_dir: &Path,
+    initial_send_amount_sats: Option<u64>,
 ) -> Result<()> {
     tracing::debug!("Connection with {peer_info}");
     connect_peer_if_necessary(&peer_info, peer_manager).await?;
@@ -140,9 +145,20 @@ pub async fn open_channel(
         ..Default::default()
     };
 
-    let _temp_channel_id = channel_manager
-        .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, Some(config))
-        .map_err(|_| anyhow!("Could not create channel with {peer_info}"))?;
+    let _temp_channel_id = match initial_send_amount_sats {
+        None => channel_manager
+            .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, Some(config))
+            .map_err(|_| anyhow!("Could not create channel with {peer_info}"))?,
+        Some(amount) => channel_manager
+            .create_channel(
+                peer_info.pubkey,
+                channel_amount_sat,
+                amount * 1000,
+                0,
+                Some(config),
+            )
+            .map_err(|_| anyhow!("Could not create channel with {peer_info}"))?,
+    };
 
     tracing::debug!("Created channel with {peer_info}");
 
@@ -207,8 +223,8 @@ pub(crate) type PeerManager = SimpleArcPeerManager<
 pub(crate) type ChannelManager =
     SimpleArcChannelManager<ChainMonitor, BdkLdkWallet, BdkLdkWallet, FilesystemLogger>;
 
-pub(crate) type InvoicePayer<E> =
-    payment::InvoicePayer<Arc<ChannelManager>, Router, Arc<FilesystemLogger>, E>;
+pub(crate) type BdkLdkInvoicePayer =
+    payment::InvoicePayer<Arc<ChannelManager>, Router, Arc<FilesystemLogger>, BdkLdkEventHandler>;
 
 type Router = DefaultRouter<Arc<NetGraph>, Arc<FilesystemLogger>, Arc<Mutex<Scorer>>>;
 type Scorer = ProbabilisticScorer<Arc<NetGraph>, Arc<FilesystemLogger>>;
@@ -438,38 +454,25 @@ pub fn setup(
         inbound_payments,
         outbound_payments,
         network,
+        invoice_payer: None,
     };
 
     Ok(system)
 }
 
-pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
+pub async fn run_ldk(system: &mut LightningSystem) -> Result<BackgroundProcessor> {
     let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
 
-    // Step 16: Handle LDK Events
-    let event_handler = {
-        let channel_manager = system.channel_manager.clone();
-        let wallet = system.wallet.clone();
-        let network_graph = system.network_graph.clone();
-        let keys_manager = system.keys_manager.clone();
-        let inbound_payments = system.inbound_payments.clone();
-        let outbound_payments = system.outbound_payments.clone();
-        let handle = tokio::runtime::Handle::current();
-        let network = system.network;
-        {
-            move |event: &Event| {
-                handle.block_on(handle_ldk_events(
-                    channel_manager.clone(),
-                    wallet.clone(),
-                    &network_graph,
-                    keys_manager.clone(),
-                    inbound_payments.clone(),
-                    outbound_payments.clone(),
-                    network,
-                    event,
-                ));
-            }
-        }
+    let runtime_handle = tokio::runtime::Handle::current();
+    let event_handler = BdkLdkEventHandler {
+        runtime_handle,
+        channel_manager: system.channel_manager.clone(),
+        wallet: system.wallet.clone(),
+        network_graph: system.network_graph.clone(),
+        keys_manager: system.keys_manager.clone(),
+        inbound_payments: system.inbound_payments.clone(),
+        outbound_payments: system.outbound_payments.clone(),
+        network: system.network,
     };
 
     // Step 17: Initialize routing ProbabilisticScorer
@@ -487,7 +490,7 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         system.keys_manager.get_secure_random_bytes(),
         scorer.clone(),
     );
-    let invoice_payer = Arc::new(InvoicePayer::new(
+    let invoice_payer = Arc::new(BdkLdkInvoicePayer::new(
         system.channel_manager.clone(),
         router,
         system.logger.clone(),
@@ -525,12 +528,14 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         }
     }
 
+    system.invoice_payer = Some(invoice_payer.clone());
+
     tracing::info!("Lightning node started");
     Ok(background_processor)
 }
 
 pub async fn run_ldk_server(
-    system: &LightningSystem,
+    system: &mut LightningSystem,
     listening_port: u16,
 ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
     let peer_manager_connection_handler = system.peer_manager.clone();
@@ -562,7 +567,10 @@ pub async fn run_ldk_server(
     Ok((tcp_handle, background_processor))
 }
 
-async fn connect_peer_if_necessary(peer: &PeerInfo, peer_manager: Arc<PeerManager>) -> Result<()> {
+pub async fn connect_peer_if_necessary(
+    peer: &PeerInfo,
+    peer_manager: Arc<PeerManager>,
+) -> Result<()> {
     for node_pubkey in peer_manager.get_peer_node_ids() {
         if node_pubkey == peer.pubkey {
             return Ok(());
@@ -691,7 +699,7 @@ async fn handle_ldk_events(
                     payment.status = HTLCStatus::Succeeded;
                     tracing::info!(
                         "EVENT: successfully sent payment of {} millisatoshis from \
-								 payment hash {:?} with preimage {:?}",
+                                                                 payment hash {:?} with preimage {:?}",
                         payment.amt_msat,
                         hex_utils::hex_str(&payment_hash.0),
                         hex_utils::hex_str(&payment_preimage.0)
@@ -885,7 +893,55 @@ async fn handle_ldk_events(
             // Unreachable, we don't set manually_accept_inbound_channels
         }
         Event::HTLCHandlingFailed { .. } => {}
-        Event::RemoteSentAddCustomOutputEvent { .. } => todo!(),
-        Event::RemoteSentCustomOutputCommitmentSignature { .. } => todo!(),
+        // Maker
+        Event::RemoteSentAddCustomOutputEvent { custom_output_id } => {
+            // TODO: Remove unwrap
+            let _details = channel_manager
+                .continue_remote_add_custom_output(*custom_output_id)
+                .unwrap();
+
+            // TODO: Persist CFD details
+        }
+        // Maker
+        Event::RemoteSentCustomOutputCommitmentSignature {
+            commitment_signed,
+            revoke_and_ack,
+            public_key_remote,
+        } => {
+            if let Err(e) = channel_manager.manual_send_commitment_signed(
+                *public_key_remote,
+                commitment_signed.clone(),
+                revoke_and_ack.clone(),
+            ) {
+                tracing::error!("Failed to manual send commitment signed: {e:#}");
+            }
+        }
+    }
+}
+
+/// Lightning network event handler
+pub struct BdkLdkEventHandler {
+    runtime_handle: runtime::Handle,
+    channel_manager: Arc<ChannelManager>,
+    wallet: Arc<BdkLdkWallet>,
+    network_graph: Arc<NetGraph>,
+    keys_manager: Arc<KeysManager>,
+    inbound_payments: PaymentInfoStorage,
+    outbound_payments: PaymentInfoStorage,
+    network: Network,
+}
+
+impl EventHandler for BdkLdkEventHandler {
+    fn handle_event(&self, event: &Event) {
+        self.runtime_handle.block_on(handle_ldk_events(
+            self.channel_manager.clone(),
+            self.wallet.clone(),
+            &self.network_graph,
+            self.keys_manager.clone(),
+            self.inbound_payments.clone(),
+            self.outbound_payments.clone(),
+            self.network,
+            event,
+        ));
     }
 }
