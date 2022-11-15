@@ -147,11 +147,11 @@ impl Wallet {
     }
 
     /// Run the lightning node
-    pub async fn run_ldk_with_port(
+    pub async fn run_ldk_server(
         &self,
         port: u16,
     ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-        lightning::run_ldk_with_port(&self.lightning, port).await
+        lightning::run_ldk_server(&self.lightning, port).await
     }
 
     pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
@@ -192,7 +192,7 @@ pub async fn run_ldk() -> Result<BackgroundProcessor> {
 
 pub async fn run_ldk_server(port: u16) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
     let wallet = { (*get_wallet()?).clone() };
-    wallet.run_ldk_with_port(port).await
+    wallet.run_ldk_server(port).await
 }
 
 pub fn node_id() -> Result<PublicKey> {

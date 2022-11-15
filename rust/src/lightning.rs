@@ -528,7 +528,7 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
     Ok(background_processor)
 }
 
-pub async fn run_ldk_with_port(
+pub async fn run_ldk_server(
     system: &LightningSystem,
     listening_port: u16,
 ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
