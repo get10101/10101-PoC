@@ -19,7 +19,7 @@ class PaymentHistoryListItem extends StatelessWidget {
 
     switch (data.status) {
       case PaymentStatus.pending:
-        statusIcon = const CircularProgressIndicator();
+        statusIcon = const SizedBox(width: 20, height: 20, child: CircularProgressIndicator());
         break;
       case PaymentStatus.finalized:
         switch (data.type) {
