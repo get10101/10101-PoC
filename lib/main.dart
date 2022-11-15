@@ -149,7 +149,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
       await setupRustLogging();
 
       final appSupportDir = await getApplicationSupportDirectory();
-      await api.initWallet(network: Network.Testnet, path: appSupportDir.path);
+      await api.initWallet(network: Network.Regtest, path: appSupportDir.path);
 
       FLog.info(text: "Starting ldk node");
       api
@@ -176,7 +176,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Future<void> _callSync() async {
     try {
       final balance = await api.getBalance();
-      bitcoinBalance.update(Amount(balance.onChain));
+      bitcoinBalance.update(Amount(balance.onChain.confirmed));
       lightningBalance.update(Amount(balance.offChain));
       FLog.trace(text: 'Successfully synced Bitcoin wallet');
     } on FfiException catch (error) {

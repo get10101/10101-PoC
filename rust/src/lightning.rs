@@ -69,10 +69,13 @@ use std::iter;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::time::SystemTime;
+use tokio::task::JoinHandle;
 
 /// Container to keep all the components of the lightning network in one place
 #[derive(Clone)]
@@ -451,10 +454,11 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         let keys_manager = system.keys_manager.clone();
         let inbound_payments = system.inbound_payments.clone();
         let outbound_payments = system.outbound_payments.clone();
+        let handle = tokio::runtime::Handle::current();
         let network = system.network;
         {
             move |event: &Event| {
-                block_on(handle_ldk_events(
+                handle.block_on(handle_ldk_events(
                     channel_manager.clone(),
                     wallet.clone(),
                     &network_graph,
@@ -523,6 +527,39 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
 
     tracing::info!("Lightning node started");
     Ok(background_processor)
+}
+
+pub async fn run_ldk_server(
+    system: &LightningSystem,
+    listening_port: u16,
+) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+    let peer_manager_connection_handler = system.peer_manager.clone();
+    let stop_listen_connect = Arc::new(AtomicBool::new(false));
+    let stop_listen = Arc::clone(&stop_listen_connect);
+    let tcp_handle = tokio::spawn(async move {
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{listening_port}"))
+            .await
+            .expect("Failed to bind to listen port - is something else already listening on it?");
+        loop {
+            let peer_mgr = peer_manager_connection_handler.clone();
+            let tcp_stream = listener.accept().await.unwrap().0;
+            if stop_listen.load(Ordering::Acquire) {
+                return;
+            }
+            tokio::spawn(async move {
+                lightning_net_tokio::setup_inbound(
+                    peer_mgr.clone(),
+                    tcp_stream.into_std().unwrap(),
+                )
+                .await;
+            });
+        }
+    });
+
+    tracing::info!("Listening to 0.0.0.0:{listening_port}");
+
+    let background_processor = run_ldk(system).await?;
+    Ok((tcp_handle, background_processor))
 }
 
 async fn connect_peer_if_necessary(peer: &PeerInfo, peer_manager: Arc<PeerManager>) -> Result<()> {
