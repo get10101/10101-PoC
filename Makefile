@@ -99,4 +99,8 @@ lint-flutter:
 test: FORCE
 	cargo test
 
+## maker: Build & run the maker (counterparty to 10101 trading component)
+maker: FORCE
+	cargo run --bin maker
+
 FORCE: ;
