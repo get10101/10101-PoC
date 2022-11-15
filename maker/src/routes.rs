@@ -1,56 +1,49 @@
+use crate::bitmex::Quote;
+use anyhow::Result;
 use http_api_problem::HttpApiProblem;
 use http_api_problem::StatusCode;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::serde::Serialize;
+use rocket::State;
+use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
+use tokio::sync::watch;
 use ten_ten_one::wallet::force_close_channel;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Price(u64);
-
-impl From<u64> for Price {
-    fn from(val: u64) -> Self {
-        Self(val)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct Offer {
-    bid: Price,
-    ask: Price,
+    #[serde(with = "rust_decimal::serde::float")]
+    bid: Decimal,
+    #[serde(with = "rust_decimal::serde::float")]
+    ask: Decimal,
+    #[serde(with = "rust_decimal::serde::float")]
+    index: Decimal,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Offers {
-    long: Offer,
-    short: Offer,
-    index_price: Price,
-}
+#[rocket::get("/offer")]
+pub async fn get_offer(
+    rx_quote_receiver: &State<watch::Receiver<Option<Quote>>>,
+) -> Result<Json<Offer>, HttpApiProblem> {
+    let rx_quote_receiver = rx_quote_receiver.inner().clone();
+    let quote = *rx_quote_receiver.borrow();
 
-#[rocket::get("/offers")]
-pub async fn get_offers() -> Result<Json<Offers>, HttpApiProblem> {
-    // TODO: Use real values instead of hard-coding
+    // TODO: take spread from clap
+    let spread = dec!(0.015);
 
-    let long = Offer {
-        bid: 19000.into(),
-        ask: 21000.into(),
-    };
-
-    // Different values only to ensure we're fetching the correct ones
-    let short = Offer {
-        bid: 20500.into(),
-        ask: 19500.into(),
-    };
-
-    let index_price = 19750.into();
-
-    let offers = Offers {
-        long,
-        short,
-        index_price,
-    };
-
-    Ok(Json(offers))
+    match quote {
+        Some(quote) => Ok(Json(Offer {
+            bid: (quote.ask * (Decimal::ONE + spread)),
+            ask: (quote.bid * (Decimal::ONE - spread)),
+            index: quote.index,
+        })),
+        None => Err("No quotes found"),
+    }
+    .map_err(|e| {
+        HttpApiProblem::new(StatusCode::NOT_FOUND)
+            .title("No quotes found")
+            .detail(e.to_string())
+    })
 }
 
 #[rocket::post("/channel/<remote_node_id>")]
