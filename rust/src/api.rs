@@ -3,6 +3,7 @@ use crate::logger;
 use crate::wallet;
 use crate::wallet::Balance;
 use crate::wallet::Network;
+use anyhow::bail;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use std::path::Path;
@@ -75,6 +76,20 @@ pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) ->
             tokio::time::sleep(Duration::from_secs(1000)).await;
         }
     });
+    Ok(())
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn open_cfd(taker_amount: u64, leverage: u64) -> Result<()> {
+    if leverage > 2 {
+        bail!("Only leverage x1 and x2 are supported at the moment");
+    }
+
+    // Hardcoded leverage of 2
+    let maker_amount = taker_amount.saturating_mul(leverage);
+
+    wallet::open_cfd(taker_amount, maker_amount).await?;
+
     Ok(())
 }
 

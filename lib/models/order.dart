@@ -26,6 +26,7 @@ enum OrderStatus {
   pending,
   open,
   closed,
+  failed,
 }
 
 extension OrderStatusExtension on OrderStatus {
@@ -34,6 +35,7 @@ extension OrderStatusExtension on OrderStatus {
     OrderStatus.pending: "Contract Setup",
     OrderStatus.open: "Open",
     OrderStatus.closed: "Closed",
+    OrderStatus.failed: "Failed",
   };
 
   String get display => displays[this]!;
