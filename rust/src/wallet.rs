@@ -1,6 +1,4 @@
-use crate::disk::parse_peer_info;
 use crate::lightning;
-use crate::lightning::connect_peer_if_necessary;
 use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
@@ -250,12 +248,9 @@ pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Resul
 pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     tracing::info!("Opening CFD with taker amount {taker_amount} maker amount {maker_amount}");
 
-    let (peer_manager, channel_manager) = {
+    let channel_manager = {
         let lightning = &get_wallet()?.lightning;
-        (
-            lightning.peer_manager.clone(),
-            lightning.channel_manager.clone(),
-        )
+        lightning.channel_manager.clone()
     };
 
     let binding = channel_manager.list_channels();
@@ -276,17 +271,6 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
         "Maker http API: {}",
         format!("{MAKER_IP}:{MAKER_PORT_HTTP}")
     );
-
-    let peers = peer_manager.get_peer_node_ids();
-    tracing::info!("Peers: {peers:?}");
-
-    let peer_info = parse_peer_info(maker_connection_str)?;
-    tracing::debug!("Connection with {peer_info}");
-    connect_peer_if_necessary(&peer_info, peer_manager.clone()).await?;
-    tracing::debug!("Connected to {peer_info}");
-
-    let peer = *peer_manager.get_peer_node_ids().first().unwrap();
-    tracing::info!("First Peer: {peer}");
 
     // hardcoded because we are not dealing with force-close scenarios yet
     let dummy_script = "0020e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -317,12 +301,9 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
 pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     tracing::info!("Settling CFD with taker amount {taker_amount} and maker amount {maker_amount}");
 
-    let (peer_manager, channel_manager) = {
+    let channel_manager = {
         let lightning = &get_wallet()?.lightning;
-        (
-            lightning.peer_manager.clone(),
-            lightning.channel_manager.clone(),
-        )
+        lightning.channel_manager.clone()
     };
 
     let custom_output_id = *channel_manager
@@ -330,16 +311,8 @@ pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
         .first()
         .context("No custom outputs in channel")?;
 
-    let channels = channel_manager.list_channels();
-    let channel_details = channels.first().context("No channels found")?;
-    let maker_pk = channel_details.counterparty.node_id;
-
     let taker_amount_msats = taker_amount * 1000;
     let maker_amount_msats = maker_amount * 1000;
-
-    let maker_connection_str = format!("{maker_pk}@{MAKER_IP}:{MAKER_PORT_LIGHTNING}");
-    let peer_info = parse_peer_info(maker_connection_str)?;
-    connect_peer_if_necessary(&peer_info, peer_manager.clone()).await?;
 
     channel_manager
         .remove_custom_output(custom_output_id, taker_amount_msats, maker_amount_msats)
