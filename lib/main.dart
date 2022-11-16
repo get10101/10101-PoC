@@ -36,6 +36,7 @@ PaymentHistory paymentHistory = PaymentHistory();
 
 const makerIp = "127.0.0.1";
 const makerLightningPort = "9045";
+const makerHttpApiPort = "8000";
 
 void main() {
   FlutterError.onError = (details) {
