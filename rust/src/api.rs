@@ -100,6 +100,13 @@ pub fn get_offer() -> Result<Offer> {
     rt.block_on(async { offer::get_offer().await })
 }
 
+#[tokio::main(flavor = "current_thread")]
+pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
+    wallet::settle_cfd(taker_amount, maker_amount).await?;
+
+    Ok(())
+}
+
 pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
     let mut tx_history = wallet::get_bitcoin_tx_history()?
         .into_iter()

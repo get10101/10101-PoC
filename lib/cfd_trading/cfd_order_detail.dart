@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
@@ -9,6 +11,8 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 class CfdOrderDetail extends StatefulWidget {
   static const subRouteName = 'cfd-order-detail';
@@ -109,12 +113,20 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                             Visibility(
                               visible: confirm,
                               child: ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
                                     // mock cfd has been closed.
                                     Timer(const Duration(seconds: 2), () {
                                       order.status = OrderStatus.closed;
                                       cfdTradingService.persist(order);
                                     });
+
+                                    try {
+                                      await api.settleCfd(takerAmount: 40000, makerAmount: 20000);
+                                    } on FfiException catch (error) {
+                                      FLog.error(
+                                          text: 'Failed to settle CFD: ' + error.message,
+                                          exception: error);
+                                    }
 
                                     context.go(CfdTrading.route);
                                   },
