@@ -158,6 +158,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
       final appSupportDir = await getApplicationSupportDirectory();
       await api.initWallet(network: Network.Regtest, path: appSupportDir.path);
+      await api.initDb(network: Network.Regtest, appDir: appSupportDir.path);
+      await api.testDbConnection(); // TODO: Remove this call after testing DB
 
       FLog.info(text: "Starting ldk node");
       api
