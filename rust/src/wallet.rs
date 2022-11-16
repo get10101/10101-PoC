@@ -31,6 +31,8 @@ static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 static MAKER_IP: &str = "127.0.0.1";
 static MAKER_PORT_LIGHTNING: u64 = 9045;
 static MAKER_PORT_HTTP: u64 = 8000;
+// Maker PK is derived from our checked in regtest maker seed
+static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
 
 pub enum Network {
     Mainnet,
@@ -265,6 +267,8 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
         .context("Could not retrieve short channel id")?;
     let maker_pk = channel_details.counterparty.node_id;
 
+    // TODO: Use  MAKER_PK meaningfully
+    assert_eq!(maker_pk.to_string(), MAKER_PK, "Using wrong maker seed");
     let maker_connection_str = format!("{maker_pk}@{MAKER_IP}:{MAKER_PORT_LIGHTNING}");
 
     tracing::info!("Connection str: {maker_connection_str}");
