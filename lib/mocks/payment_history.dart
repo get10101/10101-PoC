@@ -21,8 +21,8 @@ PaymentHistoryItem mockPaymentHistoryItem() {
   final randomAmount = Random().nextInt(max - min) + min;
   final randomType = Random().nextInt(7);
 
-  return PaymentHistoryItem(
-      Amount(randomAmount), PaymentType.values[randomType], PaymentStatus.finalized);
+  return PaymentHistoryItem(Amount(randomAmount), PaymentType.values[randomType],
+      PaymentStatus.finalized, DateTime.now().millisecondsSinceEpoch / 1000);
 }
 
 PaymentHistoryItem mockPaymentHistoryItemBitcoin() {
@@ -31,8 +31,8 @@ PaymentHistoryItem mockPaymentHistoryItemBitcoin() {
   final randomAmount = Random().nextInt(max - min) + min;
   final randomBitcoinType = Random().nextInt(3);
 
-  return PaymentHistoryItem(
-      Amount(randomAmount), PaymentType.values[randomBitcoinType], PaymentStatus.finalized);
+  return PaymentHistoryItem(Amount(randomAmount), PaymentType.values[randomBitcoinType],
+      PaymentStatus.finalized, DateTime.now().millisecondsSinceEpoch / 1000);
 }
 
 PaymentHistoryItem mockPaymentHistoryItemLightning() {
@@ -41,6 +41,6 @@ PaymentHistoryItem mockPaymentHistoryItemLightning() {
   final randomAmount = Random().nextInt(max - min) + min;
   final randomLightningType = Random().nextInt(5) + 2;
 
-  return PaymentHistoryItem(
-      Amount(randomAmount), PaymentType.values[randomLightningType], PaymentStatus.finalized);
+  return PaymentHistoryItem(Amount(randomAmount), PaymentType.values[randomLightningType],
+      PaymentStatus.finalized, DateTime.now().millisecondsSinceEpoch / 1000);
 }

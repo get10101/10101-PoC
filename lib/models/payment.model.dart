@@ -4,8 +4,9 @@ class PaymentHistoryItem {
   PaymentType type;
   PaymentStatus status;
   Amount amount;
+  num timestamp;
 
-  PaymentHistoryItem(this.amount, this.type, this.status);
+  PaymentHistoryItem(this.amount, this.type, this.status, this.timestamp);
 }
 
 enum PaymentStatus { pending, finalized }

@@ -203,8 +203,11 @@ class _TenTenOneState extends State<TenTenOneApp> {
                 ? Amount(bitcoinTxHistoryItem.sent * -1)
                 : Amount(bitcoinTxHistoryItem.received),
             bitcoinTxHistoryItem.sent != 0 ? PaymentType.withdraw : PaymentType.deposit,
-            bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending))
+            bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending,
+            bitcoinTxHistoryItem.timestamp))
         .toList();
+
+    bph.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     paymentHistory.update(bph);
     FLog.trace(text: 'Successfully synced payment history');
