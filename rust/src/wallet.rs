@@ -1,6 +1,4 @@
-use crate::disk::parse_peer_info;
 use crate::lightning;
-use crate::lightning::connect_peer_if_necessary;
 use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
@@ -150,8 +148,8 @@ impl Wallet {
     }
 
     /// Run the lightning node
-    pub async fn run_ldk(&mut self) -> Result<BackgroundProcessor> {
-        lightning::run_ldk(&mut self.lightning).await
+    pub async fn run_ldk(&self) -> Result<BackgroundProcessor> {
+        lightning::run_ldk(&self.lightning).await
     }
 
     /// Run the lightning node
@@ -159,7 +157,7 @@ impl Wallet {
         &mut self,
         port: u16,
     ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-        lightning::run_ldk_server(&mut self.lightning, port).await
+        lightning::run_ldk_server(&self.lightning, port).await
     }
 
     pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
@@ -194,7 +192,7 @@ pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
 }
 
 pub async fn run_ldk() -> Result<BackgroundProcessor> {
-    let mut wallet = { (*get_wallet()?).clone() };
+    let wallet = { (*get_wallet()?).clone() };
     wallet.run_ldk().await
 }
 
@@ -250,22 +248,19 @@ pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Resul
 pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     tracing::info!("Opening CFD with taker amount {taker_amount} maker amount {maker_amount}");
 
-    let (peer_manager, channel_manager) = {
+    let channel_manager = {
         let lightning = &get_wallet()?.lightning;
-        (
-            lightning.peer_manager.clone(),
-            lightning.channel_manager.clone(),
-        )
+        lightning.channel_manager.clone()
     };
 
     let binding = channel_manager.list_channels();
     tracing::info!("Channels: {binding:?}");
 
     let channel_details = binding.first().context("No first channel found")?;
-    let channel_id = channel_details
+    let maker_pk = channel_details.counterparty.node_id;
+    let short_channel_id = channel_details
         .short_channel_id
         .context("Could not retrieve short channel id")?;
-    let maker_pk = channel_details.counterparty.node_id;
 
     // TODO: Use  MAKER_PK meaningfully
     assert_eq!(maker_pk.to_string(), MAKER_PK, "Using wrong maker seed");
@@ -276,17 +271,6 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
         "Maker http API: {}",
         format!("{MAKER_IP}:{MAKER_PORT_HTTP}")
     );
-
-    let peers = peer_manager.get_peer_node_ids();
-    tracing::info!("Peers: {peers:?}");
-
-    let peer_info = parse_peer_info(maker_connection_str)?;
-    tracing::debug!("Connection with {peer_info}");
-    connect_peer_if_necessary(&peer_info, peer_manager.clone()).await?;
-    tracing::debug!("Connected to {peer_info}");
-
-    let peer = *peer_manager.get_peer_node_ids().first().unwrap();
-    tracing::info!("First Peer: {peer}");
 
     // hardcoded because we are not dealing with force-close scenarios yet
     let dummy_script = "0020e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -301,7 +285,7 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     tracing::info!("Adding custom output");
     let custom_output_details = channel_manager
         .add_custom_output(
-            channel_id,
+            short_channel_id,
             maker_pk,
             taker_amount,
             maker_amount,
@@ -311,7 +295,28 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
         .map_err(|e| anyhow!(e))?;
     tracing::info!(?custom_output_details, "Added custom output");
 
-    // TODO: Persist custom output for collab close
+    Ok(())
+}
+
+pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
+    tracing::info!("Settling CFD with taker amount {taker_amount} and maker amount {maker_amount}");
+
+    let channel_manager = {
+        let lightning = &get_wallet()?.lightning;
+        lightning.channel_manager.clone()
+    };
+
+    let custom_output_id = *channel_manager
+        .custom_outputs()
+        .first()
+        .context("No custom outputs in channel")?;
+
+    let taker_amount_msats = taker_amount * 1000;
+    let maker_amount_msats = maker_amount * 1000;
+
+    channel_manager
+        .remove_custom_output(custom_output_id, taker_amount_msats, maker_amount_msats)
+        .map_err(|e| anyhow!("Failed to settle CFD: {e:?}"))?;
 
     Ok(())
 }

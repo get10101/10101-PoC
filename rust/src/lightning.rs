@@ -49,7 +49,6 @@ use lightning::util::config::ChannelHandshakeConfig;
 use lightning::util::config::ChannelHandshakeLimits;
 use lightning::util::config::UserConfig;
 use lightning::util::events::Event;
-use lightning::util::events::EventHandler;
 use lightning::util::events::PaymentPurpose;
 use lightning::util::ser::ReadableArgs;
 use lightning_background_processor::BackgroundProcessor;
@@ -76,7 +75,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::time::SystemTime;
-use tokio::runtime;
 use tokio::task::JoinHandle;
 
 pub use lightning::*;
@@ -95,7 +93,6 @@ pub struct LightningSystem {
     pub gossip_sync: Arc<LdkGossipSync>,
     pub inbound_payments: PaymentInfoStorage,
     pub outbound_payments: PaymentInfoStorage,
-    pub invoice_payer: Option<Arc<BdkLdkInvoicePayer>>,
     pub data_dir: PathBuf,
     pub network: Network,
 }
@@ -243,8 +240,8 @@ pub(crate) type PeerManager = SimpleArcPeerManager<
 pub(crate) type ChannelManager =
     SimpleArcChannelManager<ChainMonitor, BdkLdkWallet, BdkLdkWallet, FilesystemLogger>;
 
-pub(crate) type BdkLdkInvoicePayer =
-    payment::InvoicePayer<Arc<ChannelManager>, Router, Arc<FilesystemLogger>, BdkLdkEventHandler>;
+pub(crate) type InvoicePayer<E> =
+    payment::InvoicePayer<Arc<ChannelManager>, Router, Arc<FilesystemLogger>, E>;
 
 type Router = DefaultRouter<Arc<NetGraph>, Arc<FilesystemLogger>, Arc<Mutex<Scorer>>>;
 type Scorer = ProbabilisticScorer<Arc<NetGraph>, Arc<FilesystemLogger>>;
@@ -478,25 +475,38 @@ pub fn setup(
         inbound_payments,
         outbound_payments,
         network,
-        invoice_payer: None,
     };
 
     Ok(system)
 }
 
-pub async fn run_ldk(system: &mut LightningSystem) -> Result<BackgroundProcessor> {
+pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
     let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
 
-    let runtime_handle = tokio::runtime::Handle::current();
-    let event_handler = BdkLdkEventHandler {
-        runtime_handle,
-        channel_manager: system.channel_manager.clone(),
-        wallet: system.wallet.clone(),
-        network_graph: system.network_graph.clone(),
-        keys_manager: system.keys_manager.clone(),
-        inbound_payments: system.inbound_payments.clone(),
-        outbound_payments: system.outbound_payments.clone(),
-        network: system.network,
+    // Step 16: Handle LDK Events
+    let event_handler = {
+        let channel_manager = system.channel_manager.clone();
+        let wallet = system.wallet.clone();
+        let network_graph = system.network_graph.clone();
+        let keys_manager = system.keys_manager.clone();
+        let inbound_payments = system.inbound_payments.clone();
+        let outbound_payments = system.outbound_payments.clone();
+        let handle = tokio::runtime::Handle::current();
+        let network = system.network;
+        {
+            move |event: &Event| {
+                handle.block_on(handle_ldk_events(
+                    channel_manager.clone(),
+                    wallet.clone(),
+                    &network_graph,
+                    keys_manager.clone(),
+                    inbound_payments.clone(),
+                    outbound_payments.clone(),
+                    network,
+                    event,
+                ));
+            }
+        }
     };
 
     // Step 17: Initialize routing ProbabilisticScorer
@@ -514,7 +524,7 @@ pub async fn run_ldk(system: &mut LightningSystem) -> Result<BackgroundProcessor
         system.keys_manager.get_secure_random_bytes(),
         scorer.clone(),
     );
-    let invoice_payer = Arc::new(BdkLdkInvoicePayer::new(
+    let invoice_payer = Arc::new(InvoicePayer::new(
         system.channel_manager.clone(),
         router,
         system.logger.clone(),
@@ -552,14 +562,12 @@ pub async fn run_ldk(system: &mut LightningSystem) -> Result<BackgroundProcessor
         }
     }
 
-    system.invoice_payer = Some(invoice_payer.clone());
-
     tracing::info!("Lightning node started");
     Ok(background_processor)
 }
 
 pub async fn run_ldk_server(
-    system: &mut LightningSystem,
+    system: &LightningSystem,
     listening_port: u16,
 ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
     let peer_manager_connection_handler = system.peer_manager.clone();
@@ -940,32 +948,5 @@ async fn handle_ldk_events(
                 tracing::error!("Failed to manual send commitment signed: {e:#}");
             }
         }
-    }
-}
-
-/// Lightning network event handler
-pub struct BdkLdkEventHandler {
-    runtime_handle: runtime::Handle,
-    channel_manager: Arc<ChannelManager>,
-    wallet: Arc<BdkLdkWallet>,
-    network_graph: Arc<NetGraph>,
-    keys_manager: Arc<KeysManager>,
-    inbound_payments: PaymentInfoStorage,
-    outbound_payments: PaymentInfoStorage,
-    network: Network,
-}
-
-impl EventHandler for BdkLdkEventHandler {
-    fn handle_event(&self, event: &Event) {
-        self.runtime_handle.block_on(handle_ldk_events(
-            self.channel_manager.clone(),
-            self.wallet.clone(),
-            &self.network_graph,
-            self.keys_manager.clone(),
-            self.inbound_payments.clone(),
-            self.outbound_payments.clone(),
-            self.network,
-            event,
-        ));
     }
 }
