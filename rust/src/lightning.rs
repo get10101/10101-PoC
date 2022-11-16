@@ -140,6 +140,8 @@ pub async fn open_channel(
         },
         channel_handshake_config: ChannelHandshakeConfig {
             announced_channel: false,
+            // We want to support 0-conf channels.
+            minimum_depth: 0,
             ..Default::default()
         },
         ..Default::default()
@@ -331,6 +333,11 @@ pub fn setup(
     user_config
         .channel_handshake_limits
         .force_announced_channel_preference = false;
+    // By setting this to 0 we indicate we accept 0-conf channels.
+    user_config.channel_handshake_config.minimum_depth = 0;
+    // By setting `manually_accept_inbound_channels` to `true` we need to manually confirm every
+    // inbound channel request.
+    user_config.manually_accept_inbound_channels = true;
 
     let (_channel_manager_blockhash, channel_manager) = {
         if let Ok(mut f) = std::fs::File::open(format!("{ldk_data_dir}/manager")) {
@@ -913,8 +920,25 @@ async fn handle_ldk_events(
         }
         Event::ProbeSuccessful { .. } => {}
         Event::ProbeFailed { .. } => {}
-        Event::OpenChannelRequest { .. } => {
-            // Unreachable, we don't set manually_accept_inbound_channels
+        Event::OpenChannelRequest {
+            temporary_channel_id,
+            counterparty_node_id,
+            ..
+        } => {
+            let mut rng = rand::thread_rng();
+            let user_channel_id = rng.gen();
+            match channel_manager.accept_inbound_channel_from_trusted_peer_0conf(
+                temporary_channel_id,
+                counterparty_node_id,
+                user_channel_id,
+            ) {
+                Ok(_) => {
+                    println!("Channel was opened successfully");
+                }
+                Err(e) => {
+                    println!("Could not open channel due to {e:?}");
+                }
+            }
         }
         Event::HTLCHandlingFailed { .. } => {}
         // Maker
