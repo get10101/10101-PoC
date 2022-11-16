@@ -26,6 +26,9 @@ lightning-net-tokio = { version = "0.0.112" }
 lightning-persister = { version = "0.0.112" }
 lightning-rapid-gossip-sync = { version = "0.0.112" }
 rand = "^0.6.0"
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls-webpki-roots"] }
+rust_decimal = { version = "1", features = ["serde-with-float"] }
+serde = "1.0.147"
 sha2 = "0.10"
 state = "0.5.3"
 time = { version = "0.3", features = ["serde", "parsing", "std", "formatting", "macros", "serde-well-known"] }

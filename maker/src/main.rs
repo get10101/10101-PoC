@@ -1,4 +1,5 @@
 use anyhow::Result;
+use maker::bitmex;
 use maker::logger;
 use maker::routes;
 use std::env::current_dir;
@@ -17,7 +18,7 @@ async fn main() -> Result<()> {
     tokio::spawn(async move {
         let (_tcp_handle, _background_processor) = wallet::run_ldk_server(port)
             .await
-            .expect("lightning network to run");
+            .expect("lightning node to run");
 
         let public_key = wallet::node_id().expect("To get node id for maker");
         let listening_address = format!("{public_key}@127.0.0.1:{port}");
@@ -36,11 +37,14 @@ async fn main() -> Result<()> {
         }
     });
 
+    let (_, quote_receiver) = bitmex::subscribe()?;
+
     let mission_success = rocket::build()
         .mount(
             "/api",
-            rocket::routes![routes::get_offers, routes::post_force_close_channel],
+            rocket::routes![routes::get_offer, routes::post_force_close_channel],
         )
+        .manage(quote_receiver)
         .launch()
         .await?;
 
