@@ -26,21 +26,7 @@ pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 
-static MAKER_IP: &str = "127.0.0.1";
-static MAKER_PORT_LIGHTNING: u64 = 9045;
-static MAKER_PORT_HTTP: u64 = 8000;
-// Maker PK is derived from our checked in regtest maker seed
-static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
-
-pub fn maker_peer_info() -> PeerInfo {
-    PeerInfo {
-        pubkey: MAKER_PK.parse().expect("Hard-coded PK to be valid"),
-        peer_addr: format!("{MAKER_IP}:{MAKER_PORT_LIGHTNING}")
-            .parse()
-            .expect("Hard-coded PK to be valid"),
-    }
-}
-
+#[derive(Clone)]
 pub enum Network {
     Mainnet,
     Testnet,
@@ -254,7 +240,13 @@ pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Resul
     .await
 }
 
-pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
+pub async fn open_cfd(
+    taker_amount: u64,
+    maker_amount: u64,
+    maker_public_key: &str,
+    maker_connection_str: &str,
+    maker_endpoint: &str,
+) -> Result<()> {
     tracing::info!("Opening CFD with taker amount {taker_amount} maker amount {maker_amount}");
 
     let channel_manager = {
@@ -272,14 +264,14 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
         .context("Could not retrieve short channel id")?;
 
     // TODO: Use  MAKER_PK meaningfully
-    assert_eq!(maker_pk.to_string(), MAKER_PK, "Using wrong maker seed");
-    let maker_connection_str = format!("{maker_pk}@{MAKER_IP}:{MAKER_PORT_LIGHTNING}");
+    assert_eq!(
+        maker_pk.to_string(),
+        maker_public_key,
+        "Using wrong maker seed"
+    );
 
     tracing::info!("Connection str: {maker_connection_str}");
-    tracing::info!(
-        "Maker http API: {}",
-        format!("{MAKER_IP}:{MAKER_PORT_HTTP}")
-    );
+    tracing::info!("Maker http API: {}", format!("{maker_endpoint}"));
 
     // hardcoded because we are not dealing with force-close scenarios yet
     let dummy_script = "0020e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

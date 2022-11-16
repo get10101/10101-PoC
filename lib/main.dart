@@ -13,6 +13,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/payment.model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
+import 'package:ten_ten_one/utilities/environment.dart';
 import 'package:ten_ten_one/wallet/deposit.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -41,10 +42,9 @@ void main() {
     FlutterError.presentError(details);
   };
 
-  final config = FLog.getDefaultConfigurations();
-  config.activeLogLevel = foundation.kReleaseMode ? LogLevel.INFO : LogLevel.DEBUG;
-
-  FLog.applyConfigurations(config);
+  final logConfig = FLog.getDefaultConfigurations();
+  logConfig.activeLogLevel = foundation.kReleaseMode ? LogLevel.INFO : LogLevel.DEBUG;
+  FLog.applyConfigurations(logConfig);
 
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(create: (context) => lightningBalance),
@@ -54,6 +54,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
+    Provider(create: (context) => Environment.parse()),
   ], child: const TenTenOneApp()));
 }
 
@@ -156,8 +157,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
     try {
       await setupRustLogging();
 
+      final config = context.read<Config>();
       final appSupportDir = await getApplicationSupportDirectory();
-      await api.initWallet(network: Network.Regtest, path: appSupportDir.path);
+      // it is not possible to set the data dir already when setting the provider
+      // as the application support directy will only become available once the app
+      // has been initialised. Hence we set the path once the app initialised.
+      config.dataDir = appSupportDir.path;
+      await api.initWallet(config: config);
 
       FLog.info(text: "Starting ldk node");
       api

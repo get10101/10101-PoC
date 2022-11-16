@@ -1,17 +1,78 @@
+use crate::lightning::PeerInfo;
 use crate::logger;
 use crate::offer;
 use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::Balance;
 use crate::wallet::Network;
+use anyhow::anyhow;
 use anyhow::bail;
+use anyhow::Context;
 use anyhow::Result;
+use flutter_rust_bridge::frb;
 use flutter_rust_bridge::StreamSink;
+use state::Storage;
 use std::path::Path;
+use std::sync::Mutex;
+use std::sync::MutexGuard;
 use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use tokio::runtime::Runtime;
+
+static CONFIG: Storage<Mutex<Config>> = Storage::new();
+
+fn get_config() -> Result<MutexGuard<'static, Config>> {
+    CONFIG
+        .try_get()
+        .context("Config uninitialised")?
+        .lock()
+        .map_err(|_| anyhow!("cannot acquire config lock"))
+}
+
+#[frb]
+#[derive(Clone)]
+pub struct Config {
+    pub network: Network,
+    pub endpoint: String,
+    pub lightning_port: u16,
+    pub http_port: u16,
+    pub maker_public_key: String,
+    #[frb(non_final)]
+    pub data_dir: Option<String>,
+}
+
+impl Config {
+    fn get_data_dir(&self) -> Result<&Path> {
+        match &self.data_dir {
+            Some(data_dir) => Ok(Path::new(data_dir.as_str())),
+            None => bail!("Missing data dir"),
+        }
+    }
+
+    pub fn get_p2p_endpoint(&self) -> String {
+        format!(
+            "{}@{}:{}",
+            self.maker_public_key, self.endpoint, self.lightning_port
+        )
+    }
+
+    pub fn get_http_endpoint(&self) -> String {
+        format!("http://{}:{}", self.endpoint, self.http_port)
+    }
+
+    fn get_peer_info(&self) -> PeerInfo {
+        PeerInfo {
+            pubkey: self
+                .maker_public_key
+                .parse()
+                .expect("maker public key to be valid"),
+            peer_addr: format!("{}:{}", self.endpoint, self.lightning_port)
+                .parse()
+                .expect("Hard-coded PK to be valid"),
+        }
+    }
+}
 
 pub struct Address {
     pub address: String,
@@ -36,8 +97,9 @@ impl Address {
     }
 }
 
-pub fn init_wallet(network: Network, path: String) -> Result<()> {
-    wallet::init_wallet(network, Path::new(path.as_str()))
+pub fn init_wallet(config: Config) -> Result<()> {
+    CONFIG.set(Mutex::new(config.clone()));
+    wallet::init_wallet(config.clone().network, config.get_data_dir()?)
 }
 
 pub fn run_ldk() -> Result<()> {
@@ -65,12 +127,10 @@ pub fn get_address() -> Result<Address> {
     Ok(Address::new(wallet::get_address()?.to_string()))
 }
 
-pub fn maker_peer_info() -> String {
-    wallet::maker_peer_info().to_string()
-}
-
 pub fn open_channel(channel_amount_sat: u64) -> Result<()> {
-    let peer_info = wallet::maker_peer_info();
+    let config = { (*get_config()?).clone() };
+    let peer_info = config.get_peer_info();
+
     let rt = Runtime::new()?;
     rt.block_on(async {
         if let Err(e) = wallet::open_channel(peer_info, channel_amount_sat).await {
@@ -93,20 +153,30 @@ pub async fn open_cfd(taker_amount: u64, leverage: u64) -> Result<()> {
     // Hardcoded leverage of 2
     let maker_amount = taker_amount.saturating_mul(leverage);
 
-    wallet::open_cfd(taker_amount, maker_amount).await?;
+    let config = (*get_config()?).clone();
+    wallet::open_cfd(
+        taker_amount,
+        maker_amount,
+        &config.maker_public_key,
+        &config.get_p2p_endpoint(),
+        &config.get_http_endpoint(),
+    )
+    .await?;
 
     Ok(())
 }
 
 pub fn get_offer() -> Result<Offer> {
     let rt = Runtime::new()?;
-    rt.block_on(async { offer::get_offer().await })
+    rt.block_on(async {
+        let config = { (*get_config()?).clone() };
+        offer::get_offer(&config.get_http_endpoint()).await
+    })
 }
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     wallet::settle_cfd(taker_amount, maker_amount).await?;
-
     Ok(())
 }
 
@@ -158,17 +228,29 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
 mod tests {
 
     use crate::api::init_wallet;
-    use std::env::temp_dir;
-
-    use super::Network;
+    use crate::api::Config;
+    use crate::wallet::Network;
 
     #[test]
     fn wallet_support_for_different_bitcoin_networks() {
-        init_wallet(Network::Mainnet, temp_dir().to_string_lossy().to_string())
-            .expect("wallet to be initialized");
-        init_wallet(Network::Testnet, temp_dir().to_string_lossy().to_string())
-            .expect("wallet to be initialized");
-        init_wallet(Network::Regtest, temp_dir().to_string_lossy().to_string())
-            .expect_err("wallet should not succeed to initialize");
+        let dummy_config = Config {
+            network: Network::Mainnet,
+            endpoint: "127.0.0.1".to_string(),
+            lightning_port: 9045,
+            http_port: 8000,
+            maker_public_key: "pubkey".to_string(),
+            data_dir: Some("".to_string()),
+        };
+        init_wallet(dummy_config.clone()).expect("wallet to be initialized");
+        init_wallet(Config {
+            network: Network::Testnet,
+            ..dummy_config.clone()
+        })
+        .expect("wallet to be initialized");
+        init_wallet(Config {
+            network: Network::Regtest,
+            ..dummy_config
+        })
+        .expect_err("wallet should not succeed to initialize");
     }
 }

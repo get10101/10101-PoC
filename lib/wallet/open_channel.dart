@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
@@ -26,7 +27,15 @@ class _OpenChannelState extends State<OpenChannel> {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
     channelCapacity = bitcoinBalance.amount.asSats;
-    _setMakerPeerInfo();
+    getP2PEndpoint();
+  }
+
+  Future<void> getP2PEndpoint() async {
+    final config = context.read<Config>();
+    final p2pEndpoint = await config.getP2PEndpoint();
+    setState(() {
+      peerPubkeyAndIpAddr = p2pEndpoint;
+    });
   }
 
   @override
@@ -46,7 +55,7 @@ class _OpenChannelState extends State<OpenChannel> {
               const SizedBox(
                 height: 5.0,
               ),
-              Text(peerPubkeyAndIpAddr, style: const TextStyle(fontSize: 20)),
+              SelectableText(peerPubkeyAndIpAddr, style: const TextStyle(fontSize: 20)),
               const SizedBox(
                 height: 10.0,
               ),
@@ -110,11 +119,5 @@ class _OpenChannelState extends State<OpenChannel> {
         ),
       )),
     );
-  }
-
-// This is pre-set in the backend, so no need to hook up to a change provider
-  Future<void> _setMakerPeerInfo() async {
-    final makerPubkeyAndIpAddr = await api.makerPeerInfo();
-    setState(() => peerPubkeyAndIpAddr = makerPubkeyAndIpAddr);
   }
 }
