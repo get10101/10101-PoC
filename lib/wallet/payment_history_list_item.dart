@@ -51,6 +51,9 @@ class PaymentHistoryListItem extends StatelessWidget {
             break;
         }
         break;
+      case PaymentStatus.failed:
+        statusIcon = Icon(FontAwesomeIcons.xmark, color: Colors.red[800]);
+        break;
     }
 
     final amountDisplay = data.amount.display(sign: true);

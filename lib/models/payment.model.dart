@@ -9,7 +9,7 @@ class PaymentHistoryItem {
   PaymentHistoryItem(this.amount, this.type, this.status, this.timestamp);
 }
 
-enum PaymentStatus { pending, finalized }
+enum PaymentStatus { pending, finalized, failed }
 
 enum PaymentType {
   // Bitcoin only
