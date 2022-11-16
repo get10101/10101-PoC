@@ -16,7 +16,7 @@ import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 
 class CfdOffer extends StatefulWidget {
-  static const leverages = [1, 2, 3];
+  static const leverages = [1, 2];
 
   const CfdOffer({Key? key}) : super(key: key);
 

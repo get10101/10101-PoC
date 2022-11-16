@@ -78,8 +78,8 @@ class CfdOrderConfirmation extends StatelessWidget {
                                 cfdTradingService.draftOrder = null;
 
                                 try {
-                                  // TODO: Don't hardcode the values
-                                  await api.openCfd(takerAmount: 20000, leverage: 2);
+                                  // TODO: Don't hardcode the taker amount
+                                  await api.openCfd(takerAmount: 20000, leverage: order.leverage);
                                   FLog.info(text: 'OpenCfd returned successfully');
                                 } on FfiException catch (error) {
                                   FLog.error(
