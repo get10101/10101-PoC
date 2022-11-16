@@ -210,6 +210,7 @@ pub struct PaymentInfo {
     secret: Option<PaymentSecret>,
     status: HTLCStatus,
     amt_msat: MillisatAmount,
+    timestamp: u64,
 }
 
 pub type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
@@ -913,6 +914,10 @@ async fn handle_ldk_events(
                     payment.status = HTLCStatus::Succeeded;
                     payment.preimage = payment_preimage;
                     payment.secret = payment_secret;
+                    payment.timestamp = SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs();
                 }
                 Entry::Vacant(e) => {
                     e.insert(PaymentInfo {
@@ -920,6 +925,10 @@ async fn handle_ldk_events(
                         secret: payment_secret,
                         status: HTLCStatus::Succeeded,
                         amt_msat: MillisatAmount(Some(*amount_msat)),
+                        timestamp: SystemTime::now()
+                            .duration_since(SystemTime::UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs(),
                     });
                 }
             }
