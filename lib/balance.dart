@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 
 import 'models/balance_model.dart';
 
@@ -19,12 +20,12 @@ class Balance extends StatelessWidget {
 
         var bitcoinBalanceWidget = BalanceRow(
             value: bitcoinBalanceDisplay.value,
-            label: bitcoinBalanceDisplay.label,
+            unit: bitcoinBalanceDisplay.unit,
             icon: Icons.currency_bitcoin_outlined,
             smaller: balanceSelector == BalanceSelector.both);
         var lightningBalanceWidget = BalanceRow(
             value: lightningBalanceDisplay.value,
-            label: lightningBalanceDisplay.label,
+            unit: lightningBalanceDisplay.unit,
             icon: Icons.bolt_outlined,
             smaller: balanceSelector == BalanceSelector.both);
 
@@ -54,33 +55,35 @@ class Balance extends StatelessWidget {
 class BalanceRow extends StatelessWidget {
   const BalanceRow(
       {required this.value,
-      required this.label,
+      required this.unit,
       required this.icon,
       required this.smaller,
       Key? key})
       : super(key: key);
 
   final String value;
-  final String label;
+  final AmountUnit unit;
   final bool smaller;
   final IconData icon;
 
   @override
   Widget build(BuildContext context) {
-    final balanceFontSize = smaller ? 32.0 : 36.0;
-    final labelFontSize = smaller ? 16.0 : 18.0;
+    final balanceFontSize = smaller ? 26.0 : 32.0;
+    final iconSize = smaller ? 24.0 : 28.0;
 
     return Center(
         child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Icon(icon),
-        Text(value,
-            key: const Key('bitcoinBalance'),
-            style: TextStyle(fontSize: balanceFontSize, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(fontSize: labelFontSize, color: Colors.grey)),
+        Icon(icon, size: 32),
+        AmountItem(
+          text: value,
+          unit: unit,
+          iconColor: Colors.grey,
+          iconSize: iconSize,
+          fontSize: balanceFontSize,
+        )
       ],
     ));
   }
