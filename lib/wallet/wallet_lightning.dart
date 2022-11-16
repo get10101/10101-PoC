@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
@@ -10,7 +11,7 @@ import 'package:ten_ten_one/wallet/service_card.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
-import '../mocks/payment_history.dart';
+import '../payment_history_change_notifier.dart';
 
 class WalletLightning extends StatefulWidget {
   const WalletLightning({Key? key}) : super(key: key);
@@ -27,20 +28,21 @@ class _WalletLightningState extends State<WalletLightning> {
 
   @override
   Widget build(BuildContext context) {
+    final history = context.watch<PaymentHistory>();
+
     List<Widget> widgets = [
       const Balance(balanceSelector: BalanceSelector.lightning),
       const Divider(),
     ];
 
-    final paymentHistory = mockPaymentHistory(10);
-
+    final lightningHistory = history.lightningHistory();
     final paymentHistoryList = ListView.builder(
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      itemCount: paymentHistory.length,
+      itemCount: lightningHistory.length,
       itemBuilder: (context, index) {
-        return PaymentHistoryListItem(data: paymentHistory[index]);
+        return PaymentHistoryListItem(data: lightningHistory[index]);
       },
     );
 

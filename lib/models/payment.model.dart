@@ -60,4 +60,6 @@ extension PaymentTypeExtension on PaymentType {
   String get display => displays[this]!;
 
   bool isBitcoin() => displayBitcoin[this]!;
+
+  bool isLightning() => !isBitcoin();
 }

@@ -12,4 +12,8 @@ class PaymentHistory extends ChangeNotifier {
   List<PaymentHistoryItem> bitcoinHistory() {
     return history.where((element) => element.type.isBitcoin()).toList();
   }
+
+  List<PaymentHistoryItem> lightningHistory() {
+    return history.where((element) => element.type.isLightning()).toList();
+  }
 }
