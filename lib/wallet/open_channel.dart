@@ -26,6 +26,7 @@ class _OpenChannelState extends State<OpenChannel> {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
     channelCapacity = bitcoinBalance.amount.asSats;
+    _setMakerPeerInfo();
   }
 
   @override
@@ -45,18 +46,7 @@ class _OpenChannelState extends State<OpenChannel> {
               const SizedBox(
                 height: 5.0,
               ),
-              TextFormField(
-                  keyboardType: TextInputType.multiline,
-                  maxLines: null,
-                  initialValue: peerPubkeyAndIpAddr,
-                  decoration: const InputDecoration(
-                      border: UnderlineInputBorder(), hintText: "pubkey@host:port"),
-                  onChanged: (text) {
-                    setState(() {
-                      peerPubkeyAndIpAddr = text;
-                    });
-                  },
-                  style: const TextStyle(fontSize: 20)),
+              Text(peerPubkeyAndIpAddr, style: const TextStyle(fontSize: 20)),
               const SizedBox(
                 height: 10.0,
               ),
@@ -108,9 +98,7 @@ class _OpenChannelState extends State<OpenChannel> {
                   onPressed: () async {
                     FLog.info(text: "Opening Channel with capacity " + channelCapacity.toString());
 
-                    api.openChannel(
-                        peerPubkeyAndIpAddr: peerPubkeyAndIpAddr,
-                        channelAmountSat: channelCapacity);
+                    api.openChannel(channelAmountSat: channelCapacity);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text("Waiting for channel to get established"),
                     ));
@@ -122,5 +110,11 @@ class _OpenChannelState extends State<OpenChannel> {
         ),
       )),
     );
+  }
+
+// This is pre-set in the backend, so no need to hook up to a change provider
+  Future<void> _setMakerPeerInfo() async {
+    final makerPubkeyAndIpAddr = await api.makerPeerInfo();
+    setState(() => peerPubkeyAndIpAddr = makerPubkeyAndIpAddr);
   }
 }
