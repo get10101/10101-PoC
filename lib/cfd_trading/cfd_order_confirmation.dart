@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/order.dart';
@@ -79,7 +80,10 @@ class CfdOrderConfirmation extends StatelessWidget {
 
                                 try {
                                   // TODO: Don't hardcode the values
-                                  await api.openCfd(takerAmount: 20000, leverage: 2);
+                                  await api.openCfd(
+                                      takerAmount: 20000,
+                                      leverage: 2,
+                                      makerConnection: makerIp + ":" + makerLightningPort);
                                   FLog.info(text: 'OpenCfd returned successfully');
                                 } on FfiException catch (error) {
                                   FLog.error(

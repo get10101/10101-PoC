@@ -80,7 +80,7 @@ pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) ->
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn open_cfd(taker_amount: u64, leverage: u64) -> Result<()> {
+pub async fn open_cfd(taker_amount: u64, leverage: u64, maker_ip_port: String) -> Result<()> {
     if leverage > 2 {
         bail!("Only leverage x1 and x2 are supported at the moment");
     }
@@ -88,7 +88,7 @@ pub async fn open_cfd(taker_amount: u64, leverage: u64) -> Result<()> {
     // Hardcoded leverage of 2
     let maker_amount = taker_amount.saturating_mul(leverage);
 
-    wallet::open_cfd(taker_amount, maker_amount).await?;
+    wallet::open_cfd(taker_amount, maker_amount, maker_ip_port).await?;
 
     Ok(())
 }

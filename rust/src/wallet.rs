@@ -28,8 +28,6 @@ pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 
-static MAKER_IP_PORT: &str = "127.0.0.1:9045";
-
 pub enum Network {
     Mainnet,
     Testnet,
@@ -243,7 +241,7 @@ pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Resul
     .await
 }
 
-pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
+pub async fn open_cfd(taker_amount: u64, maker_amount: u64, maker_ip_port: String) -> Result<()> {
     tracing::info!("Opening CFD with taker amount {taker_amount} maker amount {maker_amount}");
 
     let (peer_manager, channel_manager) = {
@@ -263,7 +261,7 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
         .context("Could not retrieve short channel id")?;
     let maker_pk = channel_details.counterparty.node_id;
 
-    let maker_connection_str = format!("{maker_pk}@{MAKER_IP_PORT}");
+    let maker_connection_str = format!("{maker_pk}@{maker_ip_port}");
 
     tracing::info!("Connection str: {maker_connection_str}");
 

@@ -34,6 +34,9 @@ BitcoinBalance bitcoinBalance = BitcoinBalance();
 SeedBackupModel seedBackup = SeedBackupModel();
 PaymentHistory paymentHistory = PaymentHistory();
 
+const makerIp = "127.0.0.1";
+const makerLightningPort = "9045";
+
 void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
