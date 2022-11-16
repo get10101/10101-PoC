@@ -306,6 +306,18 @@ pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     Ok(())
 }
 
+pub async fn force_close_channel(remote_node_id: PublicKey) -> Result<()> {
+    let channel_manager = {
+        let lightning = &get_wallet()?.lightning;
+
+        lightning.channel_manager.clone()
+    };
+
+    lightning::force_close_channel(channel_manager, remote_node_id).await?;
+
+    Ok(())
+}
+
 impl From<Network> for bitcoin::Network {
     fn from(network: Network) -> Self {
         match network {

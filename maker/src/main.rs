@@ -37,7 +37,10 @@ async fn main() -> Result<()> {
     });
 
     let mission_success = rocket::build()
-        .mount("/api", rocket::routes![routes::get_offers])
+        .mount(
+            "/api",
+            rocket::routes![routes::get_offers, routes::post_force_close_channel],
+        )
         .launch()
         .await?;
 
