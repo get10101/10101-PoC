@@ -298,9 +298,7 @@ pub fn setup(
     ));
 
     // Step 8: Read ChannelMonitor state from disk
-    let mut channelmonitors = persister
-        .read_channelmonitors(keys_manager.clone())
-        .unwrap();
+    let mut channelmonitors = persister.read_channelmonitors(keys_manager.clone())?;
 
     // TODO: This is new, check whether this is needed
     // Step 9: Poll for the best chain tip, which may be used by the channel manager & spv client
@@ -329,10 +327,13 @@ pub fn setup(
                 user_config,
                 channel_monitor_mut_references,
             );
-            <(BlockHash, ChannelManager)>::read(&mut f, read_args).unwrap()
+            <(BlockHash, ChannelManager)>::read(&mut f, read_args)
+                .map_err(|e| anyhow::anyhow!("{e:?}"))?
         } else {
             // We're starting a fresh node.
-            let (tip_height, tip_header) = lightning_wallet.get_tip().unwrap();
+            let (tip_height, tip_header) = lightning_wallet
+                .get_tip()
+                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
             let tip_hash = tip_header.block_hash();
 
             let chain_params = ChainParameters {
@@ -384,7 +385,9 @@ pub fn setup(
         .collect();
 
     // Step 10: Sync our channel monitors and channel manager to chain tip
-    lightning_wallet.sync(confirmables).unwrap();
+    lightning_wallet
+        .sync(confirmables)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     // Step 11: Give ChannelMonitors to ChainMonitor to watch
     for confirmable_monitor in confirmable_monitors.drain(..) {
@@ -419,8 +422,7 @@ pub fn setup(
     ));
     let mut ephemeral_bytes = [0; 32];
     let current_time = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
+        .duration_since(SystemTime::UNIX_EPOCH)?
         .as_secs();
     thread_rng().fill_bytes(&mut ephemeral_bytes);
     let lightning_msg_handler = MessageHandler {
@@ -430,8 +432,10 @@ pub fn setup(
     };
     let peer_manager: Arc<PeerManager> = Arc::new(PeerManager::new(
         lightning_msg_handler,
-        keys_manager.get_node_secret(Recipient::Node).unwrap(),
-        current_time.try_into().unwrap(),
+        keys_manager
+            .get_node_secret(Recipient::Node)
+            .map_err(|e| anyhow::anyhow!("{e:?}"))?,
+        current_time.try_into()?,
         &ephemeral_bytes,
         logger.clone(),
         IgnoringMessageHandler {},
