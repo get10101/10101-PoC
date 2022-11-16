@@ -3,6 +3,7 @@ use crate::offer;
 use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::Balance;
+use crate::wallet::LightningTransaction;
 use crate::wallet::Network;
 use anyhow::bail;
 use anyhow::Result;
@@ -138,6 +139,10 @@ pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
         .collect::<Vec<_>>();
 
     Ok(tx_history)
+}
+
+pub fn get_lightning_tx_history() -> Result<Vec<LightningTransaction>> {
+    wallet::get_lightning_history()
 }
 
 /// Initialise logging infrastructure for Rust

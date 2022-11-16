@@ -9,6 +9,7 @@ use bdk::bitcoin;
 use bdk::bitcoin::blockdata::constants::genesis_block;
 use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::bitcoin::secp256k1::Secp256k1;
+use bdk::bitcoin::Amount;
 use bdk::bitcoin::BlockHash;
 use bdk::bitcoin::Network;
 use bdk::blockchain::ElectrumBlockchain;
@@ -188,13 +189,15 @@ pub async fn force_close_channel(
     Ok(())
 }
 
-pub(crate) enum HTLCStatus {
+#[derive(Clone)]
+pub enum HTLCStatus {
     // Pending, FIXME: Never constructed in the example
     Succeeded,
     Failed,
 }
 
-pub(crate) struct MillisatAmount(Option<u64>);
+#[derive(Clone)]
+pub struct MillisatAmount(pub Option<u64>);
 
 impl fmt::Display for MillisatAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -205,12 +208,22 @@ impl fmt::Display for MillisatAmount {
     }
 }
 
+impl From<MillisatAmount> for Amount {
+    fn from(ma: MillisatAmount) -> Self {
+        match ma.0 {
+            None => Amount::ZERO,
+            Some(msats) => Amount::from_sat(msats / 1000),
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct PaymentInfo {
     preimage: Option<PaymentPreimage>,
     secret: Option<PaymentSecret>,
-    status: HTLCStatus,
-    amt_msat: MillisatAmount,
-    timestamp: u64,
+    pub status: HTLCStatus,
+    pub amt_msat: MillisatAmount,
+    pub timestamp: u64,
 }
 
 pub type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
