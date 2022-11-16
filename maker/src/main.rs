@@ -9,9 +9,9 @@ use tracing::metadata::LevelFilter;
 #[rocket::main]
 async fn main() -> Result<()> {
     let path = temp_dir();
-    logger::init_tracing(LevelFilter::DEBUG, false).expect("Logger to initialise");
+    logger::init_tracing(LevelFilter::DEBUG, false)?;
     // TODO: pass in wallet parameters via clap
-    wallet::init_wallet(wallet::Network::Regtest, path.as_path()).expect("wallet to initialise");
+    wallet::init_wallet(wallet::Network::Regtest, path.as_path())?;
     let port = 9045;
 
     tokio::spawn(async move {
