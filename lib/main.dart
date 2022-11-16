@@ -65,6 +65,8 @@ class TenTenOneApp extends StatefulWidget {
 }
 
 class _TenTenOneState extends State<TenTenOneApp> {
+  bool ready = false;
+
   @override
   void initState() {
     super.initState();
@@ -73,10 +75,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'TenTenOne',
-      theme: ThemeData(primarySwatch: Colors.orange),
-      routerConfig: _router,
+    return Visibility(
+      visible: ready,
+      child: MaterialApp.router(
+        title: 'TenTenOne',
+        theme: ThemeData(primarySwatch: Colors.orange),
+        routerConfig: _router,
+      ),
     );
   }
 
@@ -160,16 +165,22 @@ class _TenTenOneState extends State<TenTenOneApp> {
           .then((value) => FLog.info(text: "ldk node stopped."))
           .catchError((error) => FLog.error(text: "ldk stopped with an error", exception: error));
 
-      FLog.info(text: "Successfully initialised wallet");
-    } on FfiException catch (error) {
-      FLog.error(text: "Wallet failed to initialise: Error: " + error.message, exception: error);
-    } catch (error) {
-      FLog.error(text: "Wallet failed to initialise: Unknown error");
-    }
+      final offer = await api.getOffer();
+      cfdOffersChangeNotifier.update(offer);
 
-    // initial sync
-    _callSync();
-    _callSyncPaymentHistory();
+      // initial sync
+      _callSync();
+      _callSyncPaymentHistory();
+
+      FLog.info(text: "TenTenOne is ready!");
+      setState(() {
+        ready = true;
+      });
+    } on FfiException catch (error) {
+      FLog.error(text: "Failed to initialise: Error: " + error.message, exception: error);
+    } catch (error) {
+      FLog.error(text: "Failed to initialise: Unknown error");
+    }
 
     // consecutive syncs
     runPeriodically(_callSync);
@@ -178,44 +189,32 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 
   Future<void> _callSync() async {
-    try {
-      final balance = await api.getBalance();
-      bitcoinBalance.update(Amount(balance.onChain.confirmed));
-      lightningBalance.update(Amount(balance.offChain));
-      FLog.trace(text: 'Successfully synced Bitcoin wallet');
-    } on FfiException catch (error) {
-      FLog.error(text: 'Failed to sync Bitcoin wallet: Error: ' + error.message, exception: error);
-    }
+    final balance = await api.getBalance();
+    bitcoinBalance.update(Amount(balance.onChain.confirmed));
+    lightningBalance.update(Amount(balance.offChain));
+    FLog.trace(text: 'Successfully synced Bitcoin wallet');
   }
 
   Future<void> _callGetOffers() async {
-    try {
-      final offer = await api.getOffer();
-      cfdOffersChangeNotifier.update(offer);
-      FLog.trace(text: 'Successfully fetched offers');
-    } on FfiException catch (error) {
-      FLog.error(text: 'Failed to get offers: Error: ' + error.message, exception: error);
-    }
+    final offer = await api.getOffer();
+    cfdOffersChangeNotifier.update(offer);
+    FLog.trace(text: 'Successfully fetched offers');
   }
 
   Future<void> _callSyncPaymentHistory() async {
-    try {
-      final bitcoinTxHistory = await api.getBitcoinTxHistory();
+    final bitcoinTxHistory = await api.getBitcoinTxHistory();
 
-      var bph = bitcoinTxHistory
-          .map((bitcoinTxHistoryItem) => PaymentHistoryItem(
-              bitcoinTxHistoryItem.sent != 0
-                  ? Amount(bitcoinTxHistoryItem.sent * -1)
-                  : Amount(bitcoinTxHistoryItem.received),
-              bitcoinTxHistoryItem.sent != 0 ? PaymentType.withdraw : PaymentType.deposit,
-              bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending))
-          .toList();
+    var bph = bitcoinTxHistory
+        .map((bitcoinTxHistoryItem) => PaymentHistoryItem(
+            bitcoinTxHistoryItem.sent != 0
+                ? Amount(bitcoinTxHistoryItem.sent * -1)
+                : Amount(bitcoinTxHistoryItem.received),
+            bitcoinTxHistoryItem.sent != 0 ? PaymentType.withdraw : PaymentType.deposit,
+            bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending))
+        .toList();
 
-      paymentHistory.update(bph);
-      FLog.trace(text: 'Successfully synced payment history');
-    } on FfiException catch (error) {
-      FLog.error(text: 'Failed to sync payment history: ' + error.message, exception: error);
-    }
+    paymentHistory.update(bph);
+    FLog.trace(text: 'Successfully synced payment history');
   }
 
   Future<void> setupRustLogging() async {
@@ -230,4 +229,10 @@ class _TenTenOneState extends State<TenTenOneApp> {
 }
 
 void runPeriodically(void Function() callback) =>
-    Timer.periodic(const Duration(seconds: 20), (timer) => callback());
+    Timer.periodic(const Duration(seconds: 20), (timer) {
+      try {
+        callback();
+      } on FfiException catch (error) {
+        FLog.error(text: 'Error: ' + error.message, exception: error);
+      }
+    });
