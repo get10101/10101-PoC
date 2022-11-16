@@ -292,8 +292,8 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitmex-stream"
-version = "0.1.1"
-source = "git+https://github.com/itchysats/itchysats?rev=8f935e9dfc704b12eb6c98abd873db30dd39aece#8f935e9dfc704b12eb6c98abd873db30dd39aece"
+version = "0.1.0"
+source = "git+https://github.com/itchysats/itchysats?rev=6e4998ceeb3e21c641da209edd5cd592dbab6802#6e4998ceeb3e21c641da209edd5cd592dbab6802"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -303,8 +303,10 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tokio-extras",
  "tokio-tungstenite",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -2473,6 +2475,17 @@ dependencies = [
  "tokio-macros",
  "tracing",
  "winapi",
+]
+
+[[package]]
+name = "tokio-extras"
+version = "0.1.0"
+source = "git+https://github.com/itchysats/itchysats?rev=6e4998ceeb3e21c641da209edd5cd592dbab6802#6e4998ceeb3e21c641da209edd5cd592dbab6802"
+dependencies = [
+ "futures",
+ "pin-project-lite",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
