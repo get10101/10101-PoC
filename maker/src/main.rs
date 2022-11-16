@@ -1,14 +1,14 @@
 use anyhow::Result;
 use maker::logger;
 use maker::routes;
-use std::env::temp_dir;
+use std::env::current_dir;
 use std::time::Duration;
 use ten_ten_one::wallet;
 use tracing::metadata::LevelFilter;
 
 #[rocket::main]
 async fn main() -> Result<()> {
-    let path = temp_dir();
+    let path = current_dir()?.join("data").join("maker");
     logger::init_tracing(LevelFilter::DEBUG, false)?;
     // TODO: pass in wallet parameters via clap
     wallet::init_wallet(wallet::Network::Regtest, path.as_path())?;

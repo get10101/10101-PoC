@@ -15,3 +15,5 @@ bridge_generated.h
 #ignore keystores
 *.jks
 
+# Artefacts from running maker binary
+/data/maker/
