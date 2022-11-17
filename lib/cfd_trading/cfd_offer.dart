@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
@@ -52,7 +53,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final fundingRate = order.fundingRate.display(currency: Currency.btc).value;
     final margin = order.margin.display(currency: Currency.btc).value;
 
-    final offer = cfdOffersChangeNotifier.offer!;
+    final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
     final bid = offer.bid;
     final ask = offer.ask;
