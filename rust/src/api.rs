@@ -107,6 +107,15 @@ pub fn open_channel(taker_amount: u64) -> Result<()> {
     Ok(())
 }
 
+pub fn send_to_address(address: String, amount: u64) -> Result<String> {
+    let address = address.parse()?;
+
+    let txid = wallet::send_to_address(address, amount)?;
+    let txid = txid.to_string();
+
+    Ok(txid)
+}
+
 #[tokio::main(flavor = "current_thread")]
 pub async fn open_cfd(taker_amount: u64, leverage: u64) -> Result<()> {
     if leverage > 2 {
