@@ -5,7 +5,7 @@ import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:ten_ten_one/wallet/withdraw.dart';
+import 'package:ten_ten_one/wallet/send_on_chain.dart';
 
 import '../payment_history_change_notifier.dart';
 import 'deposit.dart';
@@ -76,9 +76,9 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
             child: const Icon(Icons.upload_sharp),
             backgroundColor: Colors.orange[600],
             foregroundColor: Colors.white,
-            label: 'Withdraw',
+            label: 'Send',
             labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(Withdraw.route),
+            onTap: () => GoRouter.of(context).go(SendOnChain.route),
           ),
         ],
       ),

@@ -29,8 +29,8 @@ class PaymentHistoryListItem extends StatelessWidget {
             statusIcon = depositIcon();
             break;
           case PaymentType.send:
-          case PaymentType.withdraw:
-            statusIcon = withdrawIcon();
+          case PaymentType.sendOnChain:
+            statusIcon = sendOnChainIcon();
             break;
           case PaymentType.cfdOpen:
             statusIcon = cfdOpenIcon();
@@ -82,7 +82,7 @@ class PaymentHistoryListItem extends StatelessWidget {
         ));
   }
 
-  Transform withdrawIcon() {
+  Transform sendOnChainIcon() {
     return Transform.rotate(
       angle: 135 * math.pi / 180,
       child: Icon(

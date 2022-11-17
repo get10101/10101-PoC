@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-class Withdraw extends StatefulWidget {
-  const Withdraw({Key? key}) : super(key: key);
+class SendOnChain extends StatefulWidget {
+  const SendOnChain({Key? key}) : super(key: key);
 
   static const route = '/' + subRouteName;
-  static const subRouteName = 'withdraw';
+  static const subRouteName = 'send-on-chain';
 
   @override
-  State<Withdraw> createState() => _WithdrawState();
+  State<SendOnChain> createState() => _SendOnChainState();
 }
 
-class _WithdrawState extends State<Withdraw> {
+class _SendOnChainState extends State<SendOnChain> {
   @override
   void initState() {
     super.initState();
@@ -20,7 +20,7 @@ class _WithdrawState extends State<Withdraw> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Withdraw Bitcoin'),
+        title: const Text('Send Bitcoin'),
       ),
       body: const SafeArea(child: Text("tbd")),
     );
