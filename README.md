@@ -98,3 +98,10 @@ nigiri faucet <address>
 ```
 
 To generate a block, simply call the faucet again.
+
+#### Run maker in docker
+
+```bash
+DATA_DIR=$(pwd)
+docker run -v$DATA_DIR:/data -p8000 -p9045 ghcr.io/bonomat/10101:main
+```
