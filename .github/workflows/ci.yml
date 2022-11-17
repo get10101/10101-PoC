@@ -42,6 +42,7 @@ jobs:
     outputs:
       rust: ${{ steps.filter.outputs.rust }}
       flutter: ${{ steps.filter.outputs.flutter }}
+      maker: ${{ steps.filter.outputs.maker }}
     steps:
       - uses: actions/checkout@v3
       - uses: dorny/paths-filter@v2
