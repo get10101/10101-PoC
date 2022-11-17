@@ -95,7 +95,7 @@ class _CfdOfferState extends State<CfdOffer> {
             value: order.quantity.toString(),
           ),
           Dropdown(
-              values: TradingPair.values.map((t) => t.name.toUpperCase()).toList(),
+              values: [TradingPair.btcusd.name.toUpperCase()],
               onChange: (tradingPair) {
                 order.tradingPair =
                     TradingPair.values.firstWhere((e) => e.name == tradingPair!.toLowerCase());
