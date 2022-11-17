@@ -77,8 +77,6 @@ use std::time::Duration;
 use std::time::SystemTime;
 use tokio::task::JoinHandle;
 
-pub use lightning::*;
-
 /// Container to keep all the components of the lightning network in one place
 #[derive(Clone)]
 pub struct LightningSystem {

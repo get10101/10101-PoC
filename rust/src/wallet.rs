@@ -2,21 +2,35 @@ use crate::lightning;
 use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
+use ::lightning::chain::chaininterface::BroadcasterInterface;
+use ::lightning::chain::chaininterface::ConfirmationTarget;
 use anyhow::anyhow;
+use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
 use bdk::bitcoin;
 use bdk::bitcoin::secp256k1::PublicKey;
+use bdk::bitcoin::Address;
+use bdk::bitcoin::Script;
+use bdk::bitcoin::Txid;
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
 use bdk::wallet::AddressIndex;
+use bdk::FeeRate;
 use bdk::KeychainKind;
+use bdk::SignOptions;
+use bdk_ldk::ScriptStatus;
 use lightning_background_processor::BackgroundProcessor;
+use reqwest::StatusCode;
+use rust_decimal::prelude::FromPrimitive;
+use serde::Deserialize;
+use serde::Serialize;
 use state::Storage;
 use std::path::Path;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
+use std::time::Duration;
 use tokio::task::JoinHandle;
 
 pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
@@ -182,6 +196,50 @@ impl Wallet {
     pub fn get_node_id(&self) -> PublicKey {
         self.lightning.channel_manager.get_our_node_id()
     }
+
+    pub fn get_script_status(&self, script: Script, txid: Txid) -> Result<ScriptStatus> {
+        let script_status = self
+            .lightning
+            .wallet
+            .get_tx_status_for_script(script, txid)
+            .map_err(|_| anyhow!("Could not get tx status for script"))?;
+        Ok(script_status)
+    }
+
+    pub fn send_to_address(&self, send_to: Address, amount: u64) -> Result<Txid> {
+        get_wallet()?.sync()?;
+
+        let wallet = self.lightning.wallet.get_wallet();
+
+        let estimated_fee_rate = self
+            .lightning
+            .wallet
+            .estimate_fee(ConfirmationTarget::Normal)
+            .map_err(|_| anyhow!("Failed to estimate fee"))?;
+
+        let (mut psbt, _) = {
+            let mut builder = wallet.build_tx();
+            builder
+                .add_recipient(send_to.script_pubkey(), amount)
+                .enable_rbf()
+                .do_not_spend_change()
+                .fee_rate(FeeRate::from_sat_per_vb(
+                    f32::from_u32(estimated_fee_rate).unwrap_or(1.0),
+                ));
+            builder.finish()?
+        };
+
+        if !wallet.sign(&mut psbt, SignOptions::default())? {
+            bail!("Failed to sign psbt");
+        }
+
+        let tx = psbt.extract_tx();
+
+        // TODO: This swallows the result internally - if we fail to broadcast we'll never know :/
+        self.lightning.wallet.broadcast_transaction(&tx);
+
+        Ok(tx.txid())
+    }
 }
 
 fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
@@ -233,7 +291,71 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
     Ok(seed_phrase)
 }
 
-pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Result<()> {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OpenChannelRequest {
+    /// The taker address where the maker should send the funds to
+    pub address_to_fund: Address,
+
+    /// The amount that the taker expects for funding
+    ///
+    /// This represents the amount of the maker.
+    pub fund_amount: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OpenChannelResponse {
+    pub funding_txid: Txid,
+}
+
+pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> {
+    let maker_amount = taker_amount * 2;
+    let channel_capacity = taker_amount + maker_amount;
+
+    let address_to_fund = get_address()?;
+
+    let client = reqwest::Client::new();
+
+    let body = OpenChannelRequest {
+        address_to_fund: address_to_fund.clone(),
+        fund_amount: maker_amount,
+    };
+
+    let maker_api = format!("http://{MAKER_IP}:{MAKER_PORT_HTTP}/api/channel/open");
+
+    tracing::info!("Sending request to open channel to maker at: {maker_api}");
+
+    let response = client.post(maker_api).json(&body).send().await?;
+
+    if response.status() == StatusCode::INTERNAL_SERVER_ERROR
+        || response.status() == StatusCode::BAD_REQUEST
+    {
+        bail!("open channel request failed with response: {response:?}")
+    }
+
+    let response: OpenChannelResponse = response.json().await?;
+
+    // TODO: Add txid to "txid-to-be-ignored" when loading the bitcoin tx-history list and balance
+    //  This will require filtering the tx history and remove entries for the txid as well as
+    // subtracting the amount from the balance.
+
+    // We cannot wait indefinitely so we specify how long we wait for the maker funds to arrive in
+    // mempool
+    let secs_until_we_consider_maker_funding_failed = 600;
+
+    let mut processing_sec_counter = 0;
+    let sleep_secs = 5;
+    while get_wallet()?.get_script_status(address_to_fund.script_pubkey(), response.funding_txid)?
+        == ScriptStatus::Unseen
+    {
+        processing_sec_counter += sleep_secs;
+        if processing_sec_counter >= secs_until_we_consider_maker_funding_failed {
+            bail!("The maker screwed up, the funds did not arrive within {secs_until_we_consider_maker_funding_failed} secs so we cannot open channel");
+        }
+
+        tokio::time::sleep(Duration::from_secs(sleep_secs)).await;
+    }
+
+    // Open Channel
     let (peer_manager, channel_manager, data_dir) = {
         let lightning = &get_wallet()?.lightning;
         (
@@ -247,9 +369,9 @@ pub async fn open_channel(peer_info: PeerInfo, channel_amount_sat: u64) -> Resul
         peer_manager,
         channel_manager,
         peer_info,
-        channel_amount_sat,
+        channel_capacity,
         data_dir.as_path(),
-        Some(channel_amount_sat.saturating_div(3).saturating_mul(2)),
+        Some(maker_amount),
     )
     .await
 }
@@ -340,6 +462,10 @@ pub async fn force_close_channel(remote_node_id: PublicKey) -> Result<()> {
     lightning::force_close_channel(channel_manager, remote_node_id).await?;
 
     Ok(())
+}
+
+pub fn send_to_address(address: Address, amount: u64) -> Result<Txid> {
+    get_wallet()?.send_to_address(address, amount)
 }
 
 impl From<Network> for bitcoin::Network {

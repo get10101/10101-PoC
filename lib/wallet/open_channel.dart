@@ -18,14 +18,14 @@ class OpenChannel extends StatefulWidget {
 }
 
 class _OpenChannelState extends State<OpenChannel> {
-  int channelCapacity = 0;
+  int takerChannelAmount = 0;
   String peerPubkeyAndIpAddr = "";
 
   @override
   void initState() {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
-    channelCapacity = bitcoinBalance.amount.asSats;
+    takerChannelAmount = bitcoinBalance.amount.asSats;
     _setMakerPeerInfo();
   }
 
@@ -67,11 +67,11 @@ class _OpenChannelState extends State<OpenChannel> {
               const SizedBox(
                 height: 10.0,
               ),
-              const Text("Channel Capacity", style: TextStyle(color: Colors.grey)),
+              const Text("Channel Amount", style: TextStyle(color: Colors.grey)),
               // TODO: Likely we cannot use the whole balance
               // TODO: Form validation
               TextFormField(
-                initialValue: channelCapacity.toString(),
+                initialValue: takerChannelAmount.toString(),
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
@@ -79,7 +79,7 @@ class _OpenChannelState extends State<OpenChannel> {
                 inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
                 onChanged: (text) {
                   setState(() {
-                    channelCapacity = text != "" ? int.parse(text) : 0;
+                    takerChannelAmount = text != "" ? int.parse(text) : 0;
                   });
                 },
               )
@@ -88,7 +88,7 @@ class _OpenChannelState extends State<OpenChannel> {
             const Padding(
               padding: EdgeInsets.only(bottom: 20.0),
               child: Text(
-                  "Opening the channel will transfer the specified channel capacity of your Bitcoin balance into a Lightning channel with 10101."
+                  "Opening the channel will transfer the specified amount of your Bitcoin balance into a Lightning channel with 10101."
                   "\n\n"
                   "Once the channel is open you can trade with 10101 non-custodial over Lightning!"),
             ),
@@ -96,9 +96,10 @@ class _OpenChannelState extends State<OpenChannel> {
               alignment: Alignment.bottomRight,
               child: ElevatedButton(
                   onPressed: () async {
-                    FLog.info(text: "Opening Channel with capacity " + channelCapacity.toString());
+                    FLog.info(
+                        text: "Opening Channel with capacity " + takerChannelAmount.toString());
 
-                    api.openChannel(channelAmountSat: channelCapacity);
+                    api.openChannel(takerAmount: takerChannelAmount);
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text("Waiting for channel to get established"),
                     ));

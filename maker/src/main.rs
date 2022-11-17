@@ -42,7 +42,11 @@ async fn main() -> Result<()> {
     let mission_success = rocket::build()
         .mount(
             "/api",
-            rocket::routes![routes::get_offer, routes::post_force_close_channel],
+            rocket::routes![
+                routes::get_offer,
+                routes::post_force_close_channel,
+                routes::post_open_channel
+            ],
         )
         .manage(quote_receiver)
         .launch()

@@ -69,11 +69,12 @@ pub fn maker_peer_info() -> String {
     wallet::maker_peer_info().to_string()
 }
 
-pub fn open_channel(channel_amount_sat: u64) -> Result<()> {
+pub fn open_channel(taker_amount: u64) -> Result<()> {
     let peer_info = wallet::maker_peer_info();
     let rt = Runtime::new()?;
     rt.block_on(async {
-        if let Err(e) = wallet::open_channel(peer_info, channel_amount_sat).await {
+        // TODO: stream updates back to the UI (if possible)?
+        if let Err(e) = wallet::open_channel(peer_info, taker_amount).await {
             tracing::error!("Unable to open channel: {e:#}")
         }
         loop {
