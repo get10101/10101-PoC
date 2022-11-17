@@ -165,13 +165,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
           .then((value) => FLog.info(text: "ldk node stopped."))
           .catchError((error) => FLog.error(text: "ldk stopped with an error", exception: error));
 
-      final offer = await api.getOffer();
-      cfdOffersChangeNotifier.update(offer);
-
-      // initial sync
-      _callSync();
-      _callSyncPaymentHistory();
-
       FLog.info(text: "TenTenOne is ready!");
       setState(() {
         ready = true;
@@ -228,11 +221,18 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 }
 
-void runPeriodically(void Function() callback) =>
-    Timer.periodic(const Duration(seconds: 20), (timer) {
-      try {
-        callback();
-      } on FfiException catch (error) {
-        FLog.error(text: 'Error: ' + error.message, exception: error);
-      }
-    });
+void runPeriodically(void Function() callback) {
+  _callback() {
+    try {
+      callback();
+    } on FfiException catch (error) {
+      FLog.error(text: 'Error: ' + error.message, exception: error);
+    }
+  }
+
+  _callback();
+
+  Timer.periodic(const Duration(seconds: 20), (timer) {
+    _callback();
+  });
+}
