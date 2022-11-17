@@ -199,11 +199,13 @@ dependencies = [
 [[package]]
 name = "bdk-ldk"
 version = "0.1.0"
-source = "git+https://github.com/itchysats/bdk-ldk?rev=2241b05837a8d300bb5825245dd64647fc404cb5#2241b05837a8d300bb5825245dd64647fc404cb5"
+source = "git+https://github.com/itchysats/bdk-ldk?rev=07dc94dcaa466d9bece8636a538757c97fe3663c#07dc94dcaa466d9bece8636a538757c97fe3663c"
 dependencies = [
+ "anyhow",
  "bdk",
  "lightning",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@ members = ["rust", "maker"]
 resolver = "2"
 
 [patch.crates-io]
-bdk-ldk = { git = "https://github.com/itchysats/bdk-ldk", rev = "2241b05837a8d300bb5825245dd64647fc404cb5" } # unreleased
+bdk-ldk = { git = "https://github.com/itchysats/bdk-ldk", rev = "07dc94dcaa466d9bece8636a538757c97fe3663c" } # unreleased
 lightning = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
 lightning-background-processor = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
 lightning-block-sync = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
