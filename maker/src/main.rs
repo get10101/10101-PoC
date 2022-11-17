@@ -6,6 +6,7 @@ use std::env::current_dir;
 use std::time::Duration;
 use ten_ten_one::db;
 use ten_ten_one::wallet;
+use ten_ten_one::wallet::REGTEST_ELECTRUM;
 use tracing::metadata::LevelFilter;
 
 #[rocket::main]
@@ -13,9 +14,7 @@ async fn main() -> Result<()> {
     let path = current_dir()?.join("data").join("maker");
     let network = wallet::Network::Regtest;
     logger::init_tracing(LevelFilter::DEBUG, false)?;
-    // TODO: pass in wallet parameters via clap
-    wallet::init_wallet(network.clone(), path.as_path())?;
-    let port = 9045;
+    wallet::init_wallet(network.clone(), REGTEST_ELECTRUM, path.as_path())?;
 
     db::init_db(&path.join(network.to_string()).join("maker.sqlite"))
         .await

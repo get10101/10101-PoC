@@ -101,13 +101,7 @@ pub struct OnChain {
 }
 
 impl Wallet {
-    pub fn new(network: Network, data_dir: &Path) -> Result<Wallet> {
-        let electrum_url = match network {
-            Network::Mainnet => MAINNET_ELECTRUM,
-            Network::Testnet => TESTNET_ELECTRUM,
-            Network::Regtest => REGTEST_ELECTRUM,
-        };
-
+    pub fn new(network: Network, electrum_url: &str, data_dir: &Path) -> Result<Wallet> {
         let network: bitcoin::Network = network.into();
         let data_dir = data_dir.join(&network.to_string());
         if !data_dir.exists() {
@@ -267,9 +261,9 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
+pub fn init_wallet(network: Network, electrum_url: &str, data_dir: &Path) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(Wallet::new(network, data_dir)?));
+    WALLET.set(Mutex::new(Wallet::new(network, electrum_url, data_dir)?));
     Ok(())
 }
 
