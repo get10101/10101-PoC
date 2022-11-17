@@ -39,7 +39,11 @@ async fn main() -> Result<()> {
 
     let (_, quote_receiver) = bitmex::subscribe()?;
 
-    let mission_success = rocket::build()
+    let figment = rocket::Config::figment()
+        .merge(("address", "0.0.0.0"))
+        .merge(("port", 8000));
+
+    let mission_success = rocket::custom(figment)
         .mount(
             "/api",
             rocket::routes![routes::get_offer, routes::post_force_close_channel],
