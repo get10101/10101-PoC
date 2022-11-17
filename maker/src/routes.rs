@@ -9,6 +9,9 @@ use rocket::State;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use ten_ten_one::wallet::force_close_channel;
+use ten_ten_one::wallet::send_to_address;
+use ten_ten_one::wallet::OpenChannelRequest;
+use ten_ten_one::wallet::OpenChannelResponse;
 use tokio::sync::watch;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -61,4 +64,18 @@ pub async fn post_force_close_channel(remote_node_id: String) -> Result<(), Http
     })?;
 
     Ok(())
+}
+
+#[rocket::post("/channel/open", data = "<request>", format = "json")]
+pub async fn post_open_channel(
+    request: Json<OpenChannelRequest>,
+) -> Result<Json<OpenChannelResponse>, HttpApiProblem> {
+    let funding_txid = send_to_address(request.address_to_fund.clone(), request.fund_amount)
+        .map_err(|e| {
+            HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .title("Failed to open channel with maker")
+                .detail(format!("Failed to transfer funds: {e:#}"))
+        })?;
+
+    Ok(Json(OpenChannelResponse { funding_txid }))
 }
