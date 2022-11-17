@@ -49,7 +49,7 @@ pub async fn get_offer(
     })
 }
 
-#[rocket::post("/channel/<remote_node_id>")]
+#[rocket::post("/channel/close/<remote_node_id>")]
 pub async fn post_force_close_channel(remote_node_id: String) -> Result<(), HttpApiProblem> {
     let remote_node_id = remote_node_id.parse().map_err(|e| {
         HttpApiProblem::new(StatusCode::BAD_REQUEST)
