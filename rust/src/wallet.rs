@@ -225,7 +225,6 @@ impl Wallet {
             builder
                 .add_recipient(send_to.script_pubkey(), amount)
                 .enable_rbf()
-                .do_not_spend_change()
                 .fee_rate(FeeRate::from_sat_per_vb(
                     f32::from_u32(estimated_fee_rate).unwrap_or(1.0),
                 ));
