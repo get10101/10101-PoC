@@ -367,7 +367,8 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     if response.status() == StatusCode::INTERNAL_SERVER_ERROR
         || response.status() == StatusCode::BAD_REQUEST
     {
-        bail!("open channel request failed with response: {response:?}")
+        let text = response.text().await?;
+        bail!("open channel request failed with response: {text}")
     }
 
     let response: OpenChannelResponse = response.json().await?;
