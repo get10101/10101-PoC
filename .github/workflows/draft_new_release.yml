@@ -35,7 +35,7 @@ jobs:
           version: ${{ github.event.inputs.version }}
 
       - name: Bump pubspec version
-        uses: fjogeleit/yaml-update-action@v0.11.1
+        uses: fjogeleit/yaml-update-action@v0.12.2
         with:
           valueFile: "pubspec.yaml"
           propertyPath: "version"
