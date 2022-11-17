@@ -4,16 +4,25 @@ use maker::logger;
 use maker::routes;
 use std::env::current_dir;
 use std::time::Duration;
+use ten_ten_one::db;
 use ten_ten_one::wallet;
 use tracing::metadata::LevelFilter;
 
 #[rocket::main]
 async fn main() -> Result<()> {
     let path = current_dir()?.join("data").join("maker");
+    let network = wallet::Network::Regtest;
     logger::init_tracing(LevelFilter::DEBUG, false)?;
     // TODO: pass in wallet parameters via clap
-    wallet::init_wallet(wallet::Network::Regtest, path.as_path())?;
+    wallet::init_wallet(network.clone(), path.as_path())?;
     let port = 9045;
+
+    db::init_db(&path.join(network.to_string()).join("maker.sqlite"))
+        .await
+        .expect("maker db to initialise");
+
+    let connection = db::acquire().await.unwrap();
+    tracing::info!(?connection);
 
     tokio::spawn(async move {
         let (_tcp_handle, _background_processor) = wallet::run_ldk_server(port)

@@ -1,3 +1,4 @@
+use crate::db;
 use crate::logger;
 use crate::offer;
 use crate::offer::Offer;
@@ -35,6 +36,26 @@ impl Address {
     pub fn new(address: String) -> Address {
         Address { address }
     }
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn init_db(app_dir: String, network: Network) -> Result<()> {
+    db::init_db(
+        &Path::new(app_dir.as_str())
+            .join(network.to_string())
+            .join("taker.sqlite"),
+    )
+    .await
+}
+
+/// Test DB operation running from Flutter
+// FIXME: remove this call and instead use DB meaningfully - this is just a test whether the DB
+// works with Flutter and this
+#[tokio::main(flavor = "current_thread")]
+pub async fn test_db_connection() -> Result<()> {
+    let connection = db::acquire().await?;
+    tracing::info!(?connection);
+    Ok(())
 }
 
 pub fn init_wallet(network: Network, path: String) -> Result<()> {

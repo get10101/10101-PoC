@@ -57,6 +57,7 @@ pub fn maker_peer_info() -> PeerInfo {
     }
 }
 
+#[derive(Clone, derive_more::Display)]
 pub enum Network {
     Mainnet,
     Testnet,

@@ -1,5 +1,6 @@
 mod api;
 mod bridge_generated;
+pub mod db;
 pub mod disk;
 mod hex_utils;
 pub mod lightning;
