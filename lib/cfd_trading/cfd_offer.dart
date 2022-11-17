@@ -33,7 +33,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final formatter = NumberFormat.decimalPattern('en');
 
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
-    final cfdOffersChangeNotifer = context.watch<CfdOfferChangeNotifier>();
+    final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
 
     // mock data
     cfdTradingService.draftOrder ??= Order(
@@ -52,7 +52,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final fundingRate = order.fundingRate.display(currency: Currency.btc).value;
     final margin = order.margin.display(currency: Currency.btc).value;
 
-    final offer = cfdOffersChangeNotifer.offer!;
+    final offer = cfdOffersChangeNotifier.offer!;
 
     final bid = offer.bid;
     final ask = offer.ask;
