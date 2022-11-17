@@ -47,11 +47,11 @@ pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 
-static MAKER_IP: &str = "127.0.0.1";
-static MAKER_PORT_LIGHTNING: u64 = 9045;
-static MAKER_PORT_HTTP: u64 = 8000;
+pub static MAKER_IP: &str = "127.0.0.1";
+pub static MAKER_PORT_LIGHTNING: u64 = 9045;
+pub static MAKER_PORT_HTTP: u64 = 8000;
 // Maker PK is derived from our checked in regtest maker seed
-static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
+pub static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
 pub static MAKER_ENDPOINT: &str = "http://127.0.0.1:8000";
 
 pub static TCP_TIMEOUT: Duration = Duration::from_secs(10);
@@ -86,7 +86,7 @@ impl Display for Network {
 #[derive(Clone)]
 pub struct Wallet {
     seed: Bip39Seed,
-    lightning: LightningSystem,
+    pub lightning: LightningSystem,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -273,7 +273,7 @@ impl Wallet {
     }
 }
 
-fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
+pub fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
     WALLET
         .try_get()
         .context("Wallet uninitialised")?
@@ -446,82 +446,6 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
         Some(maker_amount),
     )
     .await
-}
-
-pub async fn open_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
-    tracing::info!("Opening CFD with taker amount {taker_amount} maker amount {maker_amount}");
-
-    let channel_manager = {
-        let lightning = &get_wallet()?.lightning;
-        lightning.channel_manager.clone()
-    };
-
-    let binding = channel_manager.list_channels();
-    tracing::info!("Channels: {binding:?}");
-
-    let channel_details = binding.first().context("No first channel found")?;
-    let maker_pk = channel_details.counterparty.node_id;
-    let short_channel_id = channel_details
-        .short_channel_id
-        .context("Could not retrieve short channel id")?;
-
-    // TODO: Use  MAKER_PK meaningfully
-    assert_eq!(maker_pk.to_string(), MAKER_PK, "Using wrong maker seed");
-    let maker_connection_str = format!("{maker_pk}@{MAKER_IP}:{MAKER_PORT_LIGHTNING}");
-
-    tracing::info!("Connection str: {maker_connection_str}");
-    tracing::info!(
-        "Maker http API: {}",
-        format!("{MAKER_IP}:{MAKER_PORT_HTTP}")
-    );
-
-    // hardcoded because we are not dealing with force-close scenarios yet
-    let dummy_script = "0020e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-        .parse()
-        .expect("static dummy script to always parse");
-    let dummy_cltv_expiry = 40;
-
-    // Convert to msats
-    let taker_amount = taker_amount * 1000;
-    let maker_amount = maker_amount * 1000;
-
-    tracing::info!("Adding custom output");
-    let custom_output_details = channel_manager
-        .add_custom_output(
-            short_channel_id,
-            maker_pk,
-            taker_amount,
-            maker_amount,
-            dummy_cltv_expiry,
-            dummy_script,
-        )
-        .map_err(|e| anyhow!(e))?;
-    tracing::info!(?custom_output_details, "Added custom output");
-
-    Ok(())
-}
-
-pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
-    tracing::info!("Settling CFD with taker amount {taker_amount} and maker amount {maker_amount}");
-
-    let channel_manager = {
-        let lightning = &get_wallet()?.lightning;
-        lightning.channel_manager.clone()
-    };
-
-    let custom_output_id = *channel_manager
-        .custom_outputs()
-        .first()
-        .context("No custom outputs in channel")?;
-
-    let taker_amount_msats = taker_amount * 1000;
-    let maker_amount_msats = maker_amount * 1000;
-
-    channel_manager
-        .remove_custom_output(custom_output_id, taker_amount_msats, maker_amount_msats)
-        .map_err(|e| anyhow!("Failed to settle CFD: {e:?}"))?;
-
-    Ok(())
 }
 
 pub async fn force_close_channel(remote_node_id: PublicKey) -> Result<()> {

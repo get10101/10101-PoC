@@ -10,6 +10,7 @@ crate-type = ["lib", "cdylib", "staticlib"] # Android needs cdylib, whereas iOS 
 [dependencies]
 anyhow = { version = "1", features = ["backtrace"] }
 atty = "0.2"
+base64 = "0.13.1"
 bdk = "0.24.0"
 bdk-ldk = "0.1.0"
 bip39 = "1.0.1"
@@ -28,6 +29,7 @@ lightning-rapid-gossip-sync = { version = "0.0.112" }
 rand = "^0.6.0"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls-webpki-roots"] }
 rust_decimal = { version = "1", features = ["serde-with-float"] }
+rust_decimal_macros = "1.26"
 serde = "1.0.147"
 sha2 = "0.10"
 sqlx = { version = "0.6.2", features = ["offline", "sqlite", "uuid", "runtime-tokio-rustls"] }

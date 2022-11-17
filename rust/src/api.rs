@@ -1,3 +1,8 @@
+use crate::calc;
+use crate::cfd;
+use crate::cfd::Cfd;
+use crate::cfd::ContractSymbol;
+use crate::cfd::Position;
 use crate::db;
 use crate::logger;
 use crate::offer;
@@ -9,14 +14,15 @@ use crate::wallet::Network;
 use crate::wallet::MAINNET_ELECTRUM;
 use crate::wallet::REGTEST_ELECTRUM;
 use crate::wallet::TESTNET_ELECTRUM;
-use anyhow::bail;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
+use flutter_rust_bridge::SyncReturn;
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use std::path::Path;
 use std::time::Duration;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
-use tokio::runtime::Runtime;
 
 pub struct Address {
     pub address: String,
@@ -70,20 +76,18 @@ pub fn init_wallet(network: Network, path: String) -> Result<()> {
     wallet::init_wallet(network, electrum_url, Path::new(path.as_str()))
 }
 
-pub fn run_ldk() -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+pub async fn run_ldk() -> Result<()> {
     tracing::debug!("Starting ldk node");
-    let rt = Runtime::new()?;
-    rt.block_on(async move {
-        match wallet::run_ldk().await {
-            Ok(background_processor) => {
-                // await background processor here as otherwise the spawned thread gets dropped
-                let _ = background_processor.join();
-            }
-            Err(err) => {
-                tracing::error!("Error running LDK: {err}");
-            }
+    match wallet::run_ldk().await {
+        Ok(background_processor) => {
+            // await background processor here as otherwise the spawned thread gets dropped
+            let _ = background_processor.join();
         }
-    });
+        Err(err) => {
+            tracing::error!("Error running LDK: {err}");
+        }
+    }
     Ok(())
 }
 
@@ -99,20 +103,17 @@ pub fn maker_peer_info() -> String {
     wallet::maker_peer_info().to_string()
 }
 
-pub fn open_channel(taker_amount: u64) -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+pub async fn open_channel(taker_amount: u64) -> Result<()> {
     let peer_info = wallet::maker_peer_info();
-    let rt = Runtime::new()?;
-    rt.block_on(async {
-        // TODO: stream updates back to the UI (if possible)?
-        if let Err(e) = wallet::open_channel(peer_info, taker_amount).await {
-            tracing::error!("Unable to open channel: {e:#}")
-        }
-        loop {
-            // looping here indefinitely to keep the connection with the maker alive.
-            tokio::time::sleep(Duration::from_secs(1000)).await;
-        }
-    });
-    Ok(())
+    // TODO: stream updates back to the UI (if possible)?
+    if let Err(e) = wallet::open_channel(peer_info, taker_amount).await {
+        tracing::error!("Unable to open channel: {e:#}")
+    }
+    loop {
+        // looping here indefinitely to keep the connection with the maker alive.
+        tokio::time::sleep(Duration::from_secs(1000)).await;
+    }
 }
 
 pub fn send_to_address(address: String, amount: u64) -> Result<String> {
@@ -125,29 +126,26 @@ pub fn send_to_address(address: String, amount: u64) -> Result<String> {
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn open_cfd(taker_amount: u64, leverage: u64) -> Result<()> {
-    if leverage > 2 {
-        bail!("Only leverage x1 and x2 are supported at the moment");
-    }
+pub async fn list_cfds() -> Result<Vec<Cfd>> {
+    let mut conn = db::acquire().await?;
+    let cfds = db::load_cfds(&mut conn).await?;
 
-    // Hardcoded leverage of 2
-    let maker_amount = taker_amount.saturating_mul(leverage);
-
-    wallet::open_cfd(taker_amount, maker_amount).await?;
-
-    Ok(())
+    Ok(cfds)
 }
 
-pub fn get_offer() -> Result<Offer> {
-    let rt = Runtime::new()?;
-    rt.block_on(async { offer::get_offer().await })
+#[tokio::main(flavor = "current_thread")]
+pub async fn open_cfd(order: cfd::Order) -> Result<()> {
+    cfd::open(&order).await
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn get_offer() -> Result<Offer> {
+    offer::get_offer().await
 }
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
-    wallet::settle_cfd(taker_amount, maker_amount).await?;
-
-    Ok(())
+    cfd::settle(taker_amount, maker_amount).await
 }
 
 pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
@@ -196,6 +194,39 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
 
 pub fn send_lightning_payment(invoice: String) -> Result<()> {
     wallet::send_lightning_payment(&invoice)
+}
+
+pub fn calculate_liquidation_price(
+    initial_price: f64,
+    leverage: i64,
+    position: Position,
+    contract_symbol: ContractSymbol,
+) -> SyncReturn<f64> {
+    let initial_price = Decimal::try_from(initial_price).expect("Price to fit");
+
+    tracing::debug!("Initial price: {initial_price}");
+
+    let leverage = Decimal::from(leverage);
+
+    let liquidation_price = match (contract_symbol, position) {
+        (ContractSymbol::BtcUsd, Position::Long) => {
+            calc::inverse::calculate_long_liquidation_price(leverage, initial_price)
+        }
+        (ContractSymbol::BtcUsd, Position::Short) => {
+            calc::inverse::calculate_short_liquidation_price(leverage, initial_price)
+        }
+        (ContractSymbol::EthUsd, Position::Long) => {
+            calc::quanto::bankruptcy_price_long(initial_price, leverage)
+        }
+        (ContractSymbol::EthUsd, Position::Short) => {
+            calc::quanto::bankruptcy_price_short(initial_price, leverage)
+        }
+    };
+
+    let liquidation_price = liquidation_price.to_f64().expect("price to fit into f64");
+    tracing::info!("Liquidation_price: {liquidation_price}");
+
+    SyncReturn(liquidation_price)
 }
 
 // Tests are in the api layer as they became rather integration than unit tests (and need the

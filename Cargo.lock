@@ -2682,6 +2682,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "atty",
+ "base64",
  "bdk",
  "bdk-ldk",
  "bip39",
@@ -2700,6 +2701,7 @@ dependencies = [
  "rand 0.6.5",
  "reqwest",
  "rust_decimal",
+ "rust_decimal_macros",
  "serde",
  "sha2",
  "sqlx",

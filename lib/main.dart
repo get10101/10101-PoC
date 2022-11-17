@@ -20,7 +20,6 @@ import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
-import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/wallet/receive.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
@@ -52,7 +51,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => bitcoinBalance),
     ChangeNotifierProvider(create: (context) => seedBackup),
     ChangeNotifierProvider(create: (context) => paymentHistory),
-    ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier()),
+    ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier().init()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
   ], child: const TenTenOneApp()));
@@ -146,7 +145,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
             GoRoute(
               path: CfdOrderDetail.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
-                return CfdOrderDetail(order: state.extra as Order);
+                return CfdOrderDetail(cfd: state.extra as Cfd);
               },
             ),
           ]),

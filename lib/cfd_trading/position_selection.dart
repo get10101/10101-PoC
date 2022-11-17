@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/models/order.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 
 class PositionSelection extends StatefulWidget {
   final ValueChanged<Position?>? onChange;
@@ -17,20 +17,20 @@ class _PositionSelectionState extends State<PositionSelection> {
   @override
   Widget build(BuildContext context) {
     setState(() {
-      value = value ?? widget.value ?? Position.long;
+      value = value ?? widget.value ?? Position.Long;
     });
     return Row(
       children: <Widget>[
-        Expanded(child: buildButton("Buy / Long", Position.long)),
+        Expanded(child: buildButton("Buy / Long", Position.Long)),
         const SizedBox(width: 15),
-        Expanded(child: buildButton("Sell / Short", Position.short)),
+        Expanded(child: buildButton("Sell / Short", Position.Short)),
       ],
     );
   }
 
   Widget buildButton(String text, Position position) {
     bool selected = value == position;
-    Color color = Position.long == position ? Colors.green : Colors.red;
+    Color color = Position.Long == position ? Colors.green : Colors.red;
 
     return OutlinedButton(
         onPressed: () {
@@ -45,7 +45,7 @@ class _PositionSelectionState extends State<PositionSelection> {
         style: OutlinedButton.styleFrom(
             side: BorderSide(width: 1.0, color: color),
             backgroundColor: selected
-                ? Position.long == position
+                ? Position.Long == position
                     ? Colors.green
                     : Colors.red
                 : Colors.white));
