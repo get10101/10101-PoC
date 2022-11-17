@@ -3,7 +3,6 @@ use crate::lightning::HTLCStatus;
 use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
-use ::lightning::chain::chaininterface::BroadcasterInterface;
 use ::lightning::chain::chaininterface::ConfirmationTarget;
 use anyhow::anyhow;
 use anyhow::bail;
@@ -167,7 +166,7 @@ impl Wallet {
         let address = self
             .lightning
             .wallet
-            .get_wallet()
+            .get_wallet()?
             .get_address(AddressIndex::LastUnused)?;
         tracing::debug!(%address, "Current wallet address");
         Ok(address.address)
@@ -190,7 +189,7 @@ impl Wallet {
         let tx_history = self
             .lightning
             .wallet
-            .get_wallet()
+            .get_wallet()?
             .list_transactions(false)?;
         tracing::debug!(?tx_history, "Transaction history");
         Ok(tx_history)
@@ -212,7 +211,7 @@ impl Wallet {
     pub fn send_to_address(&self, send_to: Address, amount: u64) -> Result<Txid> {
         get_wallet()?.sync()?;
 
-        let wallet = self.lightning.wallet.get_wallet();
+        let wallet = self.lightning.wallet.get_wallet()?;
 
         let estimated_fee_rate = self
             .lightning
@@ -238,8 +237,7 @@ impl Wallet {
 
         let tx = psbt.extract_tx();
 
-        // TODO: This swallows the result internally - if we fail to broadcast we'll never know :/
-        self.lightning.wallet.broadcast_transaction(&tx);
+        self.lightning.wallet.broadcast(&tx)?;
 
         Ok(tx.txid())
     }
