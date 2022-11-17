@@ -32,6 +32,15 @@ static MAKER_PORT_HTTP: u64 = 8000;
 // Maker PK is derived from our checked in regtest maker seed
 static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
 
+pub fn maker_peer_info() -> PeerInfo {
+    PeerInfo {
+        pubkey: MAKER_PK.parse().expect("Hard-coded PK to be valid"),
+        peer_addr: format!("{MAKER_IP}:{MAKER_PORT_LIGHTNING}")
+            .parse()
+            .expect("Hard-coded PK to be valid"),
+    }
+}
+
 pub enum Network {
     Mainnet,
     Testnet,

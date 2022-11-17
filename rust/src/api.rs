@@ -1,4 +1,3 @@
-use crate::disk::parse_peer_info;
 use crate::logger;
 use crate::offer;
 use crate::offer::Offer;
@@ -66,8 +65,12 @@ pub fn get_address() -> Result<Address> {
     Ok(Address::new(wallet::get_address()?.to_string()))
 }
 
-pub fn open_channel(peer_pubkey_and_ip_addr: String, channel_amount_sat: u64) -> Result<()> {
-    let peer_info = parse_peer_info(peer_pubkey_and_ip_addr)?;
+pub fn maker_peer_info() -> String {
+    wallet::maker_peer_info().to_string()
+}
+
+pub fn open_channel(channel_amount_sat: u64) -> Result<()> {
+    let peer_info = wallet::maker_peer_info();
     let rt = Runtime::new()?;
     rt.block_on(async {
         if let Err(e) = wallet::open_channel(peer_info, channel_amount_sat).await {
