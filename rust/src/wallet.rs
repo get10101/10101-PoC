@@ -1,4 +1,5 @@
 use crate::lightning;
+use crate::lightning::HTLCStatus;
 use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
@@ -11,6 +12,7 @@ use anyhow::Result;
 use bdk::bitcoin;
 use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::bitcoin::Address;
+use bdk::bitcoin::Amount;
 use bdk::bitcoin::Script;
 use bdk::bitcoin::Txid;
 use bdk::blockchain::ElectrumBlockchain;
@@ -286,6 +288,41 @@ pub fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
     get_wallet()?.get_bitcoin_tx_history()
 }
 
+pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
+    let (outbound, inbound) = {
+        let lightning = &get_wallet()?.lightning;
+        let x = (
+            lightning.outbound_payments.lock().unwrap().clone(),
+            lightning.inbound_payments.lock().unwrap().clone(),
+        );
+        x
+    };
+    let mut outbound = outbound
+        .iter()
+        .map(|(_, payment_info)| LightningTransaction {
+            tx_type: LightningTransactionType::Payment,
+            flow: Flow::Outbound,
+            sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
+            status: payment_info.status.clone().into(),
+            timestamp: payment_info.timestamp,
+        })
+        .collect();
+
+    let mut inbound = inbound
+        .iter()
+        .map(|(_, payment_info)| LightningTransaction {
+            tx_type: LightningTransactionType::Payment,
+            flow: Flow::Inbound,
+            sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
+            status: payment_info.status.clone().into(),
+            timestamp: payment_info.timestamp,
+        })
+        .collect::<Vec<_>>();
+
+    inbound.append(&mut outbound);
+    Ok(inbound)
+}
+
 pub fn get_seed_phrase() -> Result<Vec<String>> {
     let seed_phrase = get_wallet()?.seed.get_seed_phrase();
     Ok(seed_phrase)
@@ -474,6 +511,39 @@ impl From<Network> for bitcoin::Network {
             Network::Mainnet => bitcoin::Network::Bitcoin,
             Network::Testnet => bitcoin::Network::Testnet,
             Network::Regtest => bitcoin::Network::Regtest,
+        }
+    }
+}
+
+pub enum LightningTransactionType {
+    Payment,
+    Cfd,
+}
+
+pub struct LightningTransaction {
+    pub tx_type: LightningTransactionType,
+    pub flow: Flow,
+    pub sats: u64,
+    pub status: TransactionStatus,
+    pub timestamp: u64,
+}
+
+pub enum Flow {
+    Inbound,
+    Outbound,
+}
+
+pub enum TransactionStatus {
+    Failed,
+    Succeeded,
+    Pending,
+}
+
+impl From<HTLCStatus> for TransactionStatus {
+    fn from(s: HTLCStatus) -> Self {
+        match s {
+            HTLCStatus::Succeeded => TransactionStatus::Succeeded,
+            HTLCStatus::Failed => TransactionStatus::Failed,
         }
     }
 }

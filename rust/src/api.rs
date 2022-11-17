@@ -3,6 +3,7 @@ use crate::offer;
 use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::Balance;
+use crate::wallet::LightningTransaction;
 use crate::wallet::Network;
 use anyhow::bail;
 use anyhow::Result;
@@ -112,7 +113,7 @@ pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
 }
 
 pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
-    let mut tx_history = wallet::get_bitcoin_tx_history()?
+    let tx_history = wallet::get_bitcoin_tx_history()?
         .into_iter()
         .map(|tx| {
             let (is_confirmed, timestamp) = match tx.confirmation_time {
@@ -137,9 +138,11 @@ pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
         })
         .collect::<Vec<_>>();
 
-    tx_history.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-
     Ok(tx_history)
+}
+
+pub fn get_lightning_tx_history() -> Result<Vec<LightningTransaction>> {
+    wallet::get_lightning_history()
 }
 
 /// Initialise logging infrastructure for Rust

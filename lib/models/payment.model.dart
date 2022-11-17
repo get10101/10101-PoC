@@ -4,11 +4,12 @@ class PaymentHistoryItem {
   PaymentType type;
   PaymentStatus status;
   Amount amount;
+  num timestamp;
 
-  PaymentHistoryItem(this.amount, this.type, this.status);
+  PaymentHistoryItem(this.amount, this.type, this.status, this.timestamp);
 }
 
-enum PaymentStatus { pending, finalized }
+enum PaymentStatus { pending, finalized, failed }
 
 enum PaymentType {
   // Bitcoin only
@@ -59,4 +60,6 @@ extension PaymentTypeExtension on PaymentType {
   String get display => displays[this]!;
 
   bool isBitcoin() => displayBitcoin[this]!;
+
+  bool isLightning() => !isBitcoin();
 }
