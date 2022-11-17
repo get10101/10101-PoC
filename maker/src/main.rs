@@ -1,20 +1,25 @@
 use anyhow::Result;
 use maker::bitmex;
+use maker::cli::Opts;
 use maker::logger;
 use maker::routes;
-use std::env::current_dir;
 use std::time::Duration;
 use ten_ten_one::db;
 use ten_ten_one::wallet;
-use ten_ten_one::wallet::REGTEST_ELECTRUM;
 use tracing::metadata::LevelFilter;
 
 #[rocket::main]
 async fn main() -> Result<()> {
-    let path = current_dir()?.join("data").join("maker");
-    let network = wallet::Network::Regtest;
+    let opts = Opts::read();
+
+    let path = opts.data_dir()?;
+    let network = opts.network();
+    let lightning_p2p_address = opts.lightning_p2p_address;
+    let http_address = opts.http_address;
+    let electrum_url = opts.electrum();
+
     logger::init_tracing(LevelFilter::DEBUG, false)?;
-    wallet::init_wallet(network.clone(), REGTEST_ELECTRUM, path.as_path())?;
+    wallet::init_wallet(network.clone(), electrum_url.as_str(), path.as_path())?;
 
     db::init_db(&path.join(network.to_string()).join("maker.sqlite"))
         .await
@@ -24,13 +29,12 @@ async fn main() -> Result<()> {
     tracing::info!(?connection);
 
     tokio::spawn(async move {
-        let (_tcp_handle, _background_processor) =
-            wallet::run_ldk_server(SocketAddr::from_str("0.0.0.0:9045").unwrap())
-                .await
-                .expect("lightning node to run");
+        let (_tcp_handle, _background_processor) = wallet::run_ldk_server(lightning_p2p_address)
+            .await
+            .expect("lightning node to run");
 
         let public_key = wallet::node_id().expect("To get node id for maker");
-        let listening_address = format!("{public_key}@127.0.0.1:{port}");
+        let listening_address = format!("{public_key}@{lightning_p2p_address}");
         tracing::info!(listening_address, "Listening on");
         let address = wallet::get_address()
             .expect("To get a new address")
@@ -49,8 +53,8 @@ async fn main() -> Result<()> {
     let (_, quote_receiver) = bitmex::subscribe()?;
 
     let figment = rocket::Config::figment()
-        .merge(("address", "0.0.0.0"))
-        .merge(("port", 8000));
+        .merge(("address", http_address.ip()))
+        .merge(("port", http_address.port()));
 
     let mission_success = rocket::custom(figment)
         .mount(

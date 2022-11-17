@@ -10,6 +10,7 @@ anyhow = { version = "1", features = ["backtrace"] }
 atty = "0.2.14"
 bdk = "0.24.0"
 bitmex-stream = { git = "https://github.com/itchysats/itchysats", rev = "6e4998ceeb3e21c641da209edd5cd592dbab6802" }
+clap = { version = "4", features = ["derive"] }
 futures = "0.3"
 http-api-problem = { version = "0.55.0", features = ["rocket"] }
 rocket = { version = "0.5.0-rc.2", features = ["json", "uuid"] }
