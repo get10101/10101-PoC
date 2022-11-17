@@ -210,7 +210,7 @@ impl Wallet {
     }
 
     pub fn send_to_address(&self, send_to: Address, amount: u64) -> Result<Txid> {
-        get_wallet()?.sync()?;
+        self.sync()?;
 
         let wallet = self.lightning.wallet.get_wallet();
 
