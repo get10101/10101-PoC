@@ -31,6 +31,7 @@ use state::Storage;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
+use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
@@ -194,9 +195,9 @@ impl Wallet {
     /// Run the lightning node
     pub async fn run_ldk_server(
         &mut self,
-        port: u16,
+        address: SocketAddr,
     ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-        lightning::run_ldk_server(&self.lightning, port).await
+        lightning::run_ldk_server(&self.lightning, address).await
     }
 
     pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
@@ -277,9 +278,9 @@ pub async fn run_ldk() -> Result<BackgroundProcessor> {
     wallet.run_ldk().await
 }
 
-pub async fn run_ldk_server(port: u16) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+pub async fn run_ldk_server(address: SocketAddr) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
     let mut wallet = { (*get_wallet()?).clone() };
-    wallet.run_ldk_server(port).await
+    wallet.run_ldk_server(address).await
 }
 
 pub fn node_id() -> Result<PublicKey> {

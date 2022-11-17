@@ -25,9 +25,10 @@ async fn main() -> Result<()> {
     tracing::info!(?connection);
 
     tokio::spawn(async move {
-        let (_tcp_handle, _background_processor) = wallet::run_ldk_server(port)
-            .await
-            .expect("lightning node to run");
+        let (_tcp_handle, _background_processor) =
+            wallet::run_ldk_server(SocketAddr::from_str("0.0.0.0:9045").unwrap())
+                .await
+                .expect("lightning node to run");
 
         let public_key = wallet::node_id().expect("To get node id for maker");
         let listening_address = format!("{public_key}@127.0.0.1:{port}");

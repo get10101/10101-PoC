@@ -587,13 +587,13 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
 
 pub async fn run_ldk_server(
     system: &LightningSystem,
-    listening_port: u16,
+    address: SocketAddr,
 ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
     let peer_manager_connection_handler = system.peer_manager.clone();
     let stop_listen_connect = Arc::new(AtomicBool::new(false));
     let stop_listen = Arc::clone(&stop_listen_connect);
     let tcp_handle = tokio::spawn(async move {
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{listening_port}"))
+        let listener = tokio::net::TcpListener::bind(address)
             .await
             .expect("Failed to bind to listen port - is something else already listening on it?");
         loop {
@@ -612,7 +612,7 @@ pub async fn run_ldk_server(
         }
     });
 
-    tracing::info!("Listening to 0.0.0.0:{listening_port}");
+    tracing::info!("Listening on {address}");
 
     let background_processor = run_ldk(system).await?;
     Ok((tcp_handle, background_processor))
