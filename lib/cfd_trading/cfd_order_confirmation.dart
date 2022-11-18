@@ -58,7 +58,7 @@ class CfdOrderConfirmation extends StatelessWidget {
               ]),
               const SizedBox(height: 20),
               Text(
-                  'This will open a position and lock up $margin BTC in a channel. Would you like to proceed',
+                  'This will open a position and lock up $margin BTC in a channel. Would you like to proceed?',
                   style: const TextStyle(fontSize: 20)),
               Expanded(
                 child: Container(
