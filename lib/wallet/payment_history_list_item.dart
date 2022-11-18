@@ -25,8 +25,8 @@ class PaymentHistoryListItem extends StatelessWidget {
       case PaymentStatus.finalized:
         switch (data.type) {
           case PaymentType.receive:
-          case PaymentType.deposit:
-            statusIcon = depositIcon();
+          case PaymentType.receiveOnChain:
+            statusIcon = receiveOnChainIcon();
             break;
           case PaymentType.send:
           case PaymentType.sendOnChain:
@@ -73,7 +73,7 @@ class PaymentHistoryListItem extends StatelessWidget {
     );
   }
 
-  Transform depositIcon() {
+  Transform receiveOnChainIcon() {
     return Transform.rotate(
         angle: -135 * math.pi / 180,
         child: Icon(

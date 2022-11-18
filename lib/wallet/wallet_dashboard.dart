@@ -7,7 +7,7 @@ import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
-import 'package:ten_ten_one/wallet/deposit.dart';
+import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
@@ -124,7 +124,7 @@ class DepositBitcoinCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onTap: () => {GoRouter.of(context).go(Deposit.route)},
+        onTap: () => {GoRouter.of(context).go(ReceiveOnChain.route)},
         child: Card(
           shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
           child: Column(

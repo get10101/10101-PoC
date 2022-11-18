@@ -82,16 +82,17 @@ class _SendOnChainState extends State<SendOnChain> {
                                     FLog.info(
                                         text:
                                             "Sending " + amount.toString() + " sats to " + address);
+                                    String? error;
                                     try {
                                       await api.sendToAddress(address: address, amount: amount);
-                                    } on FfiException catch (error) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                        content: Text("Failed to send bitcoin on-chain: $error"),
-                                      ));
+                                    } on FfiException catch (e) {
+                                      error = e.message;
                                     }
+
                                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                      content:
-                                          Text("Sent ${amount.toString()} satoshi to $address"),
+                                      content: Text(error == null
+                                          ? "Sent ${amount.toString()} satoshi to $address on-chain"
+                                          : "Failed to send bitcoin on-chain: $error"),
                                     ));
                                     context.go('/');
                                   },

@@ -13,7 +13,7 @@ enum PaymentStatus { pending, finalized, failed }
 
 enum PaymentType {
   // Bitcoin only
-  deposit,
+  receiveOnChain,
   sendOnChain,
 
   // Bitcoin and Lightning (reduce Bitcoin, add to Lightning)
@@ -32,7 +32,7 @@ enum PaymentType {
 
 extension PaymentTypeExtension on PaymentType {
   static const displays = {
-    PaymentType.deposit: "Bitcoin Deposited",
+    PaymentType.receiveOnChain: "Bitcoin Received",
     PaymentType.sendOnChain: "Bitcoin Sent",
     PaymentType.channelOpen: "Channel Opened",
     PaymentType.channelClose: "Channel Closed",
@@ -45,7 +45,7 @@ extension PaymentTypeExtension on PaymentType {
   };
 
   static const displayBitcoin = {
-    PaymentType.deposit: true,
+    PaymentType.receiveOnChain: true,
     PaymentType.sendOnChain: true,
     PaymentType.channelOpen: true,
     PaymentType.channelClose: true,

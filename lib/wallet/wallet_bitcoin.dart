@@ -8,7 +8,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ten_ten_one/wallet/send_on_chain.dart';
 
 import '../payment_history_change_notifier.dart';
-import 'deposit.dart';
+import 'receive_on_chain.dart';
 
 class WalletBitcoin extends StatefulWidget {
   const WalletBitcoin({Key? key}) : super(key: key);
@@ -68,9 +68,9 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
             child: const Icon(Icons.download_sharp),
             backgroundColor: Colors.orange[600],
             foregroundColor: Colors.white,
-            label: 'Deposit',
+            label: 'Receive',
             labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(Deposit.route),
+            onTap: () => GoRouter.of(context).go(ReceiveOnChain.route),
           ),
           SpeedDialChild(
             child: const Icon(Icons.upload_sharp),
