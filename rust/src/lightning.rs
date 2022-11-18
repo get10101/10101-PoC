@@ -343,10 +343,10 @@ pub fn setup(
         .channel_handshake_limits
         .force_announced_channel_preference = false;
     // By setting this to 0 we indicate we accept 0-conf channels.
-    user_config.channel_handshake_config.minimum_depth = 0;
+    user_config.channel_handshake_config.minimum_depth = 1;
     // By setting `manually_accept_inbound_channels` to `true` we need to manually confirm every
     // inbound channel request.
-    user_config.manually_accept_inbound_channels = true;
+    user_config.manually_accept_inbound_channels = false;
 
     let (_channel_manager_blockhash, channel_manager) = {
         if let Ok(mut f) = std::fs::File::open(format!("{ldk_data_dir}/manager")) {
