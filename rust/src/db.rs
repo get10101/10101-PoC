@@ -1,4 +1,3 @@
-use crate::cfd::Cfd;
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Context;
@@ -55,57 +54,6 @@ fn get_db() -> Result<MutexGuard<'static, SqlitePool>> {
         .context("DB uninitialised")?
         .lock()
         .map_err(|_| anyhow!("cannot acquire DB lock"))
-}
-
-pub async fn load_cfds(conn: &mut SqliteConnection) -> Result<Vec<Cfd>> {
-    let mut rows = sqlx::query!(
-        r#"
-            select
-                cfd.id as id,
-                custom_output_id,
-                contract_symbol as "contract_symbol: crate::cfd::ContractSymbol",
-                position as "position: crate::cfd::Position",
-                leverage,
-                updated,
-                created,
-                cfd_state.state as "state: crate::cfd::CfdState",
-                quantity,
-                expiry,
-                open_price,
-                close_price,
-                liquidation_price,
-                margin
-            from
-                cfd
-            inner join cfd_state on cfd.state_id = cfd_state.id
-            "#
-    )
-    .fetch(&mut *conn);
-
-    let mut cfds = Vec::new();
-
-    while let Some(row) = rows.try_next().await? {
-        let cfd = Cfd {
-            id: row.id,
-            position: row.position,
-            open_price: row.open_price,
-            leverage: row.leverage,
-            updated: row.updated,
-            created: row.created,
-            state: row.state,
-            quantity: row.quantity,
-            custom_output_id: row.custom_output_id,
-            contract_symbol: row.contract_symbol,
-            expiry: row.expiry,
-            liquidation_price: row.liquidation_price,
-            margin: row.margin,
-            close_price: row.close_price,
-        };
-
-        cfds.push(cfd);
-    }
-
-    Ok(cfds)
 }
 
 pub async fn load_ignore_txids() -> Result<Vec<(Txid, u64)>> {

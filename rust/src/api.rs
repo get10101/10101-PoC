@@ -1,8 +1,8 @@
 use crate::calc;
 use crate::cfd;
-use crate::cfd::Cfd;
-use crate::cfd::Order;
-use crate::cfd::Position;
+use crate::cfd::models::Cfd;
+use crate::cfd::models::Order;
+use crate::cfd::models::Position;
 use crate::config;
 use crate::db;
 use crate::logger;
@@ -155,13 +155,11 @@ pub fn send_to_address(address: String, amount: u64) -> Result<String> {
 #[tokio::main(flavor = "current_thread")]
 pub async fn list_cfds() -> Result<Vec<Cfd>> {
     let mut conn = db::acquire().await?;
-    let cfds = db::load_cfds(&mut conn).await?;
-
-    Ok(cfds)
+    cfd::load_cfds(&mut conn).await
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn open_cfd(order: cfd::Order) -> Result<()> {
+pub async fn open_cfd(order: Order) -> Result<()> {
     cfd::open(&order).await
 }
 
