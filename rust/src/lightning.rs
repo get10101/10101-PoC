@@ -581,7 +581,9 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         }
     }
 
-    tracing::info!("Lightning node started");
+    let node_id = system.channel_manager.get_our_node_id();
+
+    tracing::info!("Lightning node started with node ID {node_id}");
     Ok(background_processor)
 }
 
