@@ -3,7 +3,7 @@ FROM gcr.io/distroless/cc
 LABEL "org.opencontainers.image.source"="https://github.com/itchysats/10101"
 LABEL "org.opencontainers.image.authors"="hello@itchysats.network"
 
-ARG BINARY=target/x86_64-unknown-linux-musl/release/maker
+ARG BINARY=target/release/maker
 
 USER 1000
 
