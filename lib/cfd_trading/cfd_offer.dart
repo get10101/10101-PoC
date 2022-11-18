@@ -1,3 +1,4 @@
+import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -5,11 +6,12 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
+import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
+import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
@@ -54,6 +56,20 @@ class _CfdOfferState extends State<CfdOffer> {
     final expiry = DateFormat('dd.MM.yy-kk:mm')
         .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
     final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
+
+    final balance = context.read<LightningBalance>().amount.asSats;
+    final int takerAmount = Amount.fromBtc(order.marginTaker()).asSats;
+
+    ChannelError? channelError;
+    if (balance == 0) {
+      channelError = ChannelError(
+          title: 'No channel with 10101 maker',
+          details: 'You need an open channel with the 10101 maker before you can open a CFD.');
+    } else if (takerAmount > balance) {
+      channelError = ChannelError(
+          title: 'Insufficient funds',
+          details: 'The required margin is higher than the available balance.');
+    }
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
@@ -117,12 +133,15 @@ class _CfdOfferState extends State<CfdOffer> {
       ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          GoRouter.of(context)
-              .go(CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName, extra: order);
+          GoRouter.of(context).go(
+            CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName,
+            extra: CfdOrderConfirmationArgs(order, channelError),
+          );
         },
         backgroundColor: Colors.orange,
         child: const Icon(Icons.shopping_cart_checkout),
       ),
+      bottomSheet: channelError != null ? ValidationError(channelError: channelError) : null,
     );
   }
 }
