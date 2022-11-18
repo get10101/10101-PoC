@@ -194,6 +194,10 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
     wallet::get_seed_phrase()
 }
 
+pub fn send_lightning_payment(invoice: String) -> Result<()> {
+    wallet::send_lightning_payment(&invoice)
+}
+
 // Tests are in the api layer as they became rather integration than unit tests (and need the
 // runtime) TODO: Move them to `tests` directory
 #[cfg(test)]

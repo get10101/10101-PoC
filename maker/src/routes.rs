@@ -13,7 +13,9 @@ use rust_decimal_macros::dec;
 use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
 use ten_ten_one::wallet::get_balance;
+use ten_ten_one::wallet::get_invoice;
 use ten_ten_one::wallet::get_node_id;
+use ten_ten_one::wallet::send_lightning_payment;
 use ten_ten_one::wallet::send_to_address;
 use ten_ten_one::wallet::Balance;
 use ten_ten_one::wallet::OpenChannelRequest;
@@ -118,4 +120,23 @@ pub async fn post_open_channel(
         })?;
 
     Ok(Json(OpenChannelResponse { funding_txid }))
+}
+
+#[rocket::post("/invoice/send/<invoice>")]
+pub async fn post_pay_invoice(invoice: String) -> Result<(), HttpApiProblem> {
+    send_lightning_payment(&invoice).map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to pay lightning invoice")
+            .detail(format!("{e:#}"))
+    })
+}
+
+#[rocket::get("/invoice/create")]
+pub async fn get_new_invoice() -> Result<(), HttpApiProblem> {
+    // FIXME: Hard-code the parameters for testing
+    get_invoice(10000, 6000).map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to create lightning invoice")
+            .detail(format!("{e:#}"))
+    })
 }

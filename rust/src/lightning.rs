@@ -7,6 +7,7 @@ use anyhow::Context;
 use anyhow::Result;
 use bdk::bitcoin;
 use bdk::bitcoin::blockdata::constants::genesis_block;
+use bdk::bitcoin::hashes::Hash;
 use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::Amount;
@@ -14,6 +15,7 @@ use bdk::bitcoin::BlockHash;
 use bdk::bitcoin::Network;
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
+use bdk::wallet::time::get_timestamp;
 use bitcoin_bech32::WitnessProgram;
 use futures::executor::block_on;
 use lightning::chain;
@@ -50,17 +52,22 @@ use lightning::util::config::ChannelHandshakeConfig;
 use lightning::util::config::ChannelHandshakeLimits;
 use lightning::util::config::UserConfig;
 use lightning::util::events::Event;
+use lightning::util::events::EventHandler;
 use lightning::util::events::PaymentPurpose;
 use lightning::util::ser::ReadableArgs;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_background_processor::GossipSync;
 use lightning_invoice::payment;
+use lightning_invoice::payment::PaymentError;
 use lightning_invoice::utils::DefaultRouter;
+use lightning_invoice::Currency;
+use lightning_invoice::Invoice;
 use lightning_net_tokio::SocketDescriptor;
 use lightning_persister::FilesystemPersister;
 use rand::thread_rng;
 use rand::Rng;
 use rand::RngCore;
+use state::Storage;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::fmt;
@@ -76,7 +83,11 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::time::SystemTime;
+use tokio::runtime;
 use tokio::task::JoinHandle;
+
+/// has to be managed by Rust as generics are not support by frb
+static INVOICE_PAYER: Storage<Mutex<Arc<BdkLdkInvoicePayer>>> = Storage::new();
 
 /// Container to keep all the components of the lightning network in one place
 #[derive(Clone)]
@@ -191,7 +202,7 @@ pub async fn force_close_channel(
 
 #[derive(Clone)]
 pub enum HTLCStatus {
-    // Pending, FIXME: Never constructed in the example
+    Pending,
     Succeeded,
     Failed,
 }
@@ -254,8 +265,8 @@ pub(crate) type PeerManager = SimpleArcPeerManager<
 pub(crate) type ChannelManager =
     SimpleArcChannelManager<ChainMonitor, BdkLdkWallet, BdkLdkWallet, FilesystemLogger>;
 
-pub(crate) type InvoicePayer<E> =
-    payment::InvoicePayer<Arc<ChannelManager>, Router, Arc<FilesystemLogger>, E>;
+pub(crate) type BdkLdkInvoicePayer =
+    payment::InvoicePayer<Arc<ChannelManager>, Router, Arc<FilesystemLogger>, BdkLdkEventHandler>;
 
 type Router = DefaultRouter<Arc<NetGraph>, Arc<FilesystemLogger>, Arc<Mutex<Scorer>>>;
 type Scorer = ProbabilisticScorer<Arc<NetGraph>, Arc<FilesystemLogger>>;
@@ -502,30 +513,16 @@ pub fn setup(
 pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
     let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
 
-    // Step 16: Handle LDK Events
-    let event_handler = {
-        let channel_manager = system.channel_manager.clone();
-        let wallet = system.wallet.clone();
-        let network_graph = system.network_graph.clone();
-        let keys_manager = system.keys_manager.clone();
-        let inbound_payments = system.inbound_payments.clone();
-        let outbound_payments = system.outbound_payments.clone();
-        let handle = tokio::runtime::Handle::current();
-        let network = system.network;
-        {
-            move |event: &Event| {
-                handle.block_on(handle_ldk_events(
-                    channel_manager.clone(),
-                    wallet.clone(),
-                    &network_graph,
-                    keys_manager.clone(),
-                    inbound_payments.clone(),
-                    outbound_payments.clone(),
-                    network,
-                    event,
-                ));
-            }
-        }
+    let runtime_handle = tokio::runtime::Handle::current();
+    let event_handler = BdkLdkEventHandler {
+        runtime_handle,
+        channel_manager: system.channel_manager.clone(),
+        wallet: system.wallet.clone(),
+        network_graph: system.network_graph.clone(),
+        keys_manager: system.keys_manager.clone(),
+        inbound_payments: system.inbound_payments.clone(),
+        outbound_payments: system.outbound_payments.clone(),
+        network: system.network,
     };
 
     // Step 17: Initialize routing ProbabilisticScorer
@@ -543,13 +540,15 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         system.keys_manager.get_secure_random_bytes(),
         scorer.clone(),
     );
-    let invoice_payer = Arc::new(InvoicePayer::new(
+    let invoice_payer = Arc::new(BdkLdkInvoicePayer::new(
         system.channel_manager.clone(),
         router,
         system.logger.clone(),
         event_handler,
         payment::Retry::Timeout(Duration::from_secs(10)),
     ));
+
+    INVOICE_PAYER.set(Mutex::new(invoice_payer.clone()));
 
     // Step 19: Background Processing
     // TODO: Do we need to stop the background processor on the wallet, or will it be sufficient to
@@ -995,4 +994,136 @@ async fn handle_ldk_events(
             }
         }
     }
+}
+
+/// Lightning network event handler
+pub struct BdkLdkEventHandler {
+    runtime_handle: runtime::Handle,
+    channel_manager: Arc<ChannelManager>,
+    wallet: Arc<BdkLdkWallet>,
+    network_graph: Arc<NetGraph>,
+    keys_manager: Arc<KeysManager>,
+    inbound_payments: PaymentInfoStorage,
+    outbound_payments: PaymentInfoStorage,
+    network: Network,
+}
+
+impl EventHandler for BdkLdkEventHandler {
+    fn handle_event(&self, event: &Event) {
+        self.runtime_handle.block_on(handle_ldk_events(
+            self.channel_manager.clone(),
+            self.wallet.clone(),
+            &self.network_graph,
+            self.keys_manager.clone(),
+            self.inbound_payments.clone(),
+            self.outbound_payments.clone(),
+            self.network,
+            event,
+        ));
+    }
+}
+
+pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> Result<()> {
+    let status = {
+        let invoice_payer = INVOICE_PAYER
+            .try_get()
+            .context("LDK not running - no invoice payer")?
+            .lock()
+            .map_err(|e| anyhow!("could not acquire mutex: {e:#}"))?;
+        match invoice_payer.pay_invoice(invoice) {
+            Ok(_payment_id) => {
+                let payee_pubkey = invoice.recover_payee_pub_key();
+                let amt_msat = invoice
+                    .amount_milli_satoshis()
+                    .context("invalid msat amount in the invoice")?;
+                tracing::info!("EVENT: initiated sending {amt_msat} msats to {payee_pubkey}",);
+                HTLCStatus::Pending
+            }
+            Err(PaymentError::Invoice(e)) => {
+                tracing::error!("Invalid invoice: {e}");
+                anyhow::bail!(e);
+            }
+            Err(PaymentError::Routing(e)) => {
+                tracing::error!("Failed to find route: {e:?}");
+                anyhow::bail!("{:?}", e);
+            }
+            Err(PaymentError::Sending(e)) => {
+                tracing::error!("Failed to send payment: {e:?}");
+                HTLCStatus::Failed
+            }
+            Err(PaymentError::CreatingCustomOutput(e)) => {
+                panic!("This variant should not happen: {:?}", e);
+            }
+            Err(PaymentError::RemovingCustomOutput(e)) => {
+                panic!("This variant should not happen: {:?}", e);
+            }
+        }
+    };
+    let payment_hash = PaymentHash((*invoice.payment_hash()).into_inner());
+    let payment_secret = Some(*invoice.payment_secret());
+
+    let mut payments = payment_storage
+        .lock()
+        .map_err(|e| anyhow!("cannot get lock to outgoing payments: {e:#}"))?;
+    payments.insert(
+        payment_hash,
+        PaymentInfo {
+            preimage: None,
+            secret: payment_secret,
+            status,
+            amt_msat: MillisatAmount(invoice.amount_milli_satoshis()),
+            timestamp: get_timestamp(),
+        },
+    );
+    Ok(())
+}
+
+pub fn get_invoice(
+    amt_msat: u64,
+    payment_storage: PaymentInfoStorage,
+    channel_manager: Arc<ChannelManager>,
+    keys_manager: Arc<KeysManager>,
+    network: Network,
+    expiry_secs: u32,
+    logger: Arc<disk::FilesystemLogger>,
+) -> Result<()> {
+    let mut payments = payment_storage
+        .lock()
+        .map_err(|e| anyhow!("could not acquire lock: {e:#}"))?;
+    let currency = match network {
+        Network::Bitcoin => Currency::Bitcoin,
+        Network::Testnet => Currency::BitcoinTestnet,
+        Network::Regtest => Currency::Regtest,
+        Network::Signet => bail!("Signet unsupported"),
+    };
+    let invoice = match lightning_invoice::utils::create_invoice_from_channelmanager(
+        &channel_manager,
+        keys_manager,
+        logger,
+        currency,
+        Some(amt_msat),
+        "ldk-tutorial-node".to_string(),
+        expiry_secs,
+    ) {
+        Ok(inv) => {
+            tracing::debug!("Successfully generated invoice: {}", inv);
+            inv
+        }
+        Err(e) => {
+            bail!("Failed to create invoice: {:?}", e);
+        }
+    };
+
+    let payment_hash = PaymentHash((*invoice.payment_hash()).into_inner());
+    payments.insert(
+        payment_hash,
+        PaymentInfo {
+            preimage: None,
+            secret: Some(*invoice.payment_secret()),
+            status: HTLCStatus::Pending,
+            amt_msat: MillisatAmount(Some(amt_msat)),
+            timestamp: get_timestamp(),
+        },
+    );
+    Ok(())
 }

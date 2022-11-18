@@ -23,6 +23,7 @@ use bdk::KeychainKind;
 use bdk::SignOptions;
 use bdk_ldk::ScriptStatus;
 use lightning_background_processor::BackgroundProcessor;
+use lightning_invoice::Invoice;
 use reqwest::StatusCode;
 use rust_decimal::prelude::FromPrimitive;
 use serde::Deserialize;
@@ -33,6 +34,7 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::net::SocketAddr;
 use std::path::Path;
+use std::str::FromStr;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 use std::time::Duration;
@@ -191,7 +193,7 @@ impl Wallet {
 
     /// Run the lightning node
     pub async fn run_ldk_server(
-        &mut self,
+        &self,
         address: SocketAddr,
     ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
         lightning::run_ldk_server(&self.lightning, address).await
@@ -252,6 +254,23 @@ impl Wallet {
 
         Ok(tx.txid())
     }
+
+    pub fn send_lightning_payment(&self, invoice: &Invoice) -> Result<()> {
+        lightning::send_payment(invoice, self.lightning.outbound_payments.clone())?;
+        Ok(())
+    }
+
+    pub fn get_invoice(&self, amount_msat: u64, expiry_secs: u32) -> Result<()> {
+        lightning::get_invoice(
+            amount_msat,
+            self.lightning.inbound_payments.clone(),
+            self.lightning.channel_manager.clone(),
+            self.lightning.keys_manager.clone(),
+            self.lightning.network,
+            expiry_secs,
+            self.lightning.logger.clone(),
+        )
+    }
 }
 
 fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
@@ -276,13 +295,13 @@ pub async fn run_ldk() -> Result<BackgroundProcessor> {
 }
 
 pub async fn run_ldk_server(address: SocketAddr) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-    let mut wallet = { (*get_wallet()?).clone() };
+    let wallet = { (*get_wallet()?).clone() };
     wallet.run_ldk_server(address).await
 }
 
 pub fn node_id() -> Result<PublicKey> {
-    let wallet = { (*get_wallet()?).clone() };
-    Ok(wallet.get_node_id())
+    let node_id = get_wallet()?.get_node_id();
+    Ok(node_id)
 }
 
 pub fn get_balance() -> Result<Balance> {
@@ -336,6 +355,11 @@ pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
 pub fn get_seed_phrase() -> Result<Vec<String>> {
     let seed_phrase = get_wallet()?.seed.get_seed_phrase();
     Ok(seed_phrase)
+}
+
+pub fn send_lightning_payment(invoice: &str) -> Result<()> {
+    let invoice = Invoice::from_str(invoice).context("Could not parse Invoice string")?;
+    get_wallet()?.send_lightning_payment(&invoice)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -523,6 +547,10 @@ pub fn get_node_id() -> Result<PublicKey> {
     Ok(node_id)
 }
 
+pub fn get_invoice(amount_msat: u64, expiry_secs: u32) -> Result<()> {
+    get_wallet()?.get_invoice(amount_msat, expiry_secs)
+}
+
 impl From<Network> for bitcoin::Network {
     fn from(network: Network) -> Self {
         match network {
@@ -551,6 +579,7 @@ pub enum Flow {
     Outbound,
 }
 
+// TODO: Remove this? Seems to be exactly the same as HTLCStatus
 pub enum TransactionStatus {
     Failed,
     Succeeded,
@@ -562,6 +591,7 @@ impl From<HTLCStatus> for TransactionStatus {
         match s {
             HTLCStatus::Succeeded => TransactionStatus::Succeeded,
             HTLCStatus::Failed => TransactionStatus::Failed,
+            HTLCStatus::Pending => TransactionStatus::Pending,
         }
     }
 }
