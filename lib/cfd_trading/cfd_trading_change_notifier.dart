@@ -6,8 +6,7 @@ import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 /// Responsible for managing the state across the different Cfd Trading screens.
 class CfdTradingChangeNotifier extends ChangeNotifier {
-  List<Cfd> _cfds = [];
-  List<Cfd> listCfds() => _cfds;
+  List<Cfd> cfds = [];
 
   // the selected tab index needs to be managed in an app state as otherwise
   // a the order confirmation screen could not change tabs to the cfd overview
@@ -28,16 +27,20 @@ class CfdTradingChangeNotifier extends ChangeNotifier {
     super.notifyListeners();
   }
 
+  Future<void> refreshCfdList() async {
+    cfds = await api.listCfds();
+    super.notifyListeners();
+  }
+
   CfdTradingChangeNotifier init() {
-    Timer.periodic(const Duration(seconds: 20), (timer) async {
-      _cfds = await api.listCfds();
-      super.notifyListeners();
+    Timer.periodic(const Duration(seconds: 20), (timer) {
+      refreshCfdList();
     });
     return this;
   }
 
   void update() async {
-    _cfds = await api.listCfds();
+    cfds = await api.listCfds();
     super.notifyListeners();
   }
 }

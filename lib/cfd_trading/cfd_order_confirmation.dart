@@ -23,6 +23,8 @@ class CfdOrderConfirmation extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
+    final cfdTradingService = context.read<CfdTradingChangeNotifier>();
+
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
     Order order = this.order!;
 
@@ -78,12 +80,12 @@ class CfdOrderConfirmation extends StatelessWidget {
                         children: [
                           ElevatedButton(
                               onPressed: () async {
-                                // TODO: Plug in actual state changes
-
                                 try {
-                                  // TODO: Don't hardcode the taker amount
                                   await api.openCfd(order: order);
                                   FLog.info(text: 'OpenCfd returned successfully');
+
+                                  // refreshing cfd list after cfd has been opened
+                                  await cfdTradingService.refreshCfdList();
 
                                   // clear draft order from cfd service state
                                   cfdTradingChangeNotifier.draftOrder = null;
@@ -102,7 +104,10 @@ class CfdOrderConfirmation extends StatelessWidget {
                                       text: 'Failed to open CFD: ' + error.message,
                                       exception: error);
 
-                                  // TODO display error that CFD open failed in UI
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                    backgroundColor: Colors.red,
+                                    content: Text("Failed to open cfd"),
+                                  ));
                                 }
                               },
                               child: const Text('Confirm'))

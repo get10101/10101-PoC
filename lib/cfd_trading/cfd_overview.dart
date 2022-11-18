@@ -23,7 +23,7 @@ class _CfdOverviewState extends State<CfdOverview> {
   @override
   Widget build(BuildContext context) {
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
-    final cfds = cfdTradingService.listCfds();
+    final cfds = cfdTradingService.cfds;
     cfds.sort((a, b) => b.updated.compareTo(a.updated));
 
     List<Widget> widgets = [
