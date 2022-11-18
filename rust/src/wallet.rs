@@ -50,8 +50,9 @@ static MAKER_PORT_LIGHTNING: u64 = 9045;
 static MAKER_PORT_HTTP: u64 = 8000;
 // Maker PK is derived from our checked in regtest maker seed
 static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
+pub static MAKER_ENDPOINT: &str = "http://127.0.0.1:8000";
 
-static TCP_TIMEOUT: Duration = Duration::from_secs(10);
+pub static TCP_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub fn maker_peer_info() -> PeerInfo {
     PeerInfo {
