@@ -27,11 +27,7 @@ class CfdOrderConfirmation extends StatelessWidget {
     Order order = this.order!;
 
     final openPrice = formatter.format(order.openPrice);
-    final liquidationPrice = formatter.format(api.calculateLiquidationPrice(
-        initialPrice: order.openPrice,
-        leverage: order.leverage,
-        contractSymbol: order.contractSymbol,
-        position: order.position));
+    final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
     // TODO: Calculate or remove?
     final estimatedFees = Amount.zero.display(currency: Currency.sat).value;
     // TODO: Calculate

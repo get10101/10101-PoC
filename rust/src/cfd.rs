@@ -58,10 +58,8 @@ pub struct Cfd {
 }
 
 pub async fn open(order: &Order) -> Result<()> {
-    // TODO: calculate liquidation price
-    let liquidation_price: f64 = 12314.23;
-    // TODO: calculate expiry of cfd
-    let expiry = time::OffsetDateTime::now_utc().unix_timestamp();
+    let liquidation_price: f64 = order.calculate_liquidation_price().0;
+    let expiry = order.calculate_expiry().0;
 
     if order.leverage > 2 {
         bail!("Only leverage x1 and x2 are supported at the moment");

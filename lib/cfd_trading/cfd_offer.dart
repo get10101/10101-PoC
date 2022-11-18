@@ -46,12 +46,12 @@ class _CfdOfferState extends State<CfdOffer> {
       leverage: 2,
       position: Position.Long,
       contractSymbol: ContractSymbol.BtcUsd,
+      bridge: api,
     );
 
     order = cfdTradingService.draftOrder!;
 
-    final liquidationPrice = api.calculateLiquidationPrice(
-        initialPrice: order.openPrice, leverage: order.leverage, position: order.position);
+    final liquidationPrice = order.calculateLiquidationPrice();
 
     // TODO: calcualte margin
     final margin = Amount(250000).display(currency: Currency.sat).value;
