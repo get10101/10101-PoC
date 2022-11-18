@@ -227,15 +227,21 @@ class _TenTenOneState extends State<TenTenOneApp> {
       return PaymentHistoryItem(amount, type, status, e.timestamp);
     }).toList();
 
-    var bph = bitcoinTxHistory
-        .map((bitcoinTxHistoryItem) => PaymentHistoryItem(
-            bitcoinTxHistoryItem.sent != 0
-                ? Amount(bitcoinTxHistoryItem.sent * -1)
-                : Amount(bitcoinTxHistoryItem.received),
-            bitcoinTxHistoryItem.sent != 0 ? PaymentType.sendOnChain : PaymentType.receiveOnChain,
-            bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending,
-            bitcoinTxHistoryItem.timestamp))
-        .toList();
+    var bph = bitcoinTxHistory.map((bitcoinTxHistoryItem) {
+      var amount = bitcoinTxHistoryItem.sent != 0
+          ? Amount((bitcoinTxHistoryItem.sent -
+                  bitcoinTxHistoryItem.received -
+                  bitcoinTxHistoryItem.fee) *
+              -1)
+          : Amount(bitcoinTxHistoryItem.received);
+
+      var type =
+          bitcoinTxHistoryItem.sent != 0 ? PaymentType.sendOnChain : PaymentType.receiveOnChain;
+
+      var status =
+          bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending;
+      return PaymentHistoryItem(amount, type, status, bitcoinTxHistoryItem.timestamp);
+    }).toList();
 
     final combinedList = [...bph, ...lth];
     combinedList.sort((a, b) => b.timestamp.compareTo(a.timestamp));
