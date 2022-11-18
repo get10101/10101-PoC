@@ -1,5 +1,7 @@
 use crate::bitmex::Quote;
 use anyhow::Result;
+use bdk::bitcoin::secp256k1::PublicKey;
+use bdk::bitcoin::Address;
 use http_api_problem::HttpApiProblem;
 use http_api_problem::StatusCode;
 use rocket::serde::json::Json;
@@ -9,7 +11,11 @@ use rocket::State;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use ten_ten_one::wallet::force_close_channel;
+use ten_ten_one::wallet::get_address;
+use ten_ten_one::wallet::get_balance;
+use ten_ten_one::wallet::get_node_id;
 use ten_ten_one::wallet::send_to_address;
+use ten_ten_one::wallet::Balance;
 use ten_ten_one::wallet::OpenChannelRequest;
 use ten_ten_one::wallet::OpenChannelResponse;
 use tokio::sync::watch;
@@ -47,6 +53,40 @@ pub async fn get_offer(
             .title("No quotes found")
             .detail(e.to_string())
     })
+}
+
+#[derive(Serialize)]
+pub struct WalletDetails {
+    pub address: Address,
+    pub balance: Balance,
+    pub node_id: PublicKey,
+}
+
+#[allow(clippy::result_large_err)]
+#[rocket::get("/wallet-details")]
+pub fn get_wallet_details() -> Result<Json<WalletDetails>, HttpApiProblem> {
+    let balance = get_balance().map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed get new balance")
+            .detail(format!("Internal wallet error: {e:#}"))
+    })?;
+
+    let address = get_address().map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed get new address")
+            .detail(format!("Internal wallet error: {e:#}"))
+    })?;
+
+    let node_id = get_node_id().map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed get new address")
+            .detail(format!("Internal wallet error: {e:#}"))
+    })?;
+    Ok(Json(WalletDetails {
+        address,
+        balance,
+        node_id,
+    }))
 }
 
 #[rocket::post("/channel/close/<remote_node_id>")]

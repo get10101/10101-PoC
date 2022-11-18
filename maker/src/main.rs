@@ -62,7 +62,8 @@ async fn main() -> Result<()> {
             rocket::routes![
                 routes::get_offer,
                 routes::post_force_close_channel,
-                routes::post_open_channel
+                routes::post_open_channel,
+                routes::get_wallet_details
             ],
         )
         .manage(quote_receiver)
