@@ -29,15 +29,14 @@ class CfdOrderConfirmation extends StatelessWidget {
     Order order = this.order!;
 
     final openPrice = formatter.format(order.openPrice);
+
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
-    // TODO: Calculate or remove?
-    final estimatedFees = Amount.zero.display(currency: Currency.sat).value;
-    // TODO: Calculate
-    final margin = Amount.zero.display(currency: Currency.sat).value;
-    // TODO: Calculate
-    final unrealizedPL = Amount.zero.display(currency: Currency.sat).value;
-    final now = DateTime.now();
-    final expiry = DateTime(now.year, now.month, now.day + 1);
+    // TODO: calculate estimated fees
+    final estimatedFees = Amount(-4).display(currency: Currency.btc).value;
+    final margin = Amount.fromDouble(order.calculateMargin()).display(currency: Currency.btc).value;
+    final expiry = DateFormat('dd.MM.yy-kk:mm')
+        .format(DateTime.fromMillisecondsSinceEpoch(order.calculateExpiry()));
+
     final quantity = order.quantity.toString();
     final contractSymbol = order.contractSymbol.name.toUpperCase();
 
@@ -55,12 +54,8 @@ class CfdOrderConfirmation extends StatelessWidget {
                     value: order.position == Position.Long ? 'Long' : 'Short',
                     type: ValueType.satoshi),
                 TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
-                TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
                 TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                TtoRow(
-                    label: 'Expiry',
-                    value: DateFormat('dd.MM.yy-kk:mm').format(expiry),
-                    type: ValueType.satoshi),
+                TtoRow(label: 'Expiry', value: expiry, type: ValueType.satoshi),
                 TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
                 TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
                 TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi)

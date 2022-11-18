@@ -16,6 +16,10 @@ class Amount {
     this.sats = Decimal.fromInt(sats);
   }
 
+  Amount.fromDouble(double sats) {
+    this.sats = Decimal.parse(sats.toString());
+  }
+
   int get asSats => sats.toBigInt().toInt();
 
   // Defaults to sats
