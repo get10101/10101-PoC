@@ -51,6 +51,8 @@ static MAKER_PORT_HTTP: u64 = 8000;
 // Maker PK is derived from our checked in regtest maker seed
 static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
 
+static TCP_TIMEOUT: Duration = Duration::from_secs(10);
+
 pub fn maker_peer_info() -> PeerInfo {
     PeerInfo {
         pubkey: MAKER_PK.parse().expect("Hard-coded PK to be valid"),
@@ -357,7 +359,7 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 
     let address_to_fund = get_address()?;
 
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder().timeout(TCP_TIMEOUT).build()?;
 
     let body = OpenChannelRequest {
         address_to_fund: address_to_fund.clone(),
