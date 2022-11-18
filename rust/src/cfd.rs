@@ -25,13 +25,14 @@ pub enum Position {
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 pub struct Order {
     #[frb(non_final)]
-    pub leverage: u8,
+    pub leverage: i64,
     #[frb(non_final)]
-    pub quantity: u32,
+    pub quantity: i64,
     #[frb(non_final)]
     pub contract_symbol: ContractSymbol,
     #[frb(non_final)]
     pub position: Position,
+    #[frb(non_final)]
     pub open_price: f64,
 }
 
@@ -66,7 +67,7 @@ pub async fn open(order: &Order) -> Result<()> {
         bail!("Only leverage x1 and x2 are supported at the moment");
     }
 
-    let maker_amount = order.quantity.saturating_mul(order.leverage as u32);
+    let maker_amount = order.quantity.saturating_mul(order.leverage);
 
     tracing::info!(
         "Opening CFD with taker amount {} maker amount {maker_amount}",
@@ -122,7 +123,7 @@ pub async fn open(order: &Order) -> Result<()> {
 
     let custom_output_id = base64::encode(custom_output_details.id.0);
 
-    let margin = order.calculate_margin().0;
+    let margin = order.margin_taker().0;
 
     let mut connection = db::acquire().await?;
 

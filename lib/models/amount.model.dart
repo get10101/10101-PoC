@@ -16,8 +16,8 @@ class Amount {
     this.sats = Decimal.fromInt(sats);
   }
 
-  Amount.fromDouble(double sats) {
-    this.sats = Decimal.parse(sats.toString());
+  Amount.fromBtc(double btc) {
+    sats = Decimal.fromInt((btc * 100000000).toInt());
   }
 
   int get asSats => sats.toBigInt().toInt();

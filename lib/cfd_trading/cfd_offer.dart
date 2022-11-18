@@ -40,7 +40,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final fmtIndex = formatter.format(offer.index);
 
     cfdTradingService.draftOrder ??= Order(
-        openPrice: offer.index,
+        openPrice: offer.ask,
         quantity: 100,
         leverage: 2,
         contractSymbol: ContractSymbol.BtcUsd,
@@ -52,7 +52,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
     final expiry = DateFormat('dd.MM.yy-kk:mm')
         .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
-    final margin = formatter.format(order.calculateMargin());
+    final margin = formatter.format(order.marginTaker());
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
@@ -71,6 +71,7 @@ class _CfdOfferState extends State<CfdOffer> {
             onChange: (position) {
               setState(() {
                 order.position = position!;
+                order.openPrice = Position.Long == position ? offer.ask : offer.bid;
               });
             },
             value: order.position),

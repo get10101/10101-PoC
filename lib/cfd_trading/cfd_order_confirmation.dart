@@ -45,7 +45,6 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
     final formatter = NumberFormat.decimalPattern('en');
 
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
-
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
     Order order = widget.order!;
 
@@ -53,8 +52,8 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
 
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
 
-    final estimatedFees = Amount(fastestFee).display(currency: Currency.btc).value;
-    final margin = Amount.fromDouble(order.calculateMargin()).display(currency: Currency.btc).value;
+    final estimatedFees = Amount(txFee).display(currency: Currency.sat).value;
+    final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
     final expiry = DateFormat('dd.MM.yy-kk:mm')
         .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
 

@@ -4,9 +4,11 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
+import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
 
@@ -47,15 +49,19 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
 
+    final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
+    final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
+
     Cfd cfd = widget.cfd!;
 
     final openPrice = formatter.format(cfd.openPrice);
     final liquidationPrice = formatter.format(cfd.liquidationPrice);
-    final margin = Amount.fromDouble(cfd.margin).display(currency: Currency.btc).value;
-    final estimatedFees = Amount(fastestFee).display(currency: Currency.btc).value;
+    final margin = Amount.fromBtc(cfd.margin).display(currency: Currency.sat).value;
+    final estimatedFees = Amount(txFee).display(currency: Currency.sat).value;
 
-    // TODO: calculate PnL for CFD
-    final unrealizedPL = Amount(1000).display(currency: Currency.sat, sign: true).value;
+    final pnl = cfd.getOrder().calculateProfit(closingPrice: offer.index);
+
+    final unrealizedPL = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
 
     final expiry =
         DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry * 1000));

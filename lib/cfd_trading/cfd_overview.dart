@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
+import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
@@ -22,8 +23,10 @@ class CfdOverview extends StatefulWidget {
 class _CfdOverviewState extends State<CfdOverview> {
   @override
   Widget build(BuildContext context) {
-    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
-    final cfds = cfdTradingService.cfds;
+    final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
+    final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
+    final cfdTradingChangeNotifier = context.watch<CfdTradingChangeNotifier>();
+    final cfds = cfdTradingChangeNotifier.cfds;
     cfds.sort((a, b) => b.updated.compareTo(a.updated));
 
     List<Widget> widgets = [
@@ -32,18 +35,18 @@ class _CfdOverviewState extends State<CfdOverview> {
     ];
     widgets.addAll(cfds
         .where((cfd) => [CfdState.Open].contains(cfd.state))
-        .map((cfd) => CfdTradeItem(cfd: cfd))
+        .map((cfd) => CfdTradeItem(cfd: cfd, closingPrice: offer.index))
         .toList());
 
     widgets.add(ExpansionTile(
       title: const Text('Closed', style: TextStyle(fontSize: 20)),
       onExpansionChanged: (changed) {
-        cfdTradingService.expanded = true;
+        cfdTradingChangeNotifier.expanded = true;
       },
-      initiallyExpanded: cfdTradingService.expanded,
+      initiallyExpanded: cfdTradingChangeNotifier.expanded,
       children: cfds
           .where((cfd) => [CfdState.Closed, CfdState.Failed].contains(cfd.state))
-          .map((cfd) => CfdTradeItem(cfd: cfd))
+          .map((cfd) => CfdTradeItem(cfd: cfd, closingPrice: offer.index))
           .toList(),
     ));
 
@@ -57,16 +60,17 @@ class _CfdOverviewState extends State<CfdOverview> {
 
 class CfdTradeItem extends StatelessWidget {
   final Cfd cfd;
+  final double closingPrice;
 
-  const CfdTradeItem({super.key, required this.cfd});
+  const CfdTradeItem({super.key, required this.cfd, required this.closingPrice});
 
   @override
   Widget build(BuildContext context) {
-    final updated =
-        DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.updated));
+    final updated = DateFormat('dd.MM.yy-kk:mm')
+        .format(DateTime.fromMillisecondsSinceEpoch(cfd.updated * 1000));
 
-    // TODO: calculate pnl
-    final pnl = Amount(1000);
+    final pnl = cfd.getOrder().calculateProfit(closingPrice: closingPrice);
+    final fmtPnl = Amount.fromBtc(pnl).display(sign: true, currency: Currency.sat).value;
 
     return GestureDetector(
       onTap: () {
@@ -98,9 +102,9 @@ class CfdTradeItem extends StatelessWidget {
                       : const FaIcon(FontAwesomeIcons.arrowTrendDown, color: Colors.red)
                 ]),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  Text(pnl.display(sign: true, currency: Currency.sat).value,
+                  Text(fmtPnl,
                       style: TextStyle(
-                          fontSize: 20, color: pnl.asSats.isNegative ? Colors.red : Colors.green)),
+                          fontSize: 20, color: pnl.isNegative ? Colors.red : Colors.green)),
                   const SizedBox(width: 5),
                   const Text(
                     'sat',

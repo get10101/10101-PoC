@@ -14,6 +14,7 @@ use crate::wallet::Network;
 use crate::wallet::MAINNET_ELECTRUM;
 use crate::wallet::REGTEST_ELECTRUM;
 use crate::wallet::TESTNET_ELECTRUM;
+use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use flutter_rust_bridge::SyncReturn;
@@ -200,9 +201,29 @@ pub fn send_lightning_payment(invoice: String) -> Result<()> {
 // through frb. TODO: Provide multiple rust targets to the code generation so that this code can be
 // nicer structured.
 impl Order {
-    pub fn calculate_margin(&self) -> SyncReturn<f64> {
-        let margin = self.quantity as f64 / (self.open_price * self.leverage as f64);
-        SyncReturn(margin)
+    pub fn margin_taker(&self) -> SyncReturn<f64> {
+        SyncReturn(Self::calculate_margin(
+            self.open_price,
+            self.quantity,
+            self.leverage,
+        ))
+    }
+
+    fn margin_total(&self) -> f64 {
+        let margin_taker = Self::calculate_margin(self.open_price, self.quantity, self.leverage);
+        let margin_maker = Self::calculate_margin(self.open_price, self.quantity, 1);
+
+        margin_taker + margin_maker
+    }
+
+    fn calculate_margin(opening_price: f64, quantity: i64, leverage: i64) -> f64 {
+        let quantity = Decimal::from(quantity);
+        let open_price = Decimal::try_from(opening_price).expect("to fit into decimal");
+        let leverage = Decimal::from(leverage);
+
+        (quantity / (open_price * leverage))
+            .to_f64()
+            .expect("price to fit into f64")
     }
 
     pub fn calculate_expiry(&self) -> SyncReturn<i64> {
@@ -233,6 +254,38 @@ impl Order {
         tracing::info!("Liquidation_price: {liquidation_price}");
 
         SyncReturn(liquidation_price)
+    }
+
+    pub fn calculate_profit(&self, closing_price: f64) -> Result<SyncReturn<f64>> {
+        let margin = self.margin_taker().0;
+        let payout = self.calculate_payout_at_price(closing_price)?.0;
+
+        tracing::debug!(
+            "Payout: {}, Margin: {}, PnL: {}",
+            payout,
+            margin,
+            payout - margin
+        );
+
+        Ok(SyncReturn(payout - margin))
+    }
+
+    pub fn calculate_payout_at_price(&self, closing_price: f64) -> Result<SyncReturn<f64>> {
+        let uncapped_payout = {
+            let opening_price = Decimal::try_from(self.open_price)?;
+            let closing_price = Decimal::try_from(closing_price)?;
+            let quantity = Decimal::from(self.quantity);
+
+            let uncapped_pnl = (quantity / opening_price) - (quantity / closing_price);
+            let uncapped_pnl = uncapped_pnl
+                .round_dp_with_strategy(8, rust_decimal::RoundingStrategy::MidpointAwayFromZero);
+            uncapped_pnl
+                .to_f64()
+                .context("Could not convert Decimal to f64")?
+        };
+        let payout = uncapped_payout.min(self.margin_total());
+
+        Ok(SyncReturn(payout))
     }
 }
 
