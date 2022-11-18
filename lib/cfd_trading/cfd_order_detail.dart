@@ -6,8 +6,8 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
@@ -33,16 +33,33 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final formatter = NumberFormat.decimalPattern('en');
 
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
+    final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
+
     Order order = widget.order!;
+    final offer = cfdOffersChangeNotifier.offer;
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final estimatedFees = order.estimatedFees.display(currency: Currency.btc, sign: true).value;
-    final margin = order.margin.display(currency: Currency.btc).value;
-    final unrealizedPL = order.pl.display(currency: Currency.btc, sign: true).value;
+    final estimatedFees = order.estimatedFees.display(sign: true).value;
+    final margin = order.margin.display().value;
+    final unrealizedPL = order.pl.display(sign: true).value;
     final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
     final quantity = order.quantity.toString();
     final tradingPair = order.tradingPair.name.toUpperCase();
+    final leverage = order.leverage;
+
+    var takerAmount = 0;
+    var makerAmount = 0;
+
+    if (offer != null) {
+      final marginAsSats = order.margin.asSats;
+      // TODO: this should be stored in the order
+      final totalValueAsSats = marginAsSats + marginAsSats * leverage;
+      final takerPnlAsSats = order.pl.asSats;
+      takerAmount = takerPnlAsSats < 0 ? 0 : takerPnlAsSats;
+      var makerPnlAsSats = totalValueAsSats - takerPnlAsSats;
+      makerAmount = makerPnlAsSats < 0 ? 0 : makerPnlAsSats;
+    }
 
     return Scaffold(
         appBar: AppBar(title: const Text('CFD Order Details')),
@@ -121,7 +138,8 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                                     });
 
                                     try {
-                                      await api.settleCfd(takerAmount: 40000, makerAmount: 20000);
+                                      await api.settleCfd(
+                                          takerAmount: takerAmount, makerAmount: makerAmount);
                                     } on FfiException catch (error) {
                                       FLog.error(
                                           text: 'Failed to settle CFD: ' + error.message,
