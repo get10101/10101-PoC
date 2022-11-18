@@ -4,8 +4,6 @@ use anyhow::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
-static MAKER_ENDPOINT: &str = "http://127.0.0.1:8000";
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Offer {
     pub bid: f64,
@@ -14,7 +12,12 @@ pub struct Offer {
 }
 
 pub async fn get_offer() -> Result<Offer> {
-    reqwest::get(format!("{}/api/offer", MAKER_ENDPOINT))
+    let client = reqwest::Client::builder()
+        .timeout(crate::wallet::TCP_TIMEOUT)
+        .build()?;
+    client
+        .get(format!("{}/api/offer", crate::wallet::MAKER_ENDPOINT))
+        .send()
         .await?
         .json::<Offer>()
         .await
