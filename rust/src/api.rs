@@ -6,6 +6,9 @@ use crate::wallet;
 use crate::wallet::Balance;
 use crate::wallet::LightningTransaction;
 use crate::wallet::Network;
+use crate::wallet::MAINNET_ELECTRUM;
+use crate::wallet::REGTEST_ELECTRUM;
+use crate::wallet::TESTNET_ELECTRUM;
 use anyhow::bail;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
@@ -59,7 +62,12 @@ pub async fn test_db_connection() -> Result<()> {
 }
 
 pub fn init_wallet(network: Network, path: String) -> Result<()> {
-    wallet::init_wallet(network, Path::new(path.as_str()))
+    let electrum_url = match network {
+        Network::Mainnet => MAINNET_ELECTRUM,
+        Network::Testnet => TESTNET_ELECTRUM,
+        Network::Regtest => REGTEST_ELECTRUM,
+    };
+    wallet::init_wallet(network, electrum_url, Path::new(path.as_str()))
 }
 
 pub fn run_ldk() -> Result<()> {

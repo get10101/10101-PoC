@@ -31,6 +31,7 @@ use state::Storage;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
+use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
@@ -100,13 +101,7 @@ pub struct OnChain {
 }
 
 impl Wallet {
-    pub fn new(network: Network, data_dir: &Path) -> Result<Wallet> {
-        let electrum_url = match network {
-            Network::Mainnet => MAINNET_ELECTRUM,
-            Network::Testnet => TESTNET_ELECTRUM,
-            Network::Regtest => REGTEST_ELECTRUM,
-        };
-
+    pub fn new(network: Network, electrum_url: &str, data_dir: &Path) -> Result<Wallet> {
         let network: bitcoin::Network = network.into();
         let data_dir = data_dir.join(&network.to_string());
         if !data_dir.exists() {
@@ -194,9 +189,9 @@ impl Wallet {
     /// Run the lightning node
     pub async fn run_ldk_server(
         &mut self,
-        port: u16,
+        address: SocketAddr,
     ) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-        lightning::run_ldk_server(&self.lightning, port).await
+        lightning::run_ldk_server(&self.lightning, address).await
     }
 
     pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
@@ -266,9 +261,9 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: Network, data_dir: &Path) -> Result<()> {
+pub fn init_wallet(network: Network, electrum_url: &str, data_dir: &Path) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(Wallet::new(network, data_dir)?));
+    WALLET.set(Mutex::new(Wallet::new(network, electrum_url, data_dir)?));
     Ok(())
 }
 
@@ -277,9 +272,9 @@ pub async fn run_ldk() -> Result<BackgroundProcessor> {
     wallet.run_ldk().await
 }
 
-pub async fn run_ldk_server(port: u16) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
+pub async fn run_ldk_server(address: SocketAddr) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
     let mut wallet = { (*get_wallet()?).clone() };
-    wallet.run_ldk_server(port).await
+    wallet.run_ldk_server(address).await
 }
 
 pub fn node_id() -> Result<PublicKey> {
