@@ -223,7 +223,7 @@ impl Wallet {
     }
 
     pub fn send_to_address(&self, send_to: Address, amount: u64) -> Result<Txid> {
-        get_wallet()?.sync()?;
+        self.sync()?;
 
         let wallet = self.lightning.wallet.get_wallet()?;
 
@@ -238,7 +238,6 @@ impl Wallet {
             builder
                 .add_recipient(send_to.script_pubkey(), amount)
                 .enable_rbf()
-                .do_not_spend_change()
                 .fee_rate(FeeRate::from_sat_per_vb(
                     f32::from_u32(estimated_fee_rate).unwrap_or(1.0),
                 ));
@@ -379,7 +378,8 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     if response.status() == StatusCode::INTERNAL_SERVER_ERROR
         || response.status() == StatusCode::BAD_REQUEST
     {
-        bail!("open channel request failed with response: {response:?}")
+        let text = response.text().await?;
+        bail!("open channel request failed with response: {text}")
     }
 
     let response: OpenChannelResponse = response.json().await?;
