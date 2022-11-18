@@ -28,6 +28,9 @@ use rust_decimal::prelude::FromPrimitive;
 use serde::Deserialize;
 use serde::Serialize;
 use state::Storage;
+use std::fmt;
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::path::Path;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
@@ -56,11 +59,22 @@ pub fn maker_peer_info() -> PeerInfo {
     }
 }
 
-#[derive(Clone, derive_more::Display)]
+#[derive(Clone)]
 pub enum Network {
     Mainnet,
     Testnet,
     Regtest,
+}
+
+impl Display for Network {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Network::Mainnet => "mainnet",
+            Network::Testnet => "testnet",
+            Network::Regtest => "regtest",
+        }
+        .fmt(f)
+    }
 }
 
 #[derive(Clone)]
