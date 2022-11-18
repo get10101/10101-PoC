@@ -51,7 +51,7 @@ class _CfdOfferState extends State<CfdOffer> {
 
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
     final expiry = DateFormat('dd.MM.yy-kk:mm')
-        .format(DateTime.fromMillisecondsSinceEpoch(order.calculateExpiry()));
+        .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
     final margin = formatter.format(order.calculateMargin());
 
     return Scaffold(

@@ -56,7 +56,7 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
     final estimatedFees = Amount(fastestFee).display(currency: Currency.btc).value;
     final margin = Amount.fromDouble(order.calculateMargin()).display(currency: Currency.btc).value;
     final expiry = DateFormat('dd.MM.yy-kk:mm')
-        .format(DateTime.fromMillisecondsSinceEpoch(order.calculateExpiry()));
+        .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
 
     final quantity = order.quantity.toString();
     final contractSymbol = order.contractSymbol.name.toUpperCase();

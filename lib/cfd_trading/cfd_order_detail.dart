@@ -58,7 +58,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final unrealizedPL = Amount(1000).display(currency: Currency.sat, sign: true).value;
 
     final expiry =
-        DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry));
+        DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry * 1000));
     final quantity = cfd.quantity.toString();
     final contractSymbol = cfd.contractSymbol.name.toUpperCase();
 
