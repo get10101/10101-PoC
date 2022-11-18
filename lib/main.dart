@@ -13,7 +13,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/payment.model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
-import 'package:ten_ten_one/wallet/deposit.dart';
+import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
 import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
@@ -26,7 +26,7 @@ import 'package:ten_ten_one/wallet/receive.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/wallet/send.dart';
-import 'package:ten_ten_one/wallet/withdraw.dart';
+import 'package:ten_ten_one/wallet/send_on_chain.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' as bride_definitions;
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -113,15 +113,15 @@ class _TenTenOneState extends State<TenTenOneApp> {
               },
             ),
             GoRoute(
-              path: Deposit.subRouteName,
+              path: ReceiveOnChain.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
-                return const Deposit();
+                return const ReceiveOnChain();
               },
             ),
             GoRoute(
-              path: Withdraw.subRouteName,
+              path: SendOnChain.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
-                return const Withdraw();
+                return const SendOnChain();
               },
             ),
             GoRoute(
@@ -232,7 +232,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
             bitcoinTxHistoryItem.sent != 0
                 ? Amount(bitcoinTxHistoryItem.sent * -1)
                 : Amount(bitcoinTxHistoryItem.received),
-            bitcoinTxHistoryItem.sent != 0 ? PaymentType.withdraw : PaymentType.deposit,
+            bitcoinTxHistoryItem.sent != 0 ? PaymentType.sendOnChain : PaymentType.receiveOnChain,
             bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending,
             bitcoinTxHistoryItem.timestamp))
         .toList();

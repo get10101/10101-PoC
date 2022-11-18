@@ -6,17 +6,17 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
-class Deposit extends StatefulWidget {
-  const Deposit({Key? key}) : super(key: key);
+class ReceiveOnChain extends StatefulWidget {
+  const ReceiveOnChain({Key? key}) : super(key: key);
 
   static const route = '/' + subRouteName;
-  static const subRouteName = 'deposit';
+  static const subRouteName = 'receive-on-chain';
 
   @override
-  State<Deposit> createState() => _DepositState();
+  State<ReceiveOnChain> createState() => _ReceiveOnChainState();
 }
 
-class _DepositState extends State<Deposit> {
+class _ReceiveOnChainState extends State<ReceiveOnChain> {
   String address = "";
 
   @override
@@ -40,7 +40,7 @@ class _DepositState extends State<Deposit> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Deposit Bitcoin'),
+        title: const Text('Receive Bitcoin'),
       ),
       body: SafeArea(
           child: address.isEmpty
