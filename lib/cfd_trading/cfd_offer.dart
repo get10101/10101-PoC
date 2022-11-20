@@ -112,10 +112,13 @@ class _CfdOfferState extends State<CfdOffer> {
           Container(
             margin: const EdgeInsets.only(top: 25),
             child: TtoTable([
-              TtoRow(label: 'Funding Rate', value: fundingRate, icon: Icons.currency_bitcoin),
-              TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
-              TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(order.expiry)),
-              TtoRow(label: 'Liquidation Price', value: '\$ $liquidationPrice'),
+              TtoRow(label: 'Funding Rate', value: fundingRate, type: ValueType.satoshi),
+              TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+              TtoRow(
+                  label: 'Expiry',
+                  value: DateFormat('dd.MM.yy-kk:mm').format(order.expiry),
+                  type: ValueType.date),
+              TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
             ]),
           )
         ])
