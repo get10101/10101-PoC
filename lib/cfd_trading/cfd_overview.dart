@@ -5,6 +5,7 @@ import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -92,7 +93,7 @@ class CfdTradeItem extends StatelessWidget {
                       : const FaIcon(FontAwesomeIcons.arrowTrendDown, color: Colors.red)
                 ]),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  Text(order.pl.display(sign: true).value,
+                  Text(order.pl.display(sign: true, currency: Currency.sat).value,
                       style: TextStyle(
                           fontSize: 20,
                           color: order.pl.asSats.isNegative ? Colors.red : Colors.green)),

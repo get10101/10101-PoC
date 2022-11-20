@@ -10,7 +10,7 @@ class TtoRow {
   const TtoRow({required this.label, required this.value, required this.type});
 }
 
-enum ValueType { bitcoin, satoshi, usd, date }
+enum ValueType { bitcoin, satoshi, usd, date, contracts }
 
 class TtoTable extends StatelessWidget {
   final List<TtoRow> rows;
@@ -63,6 +63,17 @@ class TtoTable extends StatelessWidget {
         valueChild = Text(row.value + ' \$', style: const TextStyle(fontSize: fontSize));
         break;
       case ValueType.date:
+        valueChild = Text.rich(TextSpan(
+          style: const TextStyle(fontSize: fontSize, wordSpacing: 10),
+          children: [
+            TextSpan(
+              text: row.value,
+              style: const TextStyle(color: Colors.black, fontSize: fontSize),
+            ),
+          ],
+        ));
+        break;
+      case ValueType.contracts:
         valueChild = Text.rich(TextSpan(
           style: const TextStyle(fontSize: fontSize, wordSpacing: 10),
           children: [

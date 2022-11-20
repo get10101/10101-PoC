@@ -50,8 +50,8 @@ class _CfdOfferState extends State<CfdOffer> {
     order = cfdTradingService.draftOrder!;
 
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final fundingRate = order.fundingRate.display(currency: Currency.btc).value;
-    final margin = order.margin.display(currency: Currency.btc).value;
+    final fundingRate = order.fundingRate.display(currency: Currency.sat).value;
+    final margin = order.margin.display(currency: Currency.sat).value;
 
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
