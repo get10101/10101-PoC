@@ -28,9 +28,9 @@ class CfdOrderConfirmation extends StatelessWidget {
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final estimatedFees = order.estimatedFees.display(currency: Currency.btc).value;
-    final margin = order.margin.display(currency: Currency.btc).value;
-    final unrealizedPL = order.pl.display(currency: Currency.btc).value;
+    final estimatedFees = order.estimatedFees.display(currency: Currency.sat).value;
+    final margin = order.margin.display(currency: Currency.sat).value;
+    final unrealizedPL = order.pl.display(currency: Currency.sat).value;
     final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
     final quantity = order.quantity.toString();
     final tradingPair = order.tradingPair.name.toUpperCase();

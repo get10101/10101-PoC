@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
@@ -40,9 +41,9 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
     final openPrice = formatter.format(order.openPrice);
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final estimatedFees = order.estimatedFees.display(sign: true).value;
-    final margin = order.margin.display().value;
-    final unrealizedPL = order.pl.display(sign: true).value;
+    final estimatedFees = order.estimatedFees.display(sign: true, currency: Currency.sat).value;
+    final margin = order.margin.display(currency: Currency.sat).value;
+    final unrealizedPL = order.pl.display(sign: true, currency: Currency.sat).value;
     final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
     final quantity = order.quantity.toString();
     final tradingPair = order.tradingPair.name.toUpperCase();
@@ -90,7 +91,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                     TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
                     TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
                     TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                    TtoRow(label: 'Expiry', value: expiry, type: ValueType.satoshi),
+                    TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
                     TtoRow(
                         label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
                     TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),

@@ -15,8 +15,8 @@ class Balance extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<LightningBalance, BitcoinBalance>(
       builder: (context, lightningBalance, bitcoinBalance, child) {
-        var bitcoinBalanceDisplay = bitcoinBalance.amount.display();
-        var lightningBalanceDisplay = lightningBalance.amount.display();
+        var bitcoinBalanceDisplay = bitcoinBalance.amount.display(currency: Currency.sat);
+        var lightningBalanceDisplay = lightningBalance.amount.display(currency: Currency.sat);
 
         var bitcoinBalanceWidget = BalanceRow(
             value: bitcoinBalanceDisplay.value,
