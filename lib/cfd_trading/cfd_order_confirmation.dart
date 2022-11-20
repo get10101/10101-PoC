@@ -45,14 +45,16 @@ class CfdOrderConfirmation extends StatelessWidget {
               const SizedBox(height: 25),
               TtoTable([
                 TtoRow(
-                    label: 'Position', value: order.position == Position.long ? 'Long' : 'Short'),
-                TtoRow(label: 'Opening Price', value: '\$ $openPrice'),
-                TtoRow(label: 'Unrealized P/L', value: unrealizedPL, icon: Icons.currency_bitcoin),
-                TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
-                TtoRow(label: 'Expiry', value: expiry),
-                TtoRow(label: 'Liquidation Price', value: '\$ $liquidationPrice'),
-                TtoRow(label: 'Quantity', value: quantity),
-                TtoRow(label: 'Estimated fees', value: estimatedFees, icon: Icons.currency_bitcoin)
+                    label: 'Position',
+                    value: order.position == Position.long ? 'Long' : 'Short',
+                    type: ValueType.satoshi),
+                TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+                TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
+                TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+                TtoRow(label: 'Expiry', value: expiry, type: ValueType.satoshi),
+                TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
+                TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
+                TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi)
               ]),
               const SizedBox(height: 20),
               Text(
