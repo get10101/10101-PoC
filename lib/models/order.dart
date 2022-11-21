@@ -5,7 +5,6 @@ import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 extension ContractSymbolExtension on ContractSymbol {
   static const icons = {
     ContractSymbol.BtcUsd: FontAwesomeIcons.bitcoin,
-    ContractSymbol.EthUsd: FontAwesomeIcons.ethereum
   };
   IconData get icon => icons[this]!;
 }

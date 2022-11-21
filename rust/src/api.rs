@@ -1,7 +1,6 @@
 use crate::calc;
 use crate::cfd;
 use crate::cfd::Cfd;
-use crate::cfd::ContractSymbol;
 use crate::cfd::Position;
 use crate::db;
 use crate::logger;
@@ -200,7 +199,6 @@ pub fn calculate_liquidation_price(
     initial_price: f64,
     leverage: i64,
     position: Position,
-    contract_symbol: ContractSymbol,
 ) -> SyncReturn<f64> {
     let initial_price = Decimal::try_from(initial_price).expect("Price to fit");
 
@@ -208,18 +206,10 @@ pub fn calculate_liquidation_price(
 
     let leverage = Decimal::from(leverage);
 
-    let liquidation_price = match (contract_symbol, position) {
-        (ContractSymbol::BtcUsd, Position::Long) => {
-            calc::inverse::calculate_long_liquidation_price(leverage, initial_price)
-        }
-        (ContractSymbol::BtcUsd, Position::Short) => {
+    let liquidation_price = match position {
+        Position::Long => calc::inverse::calculate_long_liquidation_price(leverage, initial_price),
+        Position::Short => {
             calc::inverse::calculate_short_liquidation_price(leverage, initial_price)
-        }
-        (ContractSymbol::EthUsd, Position::Long) => {
-            calc::quanto::bankruptcy_price_long(initial_price, leverage)
-        }
-        (ContractSymbol::EthUsd, Position::Short) => {
-            calc::quanto::bankruptcy_price_short(initial_price, leverage)
         }
     };
 

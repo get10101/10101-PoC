@@ -13,7 +13,6 @@ use flutter_rust_bridge::frb;
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 pub enum ContractSymbol {
     BtcUsd,
-    EthUsd,
 }
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]

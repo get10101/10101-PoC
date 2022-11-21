@@ -51,10 +51,7 @@ class _CfdOfferState extends State<CfdOffer> {
     order = cfdTradingService.draftOrder!;
 
     final liquidationPrice = api.calculateLiquidationPrice(
-        initialPrice: order.openPrice,
-        leverage: order.leverage,
-        contractSymbol: order.contractSymbol,
-        position: order.position);
+        initialPrice: order.openPrice, leverage: order.leverage, position: order.position);
 
     // TODO: calcualte margin
     final margin = Amount(250000).display(currency: Currency.sat).value;
