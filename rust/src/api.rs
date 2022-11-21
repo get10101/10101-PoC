@@ -139,7 +139,7 @@ pub async fn open_cfd(order: cfd::Order) -> Result<()> {
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn get_offer() -> Result<Offer> {
+pub async fn get_offer() -> Result<Option<Offer>> {
     offer::get_offer().await
 }
 
@@ -220,6 +220,11 @@ impl Order {
         let quantity = Decimal::from(quantity);
         let open_price = Decimal::try_from(opening_price).expect("to fit into decimal");
         let leverage = Decimal::from(leverage);
+
+        if open_price == Decimal::ZERO || leverage == Decimal::ZERO {
+            // just to avoid div by 0 errors
+            return 0.0;
+        }
 
         (quantity / (open_price * leverage))
             .to_f64()

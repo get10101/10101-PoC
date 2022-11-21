@@ -9,6 +9,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
+import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
@@ -52,7 +53,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
     final expiry = DateFormat('dd.MM.yy-kk:mm')
         .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
-    final margin = formatter.format(order.marginTaker());
+    final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
