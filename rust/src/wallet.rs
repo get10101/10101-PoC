@@ -4,6 +4,7 @@ use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
 use ::lightning::chain::chaininterface::ConfirmationTarget;
+use ::lightning::ln::channelmanager::ChannelDetails;
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Context;
@@ -147,7 +148,7 @@ impl Wallet {
             .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
 
         let bdk_balance = self.get_bdk_balance()?;
-        let ldk_balance = self.get_ldk_balance()?;
+        let ldk_balance = self.get_ldk_balance();
         Ok(Balance {
             // subtract the ldk balance from the bdk balance as this balance is locked in the
             // off chain wallet.
@@ -170,13 +171,18 @@ impl Wallet {
         Ok(balance)
     }
 
-    fn get_ldk_balance(&self) -> Result<u64> {
-        let channels = self.lightning.channel_manager.list_channels();
-        if channels.len() == 1 {
-            return Ok(channels.first().expect("Opened channel").balance_msat / 1000);
-        }
-        tracing::warn!("Expected exactly 1 channel but found {}", channels.len());
-        Ok(0)
+    /// LDK balance is the total sum of money in all open channels
+    fn get_ldk_balance(&self) -> u64 {
+        self.lightning
+            .channel_manager
+            .list_channels()
+            .iter()
+            .map(|details| details.balance_msat / 1000)
+            .sum()
+    }
+
+    fn get_ldk_channels(&self) -> Vec<ChannelDetails> {
+        self.lightning.channel_manager.list_channels()
     }
 
     pub fn get_address(&self) -> Result<bitcoin::Address> {
@@ -329,6 +335,10 @@ pub fn get_address() -> Result<bitcoin::Address> {
 
 pub fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
     get_wallet()?.get_bitcoin_tx_history()
+}
+
+pub fn get_lightning_channels() -> Result<Vec<ChannelDetails>> {
+    Ok(get_wallet()?.get_ldk_channels())
 }
 
 pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {

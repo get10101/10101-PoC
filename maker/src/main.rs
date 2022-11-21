@@ -65,7 +65,8 @@ async fn main() -> Result<()> {
                 routes::post_open_channel,
                 routes::post_pay_invoice,
                 routes::get_new_invoice,
-                routes::get_wallet_details
+                routes::get_wallet_details,
+                routes::get_channel_details,
             ],
         )
         .manage(quote_receiver)
