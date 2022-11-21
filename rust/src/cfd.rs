@@ -64,11 +64,16 @@ pub async fn open(order: &Order) -> Result<()> {
         bail!("Only leverage x1 and x2 are supported at the moment");
     }
 
-    let maker_amount = order.quantity.saturating_mul(order.leverage);
+    let margin_taker_as_btc = order.margin_taker().0;
+    // Convert to msats
+    let margin_taker = (margin_taker_as_btc * 100_000_000.0 * 1000.0) as u64;
+    let margin_maker = margin_taker * order.leverage as u64;
 
     tracing::info!(
-        "Opening CFD with taker amount {} maker amount {maker_amount}",
-        order.quantity
+        quantity = order.quantity,
+        margin_taker,
+        margin_maker,
+        "Opening CFD",
     );
 
     let channel_manager = wallet::get_channel_manager()?;
@@ -92,17 +97,13 @@ pub async fn open(order: &Order) -> Result<()> {
         .expect("static dummy script to always parse");
     let dummy_cltv_expiry = 40;
 
-    // Convert to msats
-    let taker_amount = order.quantity * 1000;
-    let maker_amount = maker_amount * 1000;
-
     tracing::info!("Adding custom output");
     let custom_output_details = channel_manager
         .add_custom_output(
             short_channel_id,
             maker_pk,
-            taker_amount as u64,
-            maker_amount as u64,
+            margin_taker,
+            margin_maker,
             dummy_cltv_expiry,
             dummy_script,
         )
@@ -111,13 +112,11 @@ pub async fn open(order: &Order) -> Result<()> {
 
     let custom_output_id = base64::encode(custom_output_details.id.0);
 
-    let margin = order.margin_taker().0;
-
     let mut connection = db::acquire().await?;
 
     let created = time::OffsetDateTime::now_utc().unix_timestamp();
     let updated = time::OffsetDateTime::now_utc().unix_timestamp();
-
+    let margin_taker = margin_taker as i64;
     let query_result = sqlx::query!(
         r#"
         INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price, margin)
@@ -134,7 +133,7 @@ pub async fn open(order: &Order) -> Result<()> {
         expiry,
         order.open_price,
         liquidation_price,
-        margin
+        margin_taker
     ).execute(&mut connection).await?;
 
     if query_result.rows_affected() != 1 {
