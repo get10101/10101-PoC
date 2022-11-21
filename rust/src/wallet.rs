@@ -44,6 +44,9 @@ pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
 pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 
+pub static MAINNET_MEMPOOL: &str = "https://mempool.space/api/v1";
+pub static TESTNET_MEMPOOL: &str = "https://mempool.space/testnet/api/v1";
+
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 
@@ -271,6 +274,17 @@ impl Wallet {
             self.lightning.logger.clone(),
         )
     }
+
+    /// Fee recommendation in sats per vbyte.
+    pub fn get_fee_recommendation(&self) -> Result<u32> {
+        let fee_rate = self
+            .lightning
+            .wallet
+            .estimate_fee(ConfirmationTarget::Normal)
+            .map_err(|_| anyhow!("Failed to estimate fee"))?;
+
+        Ok(fee_rate)
+    }
 }
 
 pub fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
@@ -473,6 +487,10 @@ pub fn get_node_id() -> Result<PublicKey> {
 
 pub fn get_invoice(amount_msat: u64, expiry_secs: u32) -> Result<()> {
     get_wallet()?.get_invoice(amount_msat, expiry_secs)
+}
+
+pub fn get_fee_recommendation() -> Result<u32> {
+    get_wallet()?.get_fee_recommendation()
 }
 
 impl From<Network> for bitcoin::Network {

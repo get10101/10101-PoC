@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS cfd (
     expiry INTEGER NOT NULL,
     open_price REAL NOT NULL,
     liquidation_price REAL NOT NULL,
+    margin REAL NOT NULL,
     FOREIGN KEY(state_id) REFERENCES cfd_state(id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS dlc_id ON cfd(custom_output_id);

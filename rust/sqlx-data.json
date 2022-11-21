@@ -1,6 +1,6 @@
 {
   "db": "SQLite",
-  "32d194b30314ecad8cd44e3415328e5ec8a83c4dd8b03ed36bd073e4838f294a": {
+  "5ab7e3ff07456c376e6cbae8bd0e7c520806d127fff255ae65994b9968e2dd6c": {
     "describe": {
       "columns": [
         {
@@ -62,9 +62,15 @@
           "name": "liquidation_price",
           "ordinal": 11,
           "type_info": "Float"
+        },
+        {
+          "name": "margin",
+          "ordinal": 12,
+          "type_info": "Float"
         }
       ],
       "nullable": [
+        false,
         false,
         false,
         false,
@@ -82,6 +88,16 @@
         "Right": 0
       }
     },
-    "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::ContractSymbol\",\n                position as \"position: crate::cfd::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                liquidation_price\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
+    "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::ContractSymbol\",\n                position as \"position: crate::cfd::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                liquidation_price,\n                margin\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
+  },
+  "d1f3f4266a6e59914d5f2952c0eeb3a0b98b93b05303ed43c730cef18152dd32": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 12
+      }
+    },
+    "query": "\n        INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price, margin)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n        "
   }
 }

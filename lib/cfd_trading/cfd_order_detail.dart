@@ -2,13 +2,15 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
+import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
@@ -25,23 +27,44 @@ class CfdOrderDetail extends StatefulWidget {
 
 class _CfdOrderDetailState extends State<CfdOrderDetail> {
   bool confirm = false;
+  int txFee = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    setFee();
+  }
+
+  Future<void> setFee() async {
+    final recommended = await api.getFeeRecommendation();
+    const dummyVbytes = 500;
+    setState(() {
+      txFee = recommended * dummyVbytes;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
+    final cfdTradingService = context.read<CfdTradingChangeNotifier>();
+
+    final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
+    final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
+
     Cfd cfd = widget.cfd!;
 
     final openPrice = formatter.format(cfd.openPrice);
     final liquidationPrice = formatter.format(cfd.liquidationPrice);
-    final estimatedFees = Amount(-4).display(currency: Currency.sat, sign: true).value;
-    final margin = Amount(200).display(currency: Currency.sat).value;
+    final margin = Amount.fromBtc(cfd.margin).display(currency: Currency.sat).value;
+    final estimatedFees = Amount(txFee).display(currency: Currency.sat).value;
 
-    // TODO: calculate PnL for CFD
-    final unrealizedPL = Amount(1000).display(currency: Currency.sat, sign: true).value;
+    final pnl = cfd.getOrder().calculateProfit(closingPrice: offer.index);
+
+    final unrealizedPL = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
 
     final expiry =
-        DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry));
+        DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry * 1000));
     final quantity = cfd.quantity.toString();
     final contractSymbol = cfd.contractSymbol.name.toUpperCase();
 
@@ -116,12 +139,19 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                                   onPressed: () async {
                                     try {
                                       await api.settleCfd(takerAmount: 40000, makerAmount: 20000);
+                                      FLog.info(text: "Successfully settled cfd.");
+
+                                      // refreshing cfd list after cfd has been closed
+                                      await cfdTradingService.refreshCfdList();
                                     } on FfiException catch (error) {
                                       FLog.error(
                                           text: 'Failed to settle CFD: ' + error.message,
                                           exception: error);
 
-                                      // TODO: Notify UI about error, user can try again...
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                        backgroundColor: Colors.red,
+                                        content: Text("Failed to settle cfd"),
+                                      ));
                                     }
 
                                     // switch index to cfd overview tab

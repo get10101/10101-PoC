@@ -13,7 +13,6 @@ use flutter_rust_bridge::frb;
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 pub enum ContractSymbol {
     BtcUsd,
-    EthUsd,
 }
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
@@ -26,13 +25,14 @@ pub enum Position {
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 pub struct Order {
     #[frb(non_final)]
-    pub leverage: u8,
+    pub leverage: i64,
     #[frb(non_final)]
-    pub quantity: u32,
+    pub quantity: i64,
     #[frb(non_final)]
     pub contract_symbol: ContractSymbol,
     #[frb(non_final)]
     pub position: Position,
+    #[frb(non_final)]
     pub open_price: f64,
 }
 
@@ -56,19 +56,18 @@ pub struct Cfd {
     pub expiry: i64,
     pub open_price: f64,
     pub liquidation_price: f64,
+    pub margin: f64,
 }
 
 pub async fn open(order: &Order) -> Result<()> {
-    // TODO: calculate liquidation price
-    let liquidation_price: f64 = 12314.23;
-    // TODO: calculate expiry of cfd
-    let expiry = time::OffsetDateTime::now_utc().unix_timestamp();
+    let liquidation_price: f64 = order.calculate_liquidation_price().0;
+    let expiry = order.calculate_expiry().0;
 
     if order.leverage > 2 {
         bail!("Only leverage x1 and x2 are supported at the moment");
     }
 
-    let maker_amount = order.quantity.saturating_mul(order.leverage as u32);
+    let maker_amount = order.quantity.saturating_mul(order.leverage);
 
     tracing::info!(
         "Opening CFD with taker amount {} maker amount {maker_amount}",
@@ -124,26 +123,31 @@ pub async fn open(order: &Order) -> Result<()> {
 
     let custom_output_id = base64::encode(custom_output_details.id.0);
 
+    let margin = order.margin_taker().0;
+
     let mut connection = db::acquire().await?;
 
-    let query_result = sqlx::query(
+    let created = time::OffsetDateTime::now_utc().unix_timestamp();
+    let updated = time::OffsetDateTime::now_utc().unix_timestamp();
+
+    let query_result = sqlx::query!(
         r#"
-        INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price, margin)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         "#,
-    )
-    .bind(custom_output_id)
-    .bind(order.contract_symbol)
-    .bind(order.position)
-    .bind(order.leverage)
-    .bind(time::OffsetDateTime::now_utc().unix_timestamp())
-        .bind(time::OffsetDateTime::now_utc().unix_timestamp())
-    .bind(1)
-    .bind(order.quantity)
-    .bind(expiry)
-    .bind(order.open_price)
-    .bind(liquidation_price).execute(&mut connection)
-        .await?;
+        custom_output_id,
+        order.contract_symbol,
+        order.position,
+        order.leverage,
+        created,
+        updated,
+        1,
+        order.quantity,
+        expiry,
+        order.open_price,
+        liquidation_price,
+        margin
+    ).execute(&mut connection).await?;
 
     if query_result.rows_affected() != 1 {
         bail!("Failed to insert cfd");

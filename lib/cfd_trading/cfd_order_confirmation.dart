@@ -12,7 +12,7 @@ import 'package:ten_ten_one/utilities/tto_table.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
-class CfdOrderConfirmation extends StatelessWidget {
+class CfdOrderConfirmation extends StatefulWidget {
   static const subRouteName = 'cfd-order-confirmation';
 
   final Order? order;
@@ -20,26 +20,43 @@ class CfdOrderConfirmation extends StatelessWidget {
   const CfdOrderConfirmation({this.order, super.key});
 
   @override
+  State<CfdOrderConfirmation> createState() => _CfdOrderConfirmationState();
+}
+
+class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
+  int txFee = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    setFee();
+  }
+
+  Future<void> setFee() async {
+    final recommendedFeeRate = await api.getFeeRecommendation();
+    const estimatedVbytes = 500;
+    setState(() {
+      txFee = recommendedFeeRate * estimatedVbytes;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
+    final cfdTradingService = context.read<CfdTradingChangeNotifier>();
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
-    Order order = this.order!;
+    Order order = widget.order!;
 
     final openPrice = formatter.format(order.openPrice);
-    final liquidationPrice = formatter.format(api.calculateLiquidationPrice(
-        initialPrice: order.openPrice,
-        leverage: order.leverage,
-        contractSymbol: order.contractSymbol,
-        position: order.position));
-    // TODO: Calculate or remove?
-    final estimatedFees = Amount.zero.display(currency: Currency.sat).value;
-    // TODO: Calculate
-    final margin = Amount.zero.display(currency: Currency.sat).value;
-    // TODO: Calculate
-    final unrealizedPL = Amount.zero.display(currency: Currency.sat).value;
-    final now = DateTime.now();
-    final expiry = DateTime(now.year, now.month, now.day + 1);
+
+    final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
+
+    final estimatedFees = Amount(txFee).display(currency: Currency.sat).value;
+    final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
+    final expiry = DateFormat('dd.MM.yy-kk:mm')
+        .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
+
     final quantity = order.quantity.toString();
     final contractSymbol = order.contractSymbol.name.toUpperCase();
 
@@ -57,12 +74,8 @@ class CfdOrderConfirmation extends StatelessWidget {
                     value: order.position == Position.Long ? 'Long' : 'Short',
                     type: ValueType.satoshi),
                 TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
-                TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
                 TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                TtoRow(
-                    label: 'Expiry',
-                    value: DateFormat('dd.MM.yy-kk:mm').format(expiry),
-                    type: ValueType.satoshi),
+                TtoRow(label: 'Expiry', value: expiry, type: ValueType.satoshi),
                 TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
                 TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
                 TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi)
@@ -82,12 +95,12 @@ class CfdOrderConfirmation extends StatelessWidget {
                         children: [
                           ElevatedButton(
                               onPressed: () async {
-                                // TODO: Plug in actual state changes
-
                                 try {
-                                  // TODO: Don't hardcode the taker amount
                                   await api.openCfd(order: order);
                                   FLog.info(text: 'OpenCfd returned successfully');
+
+                                  // refreshing cfd list after cfd has been opened
+                                  await cfdTradingService.refreshCfdList();
 
                                   // clear draft order from cfd service state
                                   cfdTradingChangeNotifier.draftOrder = null;
@@ -106,7 +119,10 @@ class CfdOrderConfirmation extends StatelessWidget {
                                       text: 'Failed to open CFD: ' + error.message,
                                       exception: error);
 
-                                  // TODO display error that CFD open failed in UI
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                    backgroundColor: Colors.red,
+                                    content: Text("Failed to open cfd"),
+                                  ));
                                 }
                               },
                               child: const Text('Confirm'))

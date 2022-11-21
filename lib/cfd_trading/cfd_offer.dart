@@ -9,7 +9,6 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
-import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
@@ -41,27 +40,19 @@ class _CfdOfferState extends State<CfdOffer> {
     final fmtIndex = formatter.format(offer.index);
 
     cfdTradingService.draftOrder ??= Order(
-      openPrice: offer.index,
-      quantity: 100,
-      leverage: 2,
-      position: Position.Long,
-      contractSymbol: ContractSymbol.BtcUsd,
-    );
+        openPrice: offer.ask,
+        quantity: 100,
+        leverage: 2,
+        contractSymbol: ContractSymbol.BtcUsd,
+        position: Position.Long,
+        bridge: api);
 
     order = cfdTradingService.draftOrder!;
 
-    final liquidationPrice = api.calculateLiquidationPrice(
-        initialPrice: order.openPrice,
-        leverage: order.leverage,
-        contractSymbol: order.contractSymbol,
-        position: order.position);
-
-    // TODO: calcualte margin
-    final margin = Amount(250000).display(currency: Currency.sat).value;
-
-    // TODO: We also have to pass this to rust, otherwise it won't align with the cfd details later
-    final now = DateTime.now();
-    final expiry = DateTime(now.year, now.month, now.day + 1);
+    final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
+    final expiry = DateFormat('dd.MM.yy-kk:mm')
+        .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
+    final margin = formatter.format(order.marginTaker());
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
@@ -80,6 +71,7 @@ class _CfdOfferState extends State<CfdOffer> {
             onChange: (position) {
               setState(() {
                 order.position = position!;
+                order.openPrice = Position.Long == position ? offer.ask : offer.bid;
               });
             },
             value: order.position),
@@ -113,10 +105,7 @@ class _CfdOfferState extends State<CfdOffer> {
             margin: const EdgeInsets.only(top: 25),
             child: TtoTable([
               TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-              TtoRow(
-                  label: 'Expiry',
-                  value: DateFormat('dd.MM.yy-kk:mm').format(expiry),
-                  type: ValueType.date),
+              TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
               TtoRow(
                   label: 'Liquidation Price',
                   value: liquidationPrice.toString(),

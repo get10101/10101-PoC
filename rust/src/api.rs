@@ -1,7 +1,7 @@
 use crate::calc;
 use crate::cfd;
 use crate::cfd::Cfd;
-use crate::cfd::ContractSymbol;
+use crate::cfd::Order;
 use crate::cfd::Position;
 use crate::db;
 use crate::logger;
@@ -14,15 +14,15 @@ use crate::wallet::Network;
 use crate::wallet::MAINNET_ELECTRUM;
 use crate::wallet::REGTEST_ELECTRUM;
 use crate::wallet::TESTNET_ELECTRUM;
+use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use flutter_rust_bridge::SyncReturn;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use std::path::Path;
-use std::time::Duration;
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
+use time::Duration;
+pub use time::OffsetDateTime;
 
 pub struct Address {
     pub address: String,
@@ -112,7 +112,7 @@ pub async fn open_channel(taker_amount: u64) -> Result<()> {
     }
     loop {
         // looping here indefinitely to keep the connection with the maker alive.
-        tokio::time::sleep(Duration::from_secs(1000)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(1000)).await;
     }
 }
 
@@ -144,6 +144,13 @@ pub async fn get_offer() -> Result<Offer> {
 }
 
 #[tokio::main(flavor = "current_thread")]
+pub async fn get_fee_recommendation() -> Result<u32> {
+    let fee_recommendation = wallet::get_fee_recommendation()?;
+
+    Ok(fee_recommendation)
+}
+
+#[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     cfd::settle(taker_amount, maker_amount).await
 }
@@ -153,13 +160,7 @@ pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
         .into_iter()
         .map(|tx| {
             let (is_confirmed, timestamp) = match tx.confirmation_time {
-                None => (
-                    false,
-                    SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .expect("current timestamp to be valid")
-                        .as_secs(),
-                ),
+                None => (false, OffsetDateTime::now_utc().unix_timestamp() as u64),
                 Some(blocktime) => (true, blocktime.timestamp),
             };
 
@@ -196,37 +197,96 @@ pub fn send_lightning_payment(invoice: String) -> Result<()> {
     wallet::send_lightning_payment(&invoice)
 }
 
-pub fn calculate_liquidation_price(
-    initial_price: f64,
-    leverage: i64,
-    position: Position,
-    contract_symbol: ContractSymbol,
-) -> SyncReturn<f64> {
-    let initial_price = Decimal::try_from(initial_price).expect("Price to fit");
+// Note, this implementation has to be on the api level as otherwise it wouldn't be generated
+// through frb. TODO: Provide multiple rust targets to the code generation so that this code can be
+// nicer structured.
+impl Order {
+    pub fn margin_taker(&self) -> SyncReturn<f64> {
+        SyncReturn(Self::calculate_margin(
+            self.open_price,
+            self.quantity,
+            self.leverage,
+        ))
+    }
 
-    tracing::debug!("Initial price: {initial_price}");
+    fn margin_total(&self) -> f64 {
+        let margin_taker = Self::calculate_margin(self.open_price, self.quantity, self.leverage);
+        let margin_maker = Self::calculate_margin(self.open_price, self.quantity, 1);
 
-    let leverage = Decimal::from(leverage);
+        margin_taker + margin_maker
+    }
 
-    let liquidation_price = match (contract_symbol, position) {
-        (ContractSymbol::BtcUsd, Position::Long) => {
-            calc::inverse::calculate_long_liquidation_price(leverage, initial_price)
-        }
-        (ContractSymbol::BtcUsd, Position::Short) => {
-            calc::inverse::calculate_short_liquidation_price(leverage, initial_price)
-        }
-        (ContractSymbol::EthUsd, Position::Long) => {
-            calc::quanto::bankruptcy_price_long(initial_price, leverage)
-        }
-        (ContractSymbol::EthUsd, Position::Short) => {
-            calc::quanto::bankruptcy_price_short(initial_price, leverage)
-        }
-    };
+    fn calculate_margin(opening_price: f64, quantity: i64, leverage: i64) -> f64 {
+        let quantity = Decimal::from(quantity);
+        let open_price = Decimal::try_from(opening_price).expect("to fit into decimal");
+        let leverage = Decimal::from(leverage);
 
-    let liquidation_price = liquidation_price.to_f64().expect("price to fit into f64");
-    tracing::info!("Liquidation_price: {liquidation_price}");
+        (quantity / (open_price * leverage))
+            .to_f64()
+            .expect("price to fit into f64")
+    }
 
-    SyncReturn(liquidation_price)
+    pub fn calculate_expiry(&self) -> SyncReturn<i64> {
+        SyncReturn(
+            OffsetDateTime::now_utc()
+                .saturating_add(Duration::days(1))
+                .unix_timestamp(),
+        )
+    }
+
+    pub fn calculate_liquidation_price(&self) -> SyncReturn<f64> {
+        let initial_price = Decimal::try_from(self.open_price).expect("Price to fit");
+
+        tracing::debug!("Initial price: {}", self.open_price);
+
+        let leverage = Decimal::from(self.leverage);
+
+        let liquidation_price = match self.position {
+            Position::Long => {
+                calc::inverse::calculate_long_liquidation_price(leverage, initial_price)
+            }
+            Position::Short => {
+                calc::inverse::calculate_short_liquidation_price(leverage, initial_price)
+            }
+        };
+
+        let liquidation_price = liquidation_price.to_f64().expect("price to fit into f64");
+        tracing::info!("Liquidation_price: {liquidation_price}");
+
+        SyncReturn(liquidation_price)
+    }
+
+    pub fn calculate_profit(&self, closing_price: f64) -> Result<SyncReturn<f64>> {
+        let margin = self.margin_taker().0;
+        let payout = self.calculate_payout_at_price(closing_price)?.0;
+
+        tracing::debug!(
+            "Payout: {}, Margin: {}, PnL: {}",
+            payout,
+            margin,
+            payout - margin
+        );
+
+        Ok(SyncReturn(payout - margin))
+    }
+
+    pub fn calculate_payout_at_price(&self, closing_price: f64) -> Result<SyncReturn<f64>> {
+        let uncapped_payout = {
+            let opening_price = Decimal::try_from(self.open_price)?;
+            let closing_price = Decimal::try_from(closing_price)?;
+            let quantity = Decimal::from(self.quantity);
+
+            let uncapped_pnl = (quantity / opening_price) - (quantity / closing_price);
+            let uncapped_pnl = uncapped_pnl
+                .round_dp_with_strategy(8, rust_decimal::RoundingStrategy::MidpointAwayFromZero);
+            uncapped_pnl
+                .to_f64()
+                .context("Could not convert Decimal to f64")?
+        };
+        let payout = uncapped_payout.min(self.margin_total());
+
+        Ok(SyncReturn(payout))
+    }
 }
 
 // Tests are in the api layer as they became rather integration than unit tests (and need the
