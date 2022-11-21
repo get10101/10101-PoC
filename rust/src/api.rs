@@ -150,9 +150,10 @@ pub async fn get_fee_recommendation() -> Result<u32> {
     Ok(fee_recommendation)
 }
 
+/// Settles a CFD with the given taker and maker amounts in sats
 #[tokio::main(flavor = "current_thread")]
-pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
-    cfd::settle(taker_amount, maker_amount).await
+pub async fn settle_cfd(order: Order, offer: Offer) -> Result<()> {
+    cfd::settle(order, offer).await
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -211,6 +212,7 @@ pub fn create_lightning_invoice(
 // through frb. TODO: Provide multiple rust targets to the code generation so that this code can be
 // nicer structured.
 impl Order {
+    /// Calculate the taker's margin in BTC.
     pub fn margin_taker(&self) -> SyncReturn<f64> {
         SyncReturn(Self::calculate_margin(
             self.open_price,
@@ -219,13 +221,20 @@ impl Order {
         ))
     }
 
-    fn margin_total(&self) -> f64 {
-        let margin_taker = Self::calculate_margin(self.open_price, self.quantity, self.leverage);
-        let margin_maker = Self::calculate_margin(self.open_price, self.quantity, 1);
+    /// Calculate the maker's margin in BTC.
+    pub(crate) fn margin_maker(&self) -> f64 {
+        Self::calculate_margin(self.open_price, self.quantity, 1)
+    }
+
+    /// Calculate the total margin in BTC.
+    pub(crate) fn margin_total(&self) -> f64 {
+        let margin_taker = self.margin_taker().0;
+        let margin_maker = self.margin_maker();
 
         margin_taker + margin_maker
     }
 
+    /// Calculate the margin in BTC.
     fn calculate_margin(opening_price: f64, quantity: i64, leverage: i64) -> f64 {
         let quantity = Decimal::from(quantity);
         let open_price = Decimal::try_from(opening_price).expect("to fit into decimal");
@@ -236,9 +245,10 @@ impl Order {
             return 0.0;
         }
 
-        (quantity / (open_price * leverage))
-            .to_f64()
-            .expect("price to fit into f64")
+        let margin = quantity / (open_price * leverage);
+        let margin =
+            margin.round_dp_with_strategy(8, rust_decimal::RoundingStrategy::MidpointAwayFromZero);
+        margin.to_f64().expect("price to fit into f64")
     }
 
     pub fn calculate_expiry(&self) -> SyncReturn<i64> {
@@ -271,21 +281,18 @@ impl Order {
         SyncReturn(liquidation_price)
     }
 
-    pub fn calculate_profit(&self, closing_price: f64) -> Result<SyncReturn<f64>> {
+    /// Calculate the profit or loss in BTC.
+    pub fn calculate_profit_taker(&self, closing_price: f64) -> Result<SyncReturn<f64>> {
         let margin = self.margin_taker().0;
-        let payout = self.calculate_payout_at_price(closing_price)?.0;
+        let payout = self.calculate_payout_at_price(closing_price)?;
+        let pnl = payout - margin;
 
-        tracing::debug!(
-            "Payout: {}, Margin: {}, PnL: {}",
-            payout,
-            margin,
-            payout - margin
-        );
+        tracing::debug!(%payout, %payout, %margin,"Calculated taker's PnLPayout");
 
-        Ok(SyncReturn(payout - margin))
+        Ok(SyncReturn(pnl))
     }
 
-    pub fn calculate_payout_at_price(&self, closing_price: f64) -> Result<SyncReturn<f64>> {
+    pub(crate) fn calculate_payout_at_price(&self, closing_price: f64) -> Result<f64> {
         let uncapped_payout = {
             let opening_price = Decimal::try_from(self.open_price)?;
             let closing_price = Decimal::try_from(closing_price)?;
@@ -300,7 +307,7 @@ impl Order {
         };
         let payout = uncapped_payout.min(self.margin_total());
 
-        Ok(SyncReturn(payout))
+        Ok(payout)
     }
 }
 

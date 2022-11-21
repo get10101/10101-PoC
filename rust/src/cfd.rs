@@ -1,4 +1,5 @@
 use crate::db;
+use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::maker_pk;
 use anyhow::anyhow;
@@ -6,6 +7,8 @@ use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::frb;
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 pub enum ContractSymbol {
@@ -67,6 +70,7 @@ pub async fn open(order: &Order) -> Result<()> {
     let margin_taker_as_btc = order.margin_taker().0;
     // Convert to msats
     let margin_taker = (margin_taker_as_btc * 100_000_000.0 * 1000.0) as u64;
+    // TODO: is this correct? why do we multiply the leverage for the maker margin?
     let margin_maker = margin_taker * order.leverage as u64;
 
     tracing::info!(
@@ -145,8 +149,31 @@ pub async fn open(order: &Order) -> Result<()> {
     Ok(())
 }
 
-pub async fn settle(taker_amount: u64, maker_amount: u64) -> Result<()> {
-    tracing::info!("Settling CFD with taker amount {taker_amount} and maker amount {maker_amount}");
+pub async fn settle(order: Order, offer: Offer) -> Result<()> {
+    // TODO: this method should not expect the order, but rather the CFD, expecting the order model
+    // here since depending functions are on the order. Note, eventually the order model should
+    // probably be part of the cfd model.
+    let total_margin_sats = Decimal::try_from(order.margin_total().0)? * Decimal::from(100_000_000);
+    let taker_margin_sats = Decimal::try_from(order.margin_taker().0)? * Decimal::from(100_000_000);
+
+    let price = match order.position {
+        Position::Long => offer.bid,
+        Position::Short => offer.ask,
+    };
+
+    let taker_pnl_btc = Decimal::try_from(order.calculate_profit_taker(price)?.0)?;
+    let taker_pnl_sats = taker_pnl_btc * Decimal::from(100_000_000);
+
+    // the taker's losses are capped by the margin they put up when opening the CFD
+    let taker_payout_sats = (taker_margin_sats + taker_pnl_sats).max(Decimal::ZERO);
+    let taker_payout_sats = taker_payout_sats
+        .round_dp_with_strategy(0, rust_decimal::RoundingStrategy::MidpointAwayFromZero);
+
+    let maker_payout_sats = total_margin_sats - taker_payout_sats;
+
+    tracing::info!(
+        %taker_payout_sats, %maker_payout_sats, "Settling CFD"
+    );
 
     let channel_manager = wallet::get_channel_manager()?;
 
@@ -155,11 +182,20 @@ pub async fn settle(taker_amount: u64, maker_amount: u64) -> Result<()> {
         .first()
         .context("No custom outputs in channel")?;
 
-    let taker_amount_msats = taker_amount * 1000;
-    let maker_amount_msats = maker_amount * 1000;
+    let custom_output_id = CustomOutputId(custom_output_id);
+
+    let taker_payout_msats = taker_payout_sats * Decimal::from(1000);
+    let taker_payout_msats = taker_payout_msats
+        .to_u64()
+        .expect("decimal to fit into u64");
+
+    let maker_payout_msats = maker_payout_sats * Decimal::from(1000);
+    let maker_payout_msats = maker_payout_msats
+        .to_u64()
+        .expect("decimal to fit into u64");
 
     channel_manager
-        .remove_custom_output(custom_output_id, taker_amount_msats, maker_amount_msats)
+        .remove_custom_output(custom_output_id, taker_payout_msats, maker_payout_msats)
         .map_err(|e| anyhow!("Failed to settle CFD: {e:?}"))?;
 
     Ok(())

@@ -61,7 +61,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
     final pnl = cfd
         .getOrder()
-        .calculateProfit(closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
+.calculateProfitTaker(closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
 
     final unrealizedPL = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
 
@@ -140,7 +140,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                               child: ElevatedButton(
                                   onPressed: () async {
                                     try {
-                                      await api.settleCfd(takerAmount: 40000, makerAmount: 20000);
+                                      await api.settleCfd(order: cfd.getOrder(), offer: offer);
                                       FLog.info(text: "Successfully settled cfd.");
 
                                       // refreshing cfd list after cfd has been closed
