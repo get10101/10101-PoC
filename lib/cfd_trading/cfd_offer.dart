@@ -50,8 +50,8 @@ class _CfdOfferState extends State<CfdOffer> {
     order = cfdTradingService.draftOrder!;
 
     final liquidationPrice = formatter.format(order.liquidationPrice);
-    final fundingRate = order.fundingRate.display(currency: Currency.btc).value;
-    final margin = order.margin.display(currency: Currency.btc).value;
+    final fundingRate = order.fundingRate.display(currency: Currency.sat).value;
+    final margin = order.margin.display(currency: Currency.sat).value;
 
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
@@ -112,10 +112,13 @@ class _CfdOfferState extends State<CfdOffer> {
           Container(
             margin: const EdgeInsets.only(top: 25),
             child: TtoTable([
-              TtoRow(label: 'Funding Rate', value: fundingRate, icon: Icons.currency_bitcoin),
-              TtoRow(label: 'Margin', value: margin, icon: Icons.currency_bitcoin),
-              TtoRow(label: 'Expiry', value: DateFormat('dd.MM.yy-kk:mm').format(order.expiry)),
-              TtoRow(label: 'Liquidation Price', value: '\$ $liquidationPrice'),
+              TtoRow(label: 'Funding Rate', value: fundingRate, type: ValueType.satoshi),
+              TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+              TtoRow(
+                  label: 'Expiry',
+                  value: DateFormat('dd.MM.yy-kk:mm').format(order.expiry),
+                  type: ValueType.date),
+              TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
             ]),
           )
         ])

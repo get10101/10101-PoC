@@ -56,7 +56,7 @@ class PaymentHistoryListItem extends StatelessWidget {
         break;
     }
 
-    final amountDisplay = data.amount.display(sign: true);
+    final amountDisplay = data.amount.display(sign: true, currency: Currency.sat);
 
     return ListTile(
       leading: statusIcon,

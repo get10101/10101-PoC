@@ -19,33 +19,27 @@ class Amount {
   int get asSats => sats.toBigInt().toInt();
 
   // Defaults to sats
-  AmountDisplay display({Currency? currency, bool? sign, Decimal? price}) {
+  AmountDisplay display({required Currency currency, bool? sign, Decimal? price}) {
     var signPrefix = '';
     if (sign != null && sign && !sats.toBigInt().isNegative) {
       signPrefix = '+';
     }
 
-    if (currency != null && currency == Currency.usd) {
-      if (price == null) {
-        // TODO throw error
-      }
-
-      // TODO: conversion into USD using given price
-      throw UnimplementedError();
+    switch (currency) {
+      case Currency.btc:
+        return AmountDisplay(
+            signPrefix + formatterBtc.format(sats.shift(-8).toDouble()), AmountUnit.bitcoin);
+      case Currency.sat:
+        return AmountDisplay(signPrefix + formatterSat.format(sats.toDouble()), AmountUnit.satoshi);
+      case Currency.usd:
+        throw UnimplementedError();
     }
-
-    if (currency != null && currency == Currency.btc) {
-      return AmountDisplay(
-          signPrefix + formatterBtc.format(sats.shift(-8).toDouble()), AmountUnit.bitcoin);
-    }
-
-    return AmountDisplay(signPrefix + formatterSat.format(sats.toDouble()), AmountUnit.satoshi);
   }
 
   static final zero = Amount(0);
 }
 
-enum Currency { btc, usd }
+enum Currency { btc, sat, usd }
 
 class AmountDisplay {
   String value;
