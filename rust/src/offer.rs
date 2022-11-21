@@ -1,6 +1,5 @@
 use anyhow::anyhow;
 use anyhow::Result;
-
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -11,15 +10,24 @@ pub struct Offer {
     pub index: f64,
 }
 
-pub async fn get_offer() -> Result<Offer> {
+pub async fn get_offer() -> Result<Option<Offer>> {
     let client = reqwest::Client::builder()
         .timeout(crate::wallet::TCP_TIMEOUT)
         .build()?;
-    client
+    let result = client
         .get(format!("{}/api/offer", crate::wallet::MAKER_ENDPOINT))
         .send()
-        .await?
+        .await;
+    let response = match result {
+        Ok(res) => res,
+        Err(err) => {
+            tracing::error!("Could not fetch offers {err:?}");
+            return Ok(None);
+        }
+    };
+    let result = response
         .json::<Offer>()
         .await
-        .map_err(|e| anyhow!("Failed to fetch offer {e:?}"))
+        .map_err(|e| anyhow!("Failed to fetch offer {e:?}"))?;
+    Ok(Some(result))
 }
