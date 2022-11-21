@@ -46,7 +46,8 @@ class _CfdOverviewState extends State<CfdOverview> {
       initiallyExpanded: cfdTradingChangeNotifier.expanded,
       children: cfds
           .where((cfd) => [CfdState.Closed, CfdState.Failed].contains(cfd.state))
-          .map((cfd) => CfdTradeItem(cfd: cfd, closingPrice: offer.index))
+          .map((cfd) => CfdTradeItem(
+              cfd: cfd, closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask))
           .toList(),
     ));
 

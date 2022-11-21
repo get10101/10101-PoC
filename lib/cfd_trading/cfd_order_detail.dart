@@ -59,7 +59,9 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final margin = Amount.fromBtc(cfd.margin).display(currency: Currency.sat).value;
     final estimatedFees = Amount(txFee).display(currency: Currency.sat).value;
 
-    final pnl = cfd.getOrder().calculateProfit(closingPrice: offer.index);
+    final pnl = cfd
+        .getOrder()
+        .calculateProfit(closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
 
     final unrealizedPL = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
 
