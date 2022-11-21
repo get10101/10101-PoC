@@ -1,9 +1,6 @@
 use crate::db;
 use crate::wallet;
-use crate::wallet::MAKER_IP;
-use crate::wallet::MAKER_PK;
-use crate::wallet::MAKER_PORT_HTTP;
-use crate::wallet::MAKER_PORT_LIGHTNING;
+use crate::wallet::maker_pk;
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Context;
@@ -74,29 +71,20 @@ pub async fn open(order: &Order) -> Result<()> {
         order.quantity
     );
 
-    let channel_manager = {
-        let lightning = &wallet::get_wallet()?.lightning;
-        lightning.channel_manager.clone()
-    };
+    let channel_manager = wallet::get_channel_manager()?;
+    let channels = channel_manager.list_channels();
 
-    let binding = channel_manager.list_channels();
-    tracing::info!("Channels: {binding:?}");
+    tracing::info!("Channels: {channels:?}");
 
-    let channel_details = binding.first().context("No first channel found")?;
+    let channel_details = channels
+        .iter()
+        .find(|ch| ch.counterparty.node_id == maker_pk())
+        .context("no open channel with maker found")?;
+
     let maker_pk = channel_details.counterparty.node_id;
     let short_channel_id = channel_details
         .short_channel_id
         .context("Could not retrieve short channel id")?;
-
-    // TODO: Use  MAKER_PK meaningfully
-    assert_eq!(maker_pk.to_string(), MAKER_PK, "Using wrong maker seed");
-    let maker_connection_str = format!("{maker_pk}@{MAKER_IP}:{MAKER_PORT_LIGHTNING}");
-
-    tracing::info!("Connection str: {maker_connection_str}");
-    tracing::info!(
-        "Maker http API: {}",
-        format!("{MAKER_IP}:{MAKER_PORT_HTTP}")
-    );
 
     // hardcoded because we are not dealing with force-close scenarios yet
     let dummy_script = "0020e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -161,10 +149,7 @@ pub async fn open(order: &Order) -> Result<()> {
 pub async fn settle(taker_amount: u64, maker_amount: u64) -> Result<()> {
     tracing::info!("Settling CFD with taker amount {taker_amount} and maker amount {maker_amount}");
 
-    let channel_manager = {
-        let lightning = &wallet::get_wallet()?.lightning;
-        lightning.channel_manager.clone()
-    };
+    let channel_manager = wallet::get_channel_manager()?;
 
     let custom_output_id = *channel_manager
         .custom_outputs()

@@ -13,8 +13,8 @@ use rust_decimal_macros::dec;
 use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
 use ten_ten_one::wallet::get_balance;
+use ten_ten_one::wallet::get_channel_manager;
 use ten_ten_one::wallet::get_invoice;
-use ten_ten_one::wallet::get_lightning_channels;
 use ten_ten_one::wallet::get_node_id;
 use ten_ten_one::wallet::send_lightning_payment;
 use ten_ten_one::wallet::send_to_address;
@@ -144,11 +144,13 @@ pub async fn get_new_invoice() -> Result<(), HttpApiProblem> {
 
 #[rocket::get("/channel/list")]
 pub async fn get_channel_details() -> Result<(), HttpApiProblem> {
-    let list = get_lightning_channels().map_err(|e| {
-        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .title("Failed to create lightning invoice")
-            .detail(format!("{e:#}"))
-    })?;
+    let list = get_channel_manager()
+        .map_err(|e| {
+            HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .title("Failed to create lightning invoice")
+                .detail(format!("{e:#}"))
+        })?
+        .list_channels();
 
     tracing::info!(?list, "Open channels: {}", list.len());
     Ok(())
