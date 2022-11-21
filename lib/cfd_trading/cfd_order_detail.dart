@@ -25,6 +25,21 @@ class CfdOrderDetail extends StatefulWidget {
 
 class _CfdOrderDetailState extends State<CfdOrderDetail> {
   bool confirm = false;
+  int txFee = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    setFee();
+  }
+
+  Future<void> setFee() async {
+    final recommended = await api.getFeeRecommendation();
+    const dummyVbytes = 500;
+    setState(() {
+      txFee = recommended * dummyVbytes;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +51,8 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
     final openPrice = formatter.format(cfd.openPrice);
     final liquidationPrice = formatter.format(cfd.liquidationPrice);
-    final estimatedFees = Amount(-4).display(currency: Currency.sat, sign: true).value;
     final margin = Amount.fromDouble(cfd.margin).display(currency: Currency.btc).value;
+    final estimatedFees = Amount(fastestFee).display(currency: Currency.btc).value;
 
     // TODO: calculate PnL for CFD
     final unrealizedPL = Amount(1000).display(currency: Currency.sat, sign: true).value;

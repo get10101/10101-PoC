@@ -143,6 +143,13 @@ pub async fn get_offer() -> Result<Offer> {
 }
 
 #[tokio::main(flavor = "current_thread")]
+pub async fn get_fee_recommendation() -> Result<u32> {
+    let fee_recommendation = wallet::get_fee_recommendation()?;
+
+    Ok(fee_recommendation)
+}
+
+#[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     cfd::settle(taker_amount, maker_amount).await
 }

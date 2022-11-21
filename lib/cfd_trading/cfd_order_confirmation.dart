@@ -12,12 +12,33 @@ import 'package:ten_ten_one/utilities/tto_table.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
-class CfdOrderConfirmation extends StatelessWidget {
+class CfdOrderConfirmation extends StatefulWidget {
   static const subRouteName = 'cfd-order-confirmation';
 
   final Order? order;
 
   const CfdOrderConfirmation({this.order, super.key});
+
+  @override
+  State<CfdOrderConfirmation> createState() => _CfdOrderConfirmationState();
+}
+
+class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
+  int txFee = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    setFee();
+  }
+
+  Future<void> setFee() async {
+    final recommendedFeeRate = await api.getFeeRecommendation();
+    const estimatedVbytes = 500;
+    setState(() {
+      txFee = recommendedFeeRate * estimatedVbytes;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +47,13 @@ class CfdOrderConfirmation extends StatelessWidget {
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
 
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
-    Order order = this.order!;
+    Order order = widget.order!;
 
     final openPrice = formatter.format(order.openPrice);
 
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
-    // TODO: calculate estimated fees
-    final estimatedFees = Amount(-4).display(currency: Currency.btc).value;
+
+    final estimatedFees = Amount(fastestFee).display(currency: Currency.btc).value;
     final margin = Amount.fromDouble(order.calculateMargin()).display(currency: Currency.btc).value;
     final expiry = DateFormat('dd.MM.yy-kk:mm')
         .format(DateTime.fromMillisecondsSinceEpoch(order.calculateExpiry()));
