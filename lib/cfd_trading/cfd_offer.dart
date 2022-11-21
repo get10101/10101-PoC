@@ -99,7 +99,9 @@ class _CfdOfferState extends State<CfdOffer> {
                 .map((quantity) => quantity.toString())
                 .toList(),
             onChange: (contracts) {
-              order.quantity = int.parse(contracts!);
+              setState(() {
+                order.quantity = int.parse(contracts!);
+              });
             },
             value: order.quantity.toString(),
           ),
@@ -113,7 +115,9 @@ class _CfdOfferState extends State<CfdOffer> {
           Dropdown(
               values: CfdOffer.leverages.map((l) => 'x$l').toList(),
               onChange: (leverage) {
-                order.leverage = int.parse(leverage!.substring(1));
+                setState(() {
+                  order.leverage = int.parse(leverage!.substring(1));
+                });
               },
               value: 'x' + order.leverage.toString()),
         ]),
