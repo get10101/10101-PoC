@@ -330,13 +330,20 @@ impl Wallet {
         Ok(())
     }
 
-    pub fn get_invoice(&self, amount_msat: u64, expiry_secs: u32) -> Result<()> {
-        lightning::get_invoice(
+    pub fn create_invoice(
+        &self,
+        amount_sats: u64,
+        expiry_secs: u32,
+        description: String,
+    ) -> Result<String> {
+        let amount_msat = amount_sats * 1000;
+        lightning::create_invoice(
             amount_msat,
             self.lightning.inbound_payments.clone(),
             self.lightning.channel_manager.clone(),
             self.lightning.keys_manager.clone(),
             self.lightning.network,
+            description,
             expiry_secs,
             self.lightning.logger.clone(),
         )
@@ -563,8 +570,8 @@ pub fn get_node_id() -> Result<PublicKey> {
     Ok(node_id)
 }
 
-pub fn get_invoice(amount_msat: u64, expiry_secs: u32) -> Result<()> {
-    get_wallet()?.get_invoice(amount_msat, expiry_secs)
+pub fn create_invoice(amount_msat: u64, expiry_secs: u32, description: String) -> Result<String> {
+    get_wallet()?.create_invoice(amount_msat, expiry_secs, description)
 }
 
 pub fn get_fee_recommendation() -> Result<u32> {

@@ -1078,15 +1078,17 @@ pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> R
     Ok(())
 }
 
-pub fn get_invoice(
+#[allow(clippy::too_many_arguments)]
+pub fn create_invoice(
     amt_msat: u64,
     payment_storage: PaymentInfoStorage,
     channel_manager: Arc<ChannelManager>,
     keys_manager: Arc<KeysManager>,
     network: Network,
+    description: String,
     expiry_secs: u32,
     logger: Arc<disk::FilesystemLogger>,
-) -> Result<()> {
+) -> Result<String> {
     let mut payments = payment_storage
         .lock()
         .map_err(|e| anyhow!("could not acquire lock: {e:#}"))?;
@@ -1102,7 +1104,7 @@ pub fn get_invoice(
         logger,
         currency,
         Some(amt_msat),
-        "ldk-tutorial-node".to_string(),
+        description,
         expiry_secs,
     ) {
         Ok(inv) => {
@@ -1125,5 +1127,5 @@ pub fn get_invoice(
             timestamp: get_timestamp(),
         },
     );
-    Ok(())
+    Ok(invoice.to_string())
 }

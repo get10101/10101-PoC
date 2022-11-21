@@ -199,6 +199,14 @@ pub fn send_lightning_payment(invoice: String) -> Result<()> {
     wallet::send_lightning_payment(&invoice)
 }
 
+pub fn create_lightning_invoice(
+    amount_sats: u64,
+    expiry_secs: u32,
+    description: String,
+) -> Result<String> {
+    wallet::create_invoice(amount_sats, expiry_secs, description)
+}
+
 // Note, this implementation has to be on the api level as otherwise it wouldn't be generated
 // through frb. TODO: Provide multiple rust targets to the code generation so that this code can be
 // nicer structured.
