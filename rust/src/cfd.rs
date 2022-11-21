@@ -7,6 +7,7 @@ use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::frb;
+use lightning::ln::channelmanager::CustomOutputId;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 
@@ -57,6 +58,18 @@ pub struct Cfd {
     pub open_price: f64,
     pub liquidation_price: f64,
     pub margin: f64,
+}
+
+impl Cfd {
+    pub fn derive_order(&self) -> Order {
+        Order {
+            leverage: self.leverage,
+            quantity: self.quantity,
+            contract_symbol: self.contract_symbol,
+            position: self.position,
+            open_price: self.open_price,
+        }
+    }
 }
 
 pub async fn open(order: &Order) -> Result<()> {
@@ -149,11 +162,12 @@ pub async fn open(order: &Order) -> Result<()> {
     Ok(())
 }
 
-pub async fn settle(order: Order, offer: Offer) -> Result<()> {
-    // TODO: this method should not expect the order, but rather the CFD, expecting the order model
-    // here since depending functions are on the order. Note, eventually the order model should
-    // probably be part of the cfd model.
-    let total_margin_sats = Decimal::try_from(order.margin_total().0)? * Decimal::from(100_000_000);
+pub async fn settle(cfd: Cfd, offer: Offer) -> Result<()> {
+    // TODO: need to derive an order from the cfd as dependent functions are only available on the
+    // order eventually the order should probably be included in the cfd.
+    let order = cfd.derive_order();
+
+    let total_margin_sats = Decimal::try_from(order.margin_total())? * Decimal::from(100_000_000);
     let taker_margin_sats = Decimal::try_from(order.margin_taker().0)? * Decimal::from(100_000_000);
 
     let price = match order.position {
@@ -177,10 +191,10 @@ pub async fn settle(order: Order, offer: Offer) -> Result<()> {
 
     let channel_manager = wallet::get_channel_manager()?;
 
-    let custom_output_id = *channel_manager
-        .custom_outputs()
-        .first()
-        .context("No custom outputs in channel")?;
+    let custom_output_id = base64::decode(cfd.custom_output_id)?;
+    let custom_output_id: [u8; 32] = custom_output_id
+        .try_into()
+        .expect("custom output ID to be 32 bytes long");
 
     let custom_output_id = CustomOutputId(custom_output_id);
 

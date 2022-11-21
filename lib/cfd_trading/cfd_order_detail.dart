@@ -140,7 +140,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                               child: ElevatedButton(
                                   onPressed: () async {
                                     try {
-                                      await api.settleCfd(order: cfd.getOrder(), offer: offer);
+                                      await api.settleCfd(cfd: cfd, offer: offer);
                                       FLog.info(text: "Successfully settled cfd.");
 
                                       // switch index to cfd overview tab
