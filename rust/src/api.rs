@@ -153,7 +153,7 @@ pub async fn get_fee_recommendation() -> Result<u32> {
 /// Settles a CFD with the given taker and maker amounts in sats
 #[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(cfd: Cfd, offer: Offer) -> Result<()> {
-    cfd::settle(cfd, offer).await
+    cfd::settle(&cfd, &offer).await
 }
 
 #[tokio::main(flavor = "current_thread")]

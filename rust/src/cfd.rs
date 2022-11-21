@@ -56,6 +56,7 @@ pub struct Cfd {
     pub quantity: i64,
     pub expiry: i64,
     pub open_price: f64,
+    pub close_price: Option<f64>,
     pub liquidation_price: f64,
     pub margin: f64,
 }
@@ -162,7 +163,7 @@ pub async fn open(order: &Order) -> Result<()> {
     Ok(())
 }
 
-pub async fn settle(cfd: Cfd, offer: Offer) -> Result<()> {
+pub async fn settle(cfd: &Cfd, offer: &Offer) -> Result<()> {
     // TODO: need to derive an order from the cfd as dependent functions are only available on the
     // order eventually the order should probably be included in the cfd.
     let order = cfd.derive_order();
@@ -191,7 +192,7 @@ pub async fn settle(cfd: Cfd, offer: Offer) -> Result<()> {
 
     let channel_manager = wallet::get_channel_manager()?;
 
-    let custom_output_id = base64::decode(cfd.custom_output_id)?;
+    let custom_output_id = base64::decode(&cfd.custom_output_id)?;
     let custom_output_id: [u8; 32] = custom_output_id
         .try_into()
         .expect("custom output ID to be 32 bytes long");
@@ -211,6 +212,40 @@ pub async fn settle(cfd: Cfd, offer: Offer) -> Result<()> {
     channel_manager
         .remove_custom_output(custom_output_id, taker_payout_msats, maker_payout_msats)
         .map_err(|e| anyhow!("Failed to settle CFD: {e:?}"))?;
+
+    // TODO: We shouldn't just assume that removing the custom output
+    // has succeeded as soon as the previous call returns `Ok`. The
+    // rest of the protocol might still fail! That mean that we should
+    // be waiting for a particular event to be emitted by the LDK
+    // before we persist this information
+
+    let mut connection = db::acquire().await?;
+
+    let updated = time::OffsetDateTime::now_utc().unix_timestamp();
+    let query_result = sqlx::query!(
+        r#"
+        UPDATE cfd
+        SET
+            state_id = $1, updated = $2, close_price = $3
+        WHERE
+            cfd.custom_output_id = $4
+        "#,
+        2,
+        updated,
+        price,
+        cfd.custom_output_id,
+    )
+    .execute(&mut connection)
+    .await?;
+
+    if query_result.rows_affected() != 1 {
+        bail!(
+            "Failed to mark CFD as settled in DB. Custom output ID: {}",
+            cfd.custom_output_id
+        );
+    }
+
+    tracing::info!("CFD settled");
 
     Ok(())
 }

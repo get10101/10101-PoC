@@ -33,6 +33,7 @@ class CfdTradingChangeNotifier extends ChangeNotifier {
   }
 
   CfdTradingChangeNotifier init() {
+    refreshCfdList();
     Timer.periodic(const Duration(seconds: 20), (timer) {
       refreshCfdList();
     });
