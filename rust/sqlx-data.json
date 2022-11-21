@@ -1,5 +1,29 @@
 {
   "db": "SQLite",
+  "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
+    "describe": {
+      "columns": [
+        {
+          "name": "txid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "maker_amount",
+          "ordinal": 1,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
+  },
   "5ab7e3ff07456c376e6cbae8bd0e7c520806d127fff255ae65994b9968e2dd6c": {
     "describe": {
       "columns": [
@@ -89,24 +113,6 @@
       }
     },
     "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::ContractSymbol\",\n                position as \"position: crate::cfd::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                liquidation_price,\n                margin\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
-  },
-  "ca147fad691f8c2e01b5fac957c5f8bf22af10b16f017ffd0cbc10f71824e203": {
-    "describe": {
-      "columns": [
-        {
-          "name": "txid",
-          "ordinal": 0,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        false
-      ],
-      "parameters": {
-        "Right": 0
-      }
-    },
-    "query": "\n            select\n                txid\n            from\n                ignore_txid\n            "
   },
   "d1f3f4266a6e59914d5f2952c0eeb3a0b98b93b05303ed43c730cef18152dd32": {
     "describe": {

@@ -224,20 +224,56 @@ impl Wallet {
             .get_wallet()?
             .list_transactions(false)?;
 
-        let mut conn = db::acquire().await?;
-
-        let ignore_txids = match db::load_ignore_txids(&mut conn).await {
-            Ok(ignore_txids) => ignore_txids,
+        let (ignore_txids, latest_channel_open) = match db::load_ignore_txids().await {
+            Ok(ignore_txid_with_amount) => {
+                let latest_open_channel = ignore_txid_with_amount.last().cloned();
+                let ignore_txids = ignore_txid_with_amount
+                    .into_iter()
+                    .map(|(txid, _)| txid)
+                    .collect::<Vec<Txid>>();
+                (ignore_txids, latest_open_channel)
+            }
             Err(e) => {
                 tracing::warn!("Failed to load ignore txids, proceeding with showing tx history including ignored txids: {e:#}");
-                vec![]
+
+                (vec![], None)
             }
         };
 
-        let tx_history = tx_history
+        let mut tx_history = tx_history
             .into_iter()
             .filter(|tx_detail| !ignore_txids.contains(&tx_detail.txid))
-            .collect();
+            .collect::<Vec<_>>();
+
+        // Subtract maker's funding amount from channel open - this only works for the current
+        // channel!
+        if let Some((_, maker_funding_amount)) = latest_channel_open {
+            let channel_manager = {
+                let lightning = &get_wallet()?.lightning;
+                lightning.channel_manager.clone()
+            };
+
+            // Subtract the maker amount from the open channel tx
+            let channels = channel_manager.list_channels();
+            match channels.first() {
+                Some(channel_details) => {
+                    match channel_details.funding_txo {
+                        None => {
+                            tracing::warn!("Failed to retrieve channel funding tx, the funding_txo is not available for the channel.");
+                        }
+                        Some(output) => {
+                            let open_channel_txid = output.txid;
+                            tx_history.iter_mut().for_each(|tx_detail| {
+                                if tx_detail.txid == open_channel_txid {
+                                    tx_detail.sent -= maker_funding_amount as u64;
+                                }
+                            });
+                        }
+                    }
+                },
+                None => tracing::warn!("Failed to save amount to subtract from opening channel, the bitcoin tx history will include the taker amount"),
+            }
+        }
 
         tracing::debug!(?tx_history, "Transaction history");
         Ok(tx_history)
@@ -461,9 +497,8 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     let response: OpenChannelResponse = response.json().await?;
 
     let maker_funding_txid = response.funding_txid;
-    let conn = db::acquire().await?;
 
-    if let Err(e) = db::insert_ignore_txid(maker_funding_txid, conn).await {
+    if let Err(e) = db::insert_ignore_txid(maker_funding_txid, maker_amount as i64).await {
         tracing::warn!("Failed to insert maker funding tx to be ignored in transaction history, the taker will see the funding tx: {e:#}");
     }
 

@@ -106,13 +106,17 @@ pub async fn load_cfds(conn: &mut SqliteConnection) -> Result<Vec<Cfd>> {
     Ok(cfds)
 }
 
-pub async fn load_ignore_txids(conn: &mut SqliteConnection) -> Result<Vec<Txid>> {
+pub async fn load_ignore_txids() -> Result<Vec<(Txid, u64)>> {
+    let mut conn = acquire().await?;
+
     let mut rows = sqlx::query!(
         r#"
             select
-                txid
+                txid,
+                maker_amount
             from
                 ignore_txid
+            order by id
             "#
     )
     .fetch(&mut *conn);
@@ -121,20 +125,24 @@ pub async fn load_ignore_txids(conn: &mut SqliteConnection) -> Result<Vec<Txid>>
 
     while let Some(row) = rows.try_next().await? {
         let txid = Txid::from_hex(row.txid.as_str())?;
-        ignore_txids.push(txid);
+        let maker_amount = row.maker_amount as u64;
+        ignore_txids.push((txid, maker_amount));
     }
 
     Ok(ignore_txids)
 }
 
-pub async fn insert_ignore_txid(txid: Txid, mut conn: SqliteConnection) -> Result<()> {
+pub async fn insert_ignore_txid(txid: Txid, maker_amount: i64) -> Result<()> {
+    let mut conn = acquire().await?;
+
     let query_result = sqlx::query(
         r#"
-        INSERT INTO ignore_txid (txid)
-        VALUES ($1)
+        INSERT INTO ignore_txid (txid, maker_amount)
+        VALUES ($1, $2)
         "#,
     )
     .bind(txid.to_hex())
+    .bind(maker_amount)
     .execute(&mut conn)
     .await?;
 
