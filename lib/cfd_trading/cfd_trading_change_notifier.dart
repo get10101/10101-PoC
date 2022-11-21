@@ -38,9 +38,4 @@ class CfdTradingChangeNotifier extends ChangeNotifier {
     });
     return this;
   }
-
-  void update() async {
-    cfds = await api.listCfds();
-    super.notifyListeners();
-  }
 }

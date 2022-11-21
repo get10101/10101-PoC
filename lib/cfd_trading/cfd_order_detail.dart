@@ -143,8 +143,14 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                                       await api.settleCfd(order: cfd.getOrder(), offer: offer);
                                       FLog.info(text: "Successfully settled cfd.");
 
+                                      // switch index to cfd overview tab
+                                      cfdTradingChangeNotifier.selectedIndex = 1;
                                       // refreshing cfd list after cfd has been closed
+                                      // will also implicitely propagate the index change
                                       await cfdTradingService.refreshCfdList();
+
+                                      // navigate back to the trading route where the index has already been propagated
+                                      context.go(CfdTrading.route);
                                     } on FfiException catch (error) {
                                       FLog.error(
                                           text: 'Failed to settle CFD: ' + error.message,
@@ -155,16 +161,6 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                                         content: Text("Failed to settle cfd"),
                                       ));
                                     }
-
-                                    // switch index to cfd overview tab
-                                    cfdTradingChangeNotifier.selectedIndex = 1;
-                                    // propagate the index change
-                                    cfdTradingChangeNotifier.notify();
-                                    // trigger CFD list update
-                                    cfdTradingChangeNotifier.update();
-
-                                    // navigate back to the trading route where the index has already been propagated
-                                    context.go(CfdTrading.route);
                                   },
                                   child: const Text('Confirm')),
                             )
