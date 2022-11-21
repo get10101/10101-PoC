@@ -1,4 +1,5 @@
 use crate::lightning;
+use crate::lightning::ChannelManager;
 use crate::lightning::HTLCStatus;
 use crate::lightning::LightningSystem;
 use crate::lightning::PeerInfo;
@@ -35,6 +36,7 @@ use std::fmt::Formatter;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::str::FromStr;
+use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 use std::time::Duration;
@@ -50,18 +52,25 @@ pub static TESTNET_MEMPOOL: &str = "https://mempool.space/testnet/api/v1";
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 
-pub static MAKER_IP: &str = "127.0.0.1";
-pub static MAKER_PORT_LIGHTNING: u64 = 9045;
-pub static MAKER_PORT_HTTP: u64 = 8000;
+static MAKER_IP: &str = "127.0.0.1";
+static MAKER_PORT_LIGHTNING: u64 = 9045;
+static MAKER_PORT_HTTP: u64 = 8000;
 // Maker PK is derived from our checked in regtest maker seed
-pub static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
-pub static MAKER_ENDPOINT: &str = "http://127.0.0.1:8000";
+static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
 
 pub static TCP_TIMEOUT: Duration = Duration::from_secs(10);
 
+pub fn maker_pk() -> PublicKey {
+    MAKER_PK.parse().expect("Hard-coded PK to be valid")
+}
+
+pub fn maker_endpoint() -> String {
+    format!("http://{MAKER_IP}:{MAKER_PORT_HTTP}")
+}
+
 pub fn maker_peer_info() -> PeerInfo {
     PeerInfo {
-        pubkey: MAKER_PK.parse().expect("Hard-coded PK to be valid"),
+        pubkey: maker_pk(),
         peer_addr: format!("{MAKER_IP}:{MAKER_PORT_LIGHTNING}")
             .parse()
             .expect("Hard-coded PK to be valid"),
@@ -147,7 +156,7 @@ impl Wallet {
             .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
 
         let bdk_balance = self.get_bdk_balance()?;
-        let ldk_balance = self.get_ldk_balance()?;
+        let ldk_balance = self.get_ldk_balance();
         Ok(Balance {
             // subtract the ldk balance from the bdk balance as this balance is locked in the
             // off chain wallet.
@@ -170,13 +179,18 @@ impl Wallet {
         Ok(balance)
     }
 
-    fn get_ldk_balance(&self) -> Result<u64> {
-        let channels = self.lightning.channel_manager.list_channels();
-        if channels.len() == 1 {
-            return Ok(channels.first().expect("Opened channel").balance_msat / 1000);
-        }
-        tracing::warn!("Expected exactly 1 channel but found {}", channels.len());
-        Ok(0)
+    /// LDK balance is the total sum of money in all open channels
+    fn get_ldk_balance(&self) -> u64 {
+        self.lightning
+            .channel_manager
+            .list_channels()
+            .iter()
+            .map(|details| details.balance_msat / 1000)
+            .sum()
+    }
+
+    fn get_channel_manager(&self) -> Arc<ChannelManager> {
+        self.lightning.channel_manager.clone()
     }
 
     pub fn get_address(&self) -> Result<bitcoin::Address> {
@@ -287,7 +301,10 @@ impl Wallet {
     }
 }
 
-pub fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
+// XXX: Try not to make this function public - exposing MutexGuard is risky.
+// Instead, expose a free function that wraps this in a way that returns what
+// you're after.
+fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
     WALLET
         .try_get()
         .context("Wallet uninitialised")?
@@ -329,6 +346,10 @@ pub fn get_address() -> Result<bitcoin::Address> {
 
 pub fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
     get_wallet()?.get_bitcoin_tx_history()
+}
+
+pub fn get_channel_manager() -> Result<Arc<ChannelManager>> {
+    Ok(get_wallet()?.get_channel_manager())
 }
 
 pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
