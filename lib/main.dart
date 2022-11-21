@@ -139,7 +139,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
             GoRoute(
               path: CfdOrderConfirmation.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
-                return CfdOrderConfirmation(order: state.extra as Order);
+                return CfdOrderConfirmation(args: state.extra as CfdOrderConfirmationArgs);
               },
             ),
             GoRoute(

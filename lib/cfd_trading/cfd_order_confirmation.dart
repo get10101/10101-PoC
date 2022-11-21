@@ -6,18 +6,26 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
+class CfdOrderConfirmationArgs {
+  Order order;
+  ChannelError? channelError;
+
+  CfdOrderConfirmationArgs(this.order, this.channelError);
+}
+
 class CfdOrderConfirmation extends StatefulWidget {
   static const subRouteName = 'cfd-order-confirmation';
 
-  final Order? order;
+  final CfdOrderConfirmationArgs args;
 
-  const CfdOrderConfirmation({this.order, super.key});
+  const CfdOrderConfirmation({super.key, required this.args});
 
   @override
   State<CfdOrderConfirmation> createState() => _CfdOrderConfirmationState();
@@ -46,7 +54,8 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
 
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
-    Order order = widget.order!;
+    Order order = widget.args.order;
+    ChannelError? channelError = widget.args.channelError;
 
     final openPrice = formatter.format(order.openPrice);
 
@@ -84,56 +93,46 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
               Text(
                   'This will open a position and lock up $margin Satoshi in a channel. Would you like to proceed?',
                   style: const TextStyle(fontSize: 20)),
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(0, 0, 20, 30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton(
-                              onPressed: () async {
-                                try {
-                                  await api.openCfd(order: order);
-                                  FLog.info(text: 'OpenCfd returned successfully');
-
-                                  // refreshing cfd list after cfd has been opened
-                                  await cfdTradingService.refreshCfdList();
-
-                                  // clear draft order from cfd service state
-                                  cfdTradingChangeNotifier.draftOrder = null;
-
-                                  // switch index to cfd overview tab
-                                  cfdTradingChangeNotifier.selectedIndex = 1;
-                                  // propagate the index change
-                                  cfdTradingChangeNotifier.notify();
-                                  // trigger CFD list update
-                                  cfdTradingChangeNotifier.update();
-
-                                  // navigate back to the trading route where the index has already been propagated
-                                  context.go(CfdTrading.route);
-                                } on FfiException catch (error) {
-                                  FLog.error(
-                                      text: 'Failed to open CFD: ' + error.message,
-                                      exception: error);
-
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                    backgroundColor: Colors.red,
-                                    content: Text("Failed to open cfd"),
-                                  ));
-                                }
-                              },
-                              child: const Text('Confirm'))
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              )
             ]),
           ),
-        ));
+        ),
+        floatingActionButton: ElevatedButton(
+            onPressed: channelError == null
+                ? () async {
+                    try {
+                      await api.openCfd(order: order);
+                      FLog.info(text: 'OpenCfd returned successfully');
+
+                      // refreshing cfd list after cfd has been opened
+                      await cfdTradingService.refreshCfdList();
+
+                      // clear draft order from cfd service state
+                      cfdTradingChangeNotifier.draftOrder = null;
+
+                      // switch index to cfd overview tab
+                      cfdTradingChangeNotifier.selectedIndex = 1;
+                      // propagate the index change
+                      cfdTradingChangeNotifier.notify();
+                      // trigger CFD list update
+                      cfdTradingChangeNotifier.update();
+
+                      // navigate back to the trading route where the index has already been propagated
+                      context.go(CfdTrading.route);
+                    } on FfiException catch (error) {
+                      FLog.error(text: 'Failed to open CFD: ' + error.message, exception: error);
+
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        backgroundColor: Colors.red,
+                        content: Text("Failed to open cfd"),
+                      ));
+
+                      return;
+                    }
+
+                    context.go(CfdTrading.route);
+                  }
+                : null,
+            child: const Text('Confirm')),
+        bottomSheet: channelError != null ? ValidationError(channelError: channelError) : null);
   }
 }
