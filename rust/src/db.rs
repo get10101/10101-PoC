@@ -68,7 +68,8 @@ pub async fn load_cfds(conn: &mut SqliteConnection) -> Result<Vec<Cfd>> {
                 quantity,
                 expiry,
                 open_price,
-                liquidation_price
+                liquidation_price,
+                margin
             from
                 cfd
             inner join cfd_state on cfd.state_id = cfd_state.id
@@ -92,6 +93,7 @@ pub async fn load_cfds(conn: &mut SqliteConnection) -> Result<Vec<Cfd>> {
             contract_symbol: row.contract_symbol,
             expiry: row.expiry,
             liquidation_price: row.liquidation_price,
+            margin: row.margin,
         };
 
         cfds.push(cfd);

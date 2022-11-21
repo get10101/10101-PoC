@@ -37,7 +37,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final openPrice = formatter.format(cfd.openPrice);
     final liquidationPrice = formatter.format(cfd.liquidationPrice);
     final estimatedFees = Amount(-4).display(currency: Currency.sat, sign: true).value;
-    final margin = Amount(200).display(currency: Currency.sat).value;
+    final margin = Amount.fromDouble(cfd.margin).display(currency: Currency.btc).value;
 
     // TODO: calculate PnL for CFD
     final unrealizedPL = Amount(1000).display(currency: Currency.sat, sign: true).value;
