@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -12,10 +10,10 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
+import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 class CfdOffer extends StatefulWidget {
   static const leverages = [1, 2];
@@ -36,32 +34,34 @@ class _CfdOfferState extends State<CfdOffer> {
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
 
-    // mock data
+    final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
+
+    final fmtBid = formatter.format(offer.bid);
+    final fmtAsk = formatter.format(offer.ask);
+    final fmtIndex = formatter.format(offer.index);
+
     cfdTradingService.draftOrder ??= Order(
-        fundingRate: Amount(200),
-        margin: Amount(250000),
-        expiry: DateTime.now(),
-        liquidationPrice: 13104,
-        openPrice: 19100,
-        pl: Amount(Random().nextInt(20000) + -10000),
-        quantity: 100,
-        estimatedFees: Amount(-4));
+      openPrice: offer.index,
+      quantity: 100,
+      leverage: 2,
+      position: Position.Long,
+      contractSymbol: ContractSymbol.BtcUsd,
+    );
 
     order = cfdTradingService.draftOrder!;
 
-    final liquidationPrice = formatter.format(order.liquidationPrice);
-    final fundingRate = order.fundingRate.display(currency: Currency.sat).value;
-    final margin = order.margin.display(currency: Currency.sat).value;
+    final liquidationPrice = api.calculateLiquidationPrice(
+        initialPrice: order.openPrice,
+        leverage: order.leverage,
+        contractSymbol: order.contractSymbol,
+        position: order.position);
 
-    final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
+    // TODO: calcualte margin
+    final margin = Amount(250000).display(currency: Currency.sat).value;
 
-    final bid = offer.bid;
-    final ask = offer.ask;
-    final index = offer.index;
-
-    final fmtBid = formatter.format(bid);
-    final fmtAsk = formatter.format(ask);
-    final fmtIndex = formatter.format(index);
+    // TODO: We also have to pass this to rust, otherwise it won't align with the cfd details later
+    final now = DateTime.now();
+    final expiry = DateTime(now.year, now.month, now.day + 1);
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
@@ -95,12 +95,12 @@ class _CfdOfferState extends State<CfdOffer> {
             value: order.quantity.toString(),
           ),
           Dropdown(
-              values: [TradingPair.btcusd.name.toUpperCase()],
-              onChange: (tradingPair) {
-                order.tradingPair =
-                    TradingPair.values.firstWhere((e) => e.name == tradingPair!.toLowerCase());
+              values: [ContractSymbol.BtcUsd.name.toUpperCase()],
+              onChange: (contractSymbol) {
+                order.contractSymbol = ContractSymbol.values
+                    .firstWhere((e) => e.name == contractSymbol!.toLowerCase());
               },
-              value: order.tradingPair.name.toUpperCase()),
+              value: order.contractSymbol.name.toUpperCase()),
           Dropdown(
               values: CfdOffer.leverages.map((l) => 'x$l').toList(),
               onChange: (leverage) {
@@ -112,13 +112,15 @@ class _CfdOfferState extends State<CfdOffer> {
           Container(
             margin: const EdgeInsets.only(top: 25),
             child: TtoTable([
-              TtoRow(label: 'Funding Rate', value: fundingRate, type: ValueType.satoshi),
               TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
               TtoRow(
                   label: 'Expiry',
-                  value: DateFormat('dd.MM.yy-kk:mm').format(order.expiry),
+                  value: DateFormat('dd.MM.yy-kk:mm').format(expiry),
                   type: ValueType.date),
-              TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
+              TtoRow(
+                  label: 'Liquidation Price',
+                  value: liquidationPrice.toString(),
+                  type: ValueType.usd),
             ]),
           )
         ])

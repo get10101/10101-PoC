@@ -1,25 +1,23 @@
-import 'dart:async';
-
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 class CfdOrderDetail extends StatefulWidget {
   static const subRouteName = 'cfd-order-detail';
 
-  final Order? order;
+  final Cfd? cfd;
 
-  const CfdOrderDetail({this.order, super.key});
+  const CfdOrderDetail({this.cfd, super.key});
 
   @override
   State<CfdOrderDetail> createState() => _CfdOrderDetailState();
@@ -32,18 +30,22 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
+    Cfd cfd = widget.cfd!;
 
-    Order order = widget.order!;
+    final openPrice = formatter.format(cfd.openPrice);
+    final liquidationPrice = formatter.format(cfd.liquidationPrice);
+    final estimatedFees = Amount(-4).display(currency: Currency.sat, sign: true).value;
+    final margin = Amount(200).display(currency: Currency.sat).value;
 
-    final openPrice = formatter.format(order.openPrice);
-    final liquidationPrice = formatter.format(order.liquidationPrice);
-    final estimatedFees = order.estimatedFees.display(sign: true, currency: Currency.sat).value;
-    final margin = order.margin.display(currency: Currency.sat).value;
-    final unrealizedPL = order.pl.display(sign: true, currency: Currency.sat).value;
-    final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
-    final quantity = order.quantity.toString();
-    final tradingPair = order.tradingPair.name.toUpperCase();
+    // TODO: calculate PnL for CFD
+    final unrealizedPL = Amount(1000).display(currency: Currency.sat, sign: true).value;
+
+    final expiry =
+        DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry));
+    final quantity = cfd.quantity.toString();
+    final contractSymbol = cfd.contractSymbol.name.toUpperCase();
+
+    final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
 
     return Scaffold(
         appBar: AppBar(title: const Text('CFD Order Details')),
@@ -51,10 +53,10 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
           child: Container(
               padding: const EdgeInsets.all(20.0),
               child: Column(children: [
-                Center(child: Text(tradingPair, style: const TextStyle(fontSize: 24))),
+                Center(child: Text(contractSymbol, style: const TextStyle(fontSize: 24))),
                 const SizedBox(height: 35),
                 Chip(
-                    label: Text(order.status.display,
+                    label: Text(cfd.state.name,
                         style:
                             const TextStyle(fontSize: 24, color: Colors.black, letterSpacing: 2)),
                     labelPadding: const EdgeInsets.only(left: 30, right: 30, top: 5, bottom: 5),
@@ -67,10 +69,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                 const SizedBox(height: 35),
                 Expanded(
                   child: TtoTable([
-                    TtoRow(
-                        label: 'Position',
-                        value: order.position == Position.long ? 'Long' : 'Short',
-                        type: ValueType.satoshi),
+                    TtoRow(label: 'Position', value: cfd.position.name, type: ValueType.satoshi),
                     TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
                     TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
                     TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
@@ -102,7 +101,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Visibility(
-                              visible: OrderStatus.open == order.status && !confirm,
+                              visible: CfdState.Open == cfd.state && !confirm,
                               child: ElevatedButton(
                                   onPressed: () {
                                     setState(() {
@@ -115,20 +114,24 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                               visible: confirm,
                               child: ElevatedButton(
                                   onPressed: () async {
-                                    // mock cfd has been closed.
-                                    Timer(const Duration(seconds: 2), () {
-                                      order.status = OrderStatus.closed;
-                                      cfdTradingService.persist(order);
-                                    });
-
                                     try {
                                       await api.settleCfd(takerAmount: 40000, makerAmount: 20000);
                                     } on FfiException catch (error) {
                                       FLog.error(
                                           text: 'Failed to settle CFD: ' + error.message,
                                           exception: error);
+
+                                      // TODO: Notify UI about error, user can try again...
                                     }
 
+                                    // switch index to cfd overview tab
+                                    cfdTradingChangeNotifier.selectedIndex = 1;
+                                    // propagate the index change
+                                    cfdTradingChangeNotifier.notify();
+                                    // trigger CFD list update
+                                    cfdTradingChangeNotifier.update();
+
+                                    // navigate back to the trading route where the index has already been propagated
                                     context.go(CfdTrading.route);
                                   },
                                   child: const Text('Confirm')),

@@ -1,10 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:ten_ten_one/models/order.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
+import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 /// Responsible for managing the state across the different Cfd Trading screens.
 class CfdTradingChangeNotifier extends ChangeNotifier {
-  final List<Order> _orders = [];
-  List<Order> listOrders() => _orders;
+  List<Cfd> _cfds = [];
+  List<Cfd> listCfds() => _cfds;
 
   // the selected tab index needs to be managed in an app state as otherwise
   // a the order confirmation screen could not change tabs to the cfd overview
@@ -21,15 +24,20 @@ class CfdTradingChangeNotifier extends ChangeNotifier {
   // to null once the order has been confirmed.
   Order? draftOrder;
 
-  void persist(Order order) {
-    final index = _orders.indexWhere((o) => o.id == order.id);
+  void notify() {
+    super.notifyListeners();
+  }
 
-    if (index >= 0) {
-      _orders.removeAt(index);
-    }
+  CfdTradingChangeNotifier init() {
+    Timer.periodic(const Duration(seconds: 20), (timer) async {
+      _cfds = await api.listCfds();
+      super.notifyListeners();
+    });
+    return this;
+  }
 
-    _orders.add(order);
-
+  void update() async {
+    _cfds = await api.listCfds();
     super.notifyListeners();
   }
 }

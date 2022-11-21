@@ -1,0 +1,87 @@
+{
+  "db": "SQLite",
+  "32d194b30314ecad8cd44e3415328e5ec8a83c4dd8b03ed36bd073e4838f294a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "custom_output_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "contract_symbol: crate::cfd::ContractSymbol",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "position: crate::cfd::Position",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "leverage",
+          "ordinal": 4,
+          "type_info": "Int64"
+        },
+        {
+          "name": "updated",
+          "ordinal": 5,
+          "type_info": "Int64"
+        },
+        {
+          "name": "created",
+          "ordinal": 6,
+          "type_info": "Int64"
+        },
+        {
+          "name": "state: crate::cfd::CfdState",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "quantity",
+          "ordinal": 8,
+          "type_info": "Int64"
+        },
+        {
+          "name": "expiry",
+          "ordinal": 9,
+          "type_info": "Int64"
+        },
+        {
+          "name": "open_price",
+          "ordinal": 10,
+          "type_info": "Float"
+        },
+        {
+          "name": "liquidation_price",
+          "ordinal": 11,
+          "type_info": "Float"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::ContractSymbol\",\n                position as \"position: crate::cfd::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                liquidation_price\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
+  }
+}

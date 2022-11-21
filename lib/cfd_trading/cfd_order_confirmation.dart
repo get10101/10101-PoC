@@ -4,10 +4,10 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
-import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -23,17 +23,25 @@ class CfdOrderConfirmation extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatter = NumberFormat.decimalPattern('en');
 
-    final cfdTradingService = context.read<CfdTradingChangeNotifier>();
+    final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
     Order order = this.order!;
 
     final openPrice = formatter.format(order.openPrice);
-    final liquidationPrice = formatter.format(order.liquidationPrice);
-    final estimatedFees = order.estimatedFees.display(currency: Currency.sat).value;
-    final margin = order.margin.display(currency: Currency.sat).value;
-    final unrealizedPL = order.pl.display(currency: Currency.sat).value;
-    final expiry = DateFormat('dd.MM.yy-kk:mm').format(order.expiry);
+    final liquidationPrice = formatter.format(api.calculateLiquidationPrice(
+        initialPrice: order.openPrice,
+        leverage: order.leverage,
+        contractSymbol: order.contractSymbol,
+        position: order.position));
+    // TODO: Calculate or remove?
+    final estimatedFees = Amount.zero.display(currency: Currency.sat).value;
+    // TODO: Calculate
+    final margin = Amount.zero.display(currency: Currency.sat).value;
+    // TODO: Calculate
+    final unrealizedPL = Amount.zero.display(currency: Currency.sat).value;
+    final now = DateTime.now();
+    final expiry = DateTime(now.year, now.month, now.day + 1);
     final quantity = order.quantity.toString();
-    final tradingPair = order.tradingPair.name.toUpperCase();
+    final contractSymbol = order.contractSymbol.name.toUpperCase();
 
     return Scaffold(
         appBar: AppBar(title: const Text('CFD Order Confirmation')),
@@ -41,17 +49,20 @@ class CfdOrderConfirmation extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(20.0),
             child: Column(children: [
-              Center(child: Text(tradingPair, style: const TextStyle(fontSize: 16))),
+              Center(child: Text(contractSymbol, style: const TextStyle(fontSize: 16))),
               const SizedBox(height: 25),
               TtoTable([
                 TtoRow(
                     label: 'Position',
-                    value: order.position == Position.long ? 'Long' : 'Short',
+                    value: order.position == Position.Long ? 'Long' : 'Short',
                     type: ValueType.satoshi),
                 TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
                 TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
                 TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                TtoRow(label: 'Expiry', value: expiry, type: ValueType.satoshi),
+                TtoRow(
+                    label: 'Expiry',
+                    value: DateFormat('dd.MM.yy-kk:mm').format(expiry),
+                    type: ValueType.satoshi),
                 TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
                 TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
                 TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi)
@@ -71,39 +82,32 @@ class CfdOrderConfirmation extends StatelessWidget {
                         children: [
                           ElevatedButton(
                               onPressed: () async {
-                                // switch index to cfd overview tab.
-                                cfdTradingService.selectedIndex = 1;
-
                                 // TODO: Plug in actual state changes
-
-                                // clear draft order from cfd service state
-                                cfdTradingService.draftOrder = null;
 
                                 try {
                                   // TODO: Don't hardcode the taker amount
-                                  await api.openCfd(takerAmount: 20000, leverage: order.leverage);
+                                  await api.openCfd(order: order);
                                   FLog.info(text: 'OpenCfd returned successfully');
+
+                                  // clear draft order from cfd service state
+                                  cfdTradingChangeNotifier.draftOrder = null;
+
+                                  // switch index to cfd overview tab
+                                  cfdTradingChangeNotifier.selectedIndex = 1;
+                                  // propagate the index change
+                                  cfdTradingChangeNotifier.notify();
+                                  // trigger CFD list update
+                                  cfdTradingChangeNotifier.update();
+
+                                  // navigate back to the trading route where the index has already been propagated
+                                  context.go(CfdTrading.route);
                                 } on FfiException catch (error) {
                                   FLog.error(
                                       text: 'Failed to open CFD: ' + error.message,
                                       exception: error);
 
-                                  order.status = OrderStatus.pending;
-                                  order.updated = DateTime.now();
-                                  // immediately set to open, because if adding the custom output succeeded we just go on
-                                  order.status = OrderStatus.failed;
-                                  cfdTradingService.persist(order);
-
-                                  return;
+                                  // TODO display error that CFD open failed in UI
                                 }
-
-                                order.status = OrderStatus.pending;
-                                order.updated = DateTime.now();
-                                // if adding the custom output succeeded, the CFD is open
-                                order.status = OrderStatus.open;
-                                cfdTradingService.persist(order);
-
-                                context.go(CfdTrading.route);
                               },
                               child: const Text('Confirm'))
                         ],

@@ -2,14 +2,15 @@ import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
+import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:ten_ten_one/models/order.dart';
 
 class CfdOverview extends StatefulWidget {
   const CfdOverview({Key? key}) : super(key: key);
@@ -22,16 +23,16 @@ class _CfdOverviewState extends State<CfdOverview> {
   @override
   Widget build(BuildContext context) {
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
-    final orders = cfdTradingService.listOrders();
-    orders.sort((a, b) => b.updated.compareTo(a.updated));
+    final cfds = cfdTradingService.listCfds();
+    cfds.sort((a, b) => b.updated.compareTo(a.updated));
 
     List<Widget> widgets = [
       const Balance(balanceSelector: BalanceSelector.lightning),
       const Divider()
     ];
-    widgets.addAll(orders
-        .where((order) => [OrderStatus.open, OrderStatus.pending].contains(order.status))
-        .map((order) => CfdTradeItem(order: order))
+    widgets.addAll(cfds
+        .where((cfd) => [CfdState.Open].contains(cfd.state))
+        .map((cfd) => CfdTradeItem(cfd: cfd))
         .toList());
 
     widgets.add(ExpansionTile(
@@ -40,9 +41,9 @@ class _CfdOverviewState extends State<CfdOverview> {
         cfdTradingService.expanded = true;
       },
       initiallyExpanded: cfdTradingService.expanded,
-      children: orders
-          .where((order) => [OrderStatus.closed].contains(order.status))
-          .map((order) => CfdTradeItem(order: order))
+      children: cfds
+          .where((cfd) => [CfdState.Closed, CfdState.Failed].contains(cfd.state))
+          .map((cfd) => CfdTradeItem(cfd: cfd))
           .toList(),
     ));
 
@@ -55,17 +56,21 @@ class _CfdOverviewState extends State<CfdOverview> {
 }
 
 class CfdTradeItem extends StatelessWidget {
-  final Order order;
+  final Cfd cfd;
 
-  const CfdTradeItem({super.key, required this.order});
+  const CfdTradeItem({super.key, required this.cfd});
 
   @override
   Widget build(BuildContext context) {
-    final updated = DateFormat('dd.MM.yy-kk:mm').format(order.updated);
+    final updated =
+        DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.updated));
+
+    // TODO: calculate pnl
+    final pnl = Amount(1000);
 
     return GestureDetector(
       onTap: () {
-        context.go(CfdTrading.route + '/' + CfdOrderDetail.subRouteName, extra: order);
+        context.go(CfdTrading.route + '/' + CfdOrderDetail.subRouteName, extra: cfd);
       },
       child: Container(
         decoration: const BoxDecoration(
@@ -79,24 +84,23 @@ class CfdTradeItem extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    SizedBox(width: 20, child: FaIcon(order.tradingPair.icon)),
+                    SizedBox(width: 20, child: FaIcon(cfd.contractSymbol.icon)),
                     const SizedBox(width: 15),
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(order.status.display, style: const TextStyle(fontSize: 20)),
+                      Text(cfd.state.name, style: const TextStyle(fontSize: 20)),
                       Text(updated, style: const TextStyle(color: Colors.grey, fontSize: 16))
                     ]),
                   ],
                 ),
                 Row(children: [
-                  order.position == Position.long
+                  cfd.position == Position.Long
                       ? const FaIcon(FontAwesomeIcons.arrowTrendUp, color: Colors.green)
                       : const FaIcon(FontAwesomeIcons.arrowTrendDown, color: Colors.red)
                 ]),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  Text(order.pl.display(sign: true, currency: Currency.sat).value,
+                  Text(pnl.display(sign: true, currency: Currency.sat).value,
                       style: TextStyle(
-                          fontSize: 20,
-                          color: order.pl.asSats.isNegative ? Colors.red : Colors.green)),
+                          fontSize: 20, color: pnl.asSats.isNegative ? Colors.red : Colors.green)),
                   const SizedBox(width: 5),
                   const Text(
                     'sat',

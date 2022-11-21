@@ -1,5 +1,7 @@
 mod api;
 mod bridge_generated;
+mod calc;
+mod cfd;
 pub mod db;
 pub mod disk;
 mod hex_utils;
