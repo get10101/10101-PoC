@@ -1,3 +1,4 @@
+use crate::db;
 use crate::lightning;
 use crate::lightning::ChannelManager;
 use crate::lightning::HTLCStatus;
@@ -216,12 +217,64 @@ impl Wallet {
         lightning::run_ldk_server(&self.lightning, address).await
     }
 
-    pub fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
+    pub async fn get_bitcoin_tx_history(&self) -> Result<Vec<bdk::TransactionDetails>> {
         let tx_history = self
             .lightning
             .wallet
             .get_wallet()?
             .list_transactions(false)?;
+
+        let (ignore_txids, latest_channel_open) = match db::load_ignore_txids().await {
+            Ok(ignore_txid_with_amount) => {
+                let latest_open_channel = ignore_txid_with_amount.last().cloned();
+                let ignore_txids = ignore_txid_with_amount
+                    .into_iter()
+                    .map(|(txid, _)| txid)
+                    .collect::<Vec<Txid>>();
+                (ignore_txids, latest_open_channel)
+            }
+            Err(e) => {
+                tracing::warn!("Failed to load ignore txids, proceeding with showing tx history including ignored txids: {e:#}");
+
+                (vec![], None)
+            }
+        };
+
+        let mut tx_history = tx_history
+            .into_iter()
+            .filter(|tx_detail| !ignore_txids.contains(&tx_detail.txid))
+            .collect::<Vec<_>>();
+
+        // Subtract maker's funding amount from channel open - this only works for the current
+        // channel!
+        if let Some((_, maker_funding_amount)) = latest_channel_open {
+            let channel_manager = {
+                let lightning = &get_wallet()?.lightning;
+                lightning.channel_manager.clone()
+            };
+
+            // Subtract the maker amount from the open channel tx
+            let channels = channel_manager.list_channels();
+            match channels.first() {
+                Some(channel_details) => {
+                    match channel_details.funding_txo {
+                        None => {
+                            tracing::warn!("Failed to retrieve channel funding tx, the funding_txo is not available for the channel.");
+                        }
+                        Some(output) => {
+                            let open_channel_txid = output.txid;
+                            tx_history.iter_mut().for_each(|tx_detail| {
+                                if tx_detail.txid == open_channel_txid {
+                                    tx_detail.sent -= maker_funding_amount as u64;
+                                }
+                            });
+                        }
+                    }
+                },
+                None => tracing::warn!("Failed to save amount to subtract from opening channel, the bitcoin tx history will include the taker amount"),
+            }
+        }
+
         tracing::debug!(?tx_history, "Transaction history");
         Ok(tx_history)
     }
@@ -344,8 +397,10 @@ pub fn get_address() -> Result<bitcoin::Address> {
     get_wallet()?.get_address()
 }
 
-pub fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
-    get_wallet()?.get_bitcoin_tx_history()
+pub async fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
+    let wallet = { (*get_wallet()?).clone() };
+    let tx_history = wallet.get_bitcoin_tx_history().await?;
+    Ok(tx_history)
 }
 
 pub fn get_channel_manager() -> Result<Arc<ChannelManager>> {
@@ -441,9 +496,11 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 
     let response: OpenChannelResponse = response.json().await?;
 
-    // TODO: Add txid to "txid-to-be-ignored" when loading the bitcoin tx-history list and balance
-    //  This will require filtering the tx history and remove entries for the txid as well as
-    // subtracting the amount from the balance.
+    let maker_funding_txid = response.funding_txid;
+
+    if let Err(e) = db::insert_ignore_txid(maker_funding_txid, maker_amount as i64).await {
+        tracing::warn!("Failed to insert maker funding tx to be ignored in transaction history, the taker will see the funding tx: {e:#}");
+    }
 
     // We cannot wait indefinitely so we specify how long we wait for the maker funds to arrive in
     // mempool
@@ -451,7 +508,7 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 
     let mut processing_sec_counter = 0;
     let sleep_secs = 5;
-    while get_wallet()?.get_script_status(address_to_fund.script_pubkey(), response.funding_txid)?
+    while get_wallet()?.get_script_status(address_to_fund.script_pubkey(), maker_funding_txid)?
         == ScriptStatus::Unseen
     {
         processing_sec_counter += sleep_secs;

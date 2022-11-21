@@ -155,8 +155,10 @@ pub async fn settle_cfd(taker_amount: u64, maker_amount: u64) -> Result<()> {
     cfd::settle(taker_amount, maker_amount).await
 }
 
-pub fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
-    let tx_history = wallet::get_bitcoin_tx_history()?
+#[tokio::main(flavor = "current_thread")]
+pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
+    let tx_history = wallet::get_bitcoin_tx_history()
+        .await?
         .into_iter()
         .map(|tx| {
             let (is_confirmed, timestamp) = match tx.confirmation_time {

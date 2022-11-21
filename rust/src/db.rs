@@ -1,7 +1,11 @@
 use crate::cfd::Cfd;
 use anyhow::anyhow;
+use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
+use bdk::bitcoin::hashes::hex::FromHex;
+use bdk::bitcoin::hashes::hex::ToHex;
+use bdk::bitcoin::Txid;
 use futures::TryStreamExt;
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
@@ -100,4 +104,53 @@ pub async fn load_cfds(conn: &mut SqliteConnection) -> Result<Vec<Cfd>> {
     }
 
     Ok(cfds)
+}
+
+pub async fn load_ignore_txids() -> Result<Vec<(Txid, u64)>> {
+    let mut conn = acquire().await?;
+
+    let mut rows = sqlx::query!(
+        r#"
+            select
+                txid,
+                maker_amount
+            from
+                ignore_txid
+            order by id
+            "#
+    )
+    .fetch(&mut *conn);
+
+    let mut ignore_txids = Vec::new();
+
+    while let Some(row) = rows.try_next().await? {
+        let txid = Txid::from_hex(row.txid.as_str())?;
+        let maker_amount = row.maker_amount as u64;
+        ignore_txids.push((txid, maker_amount));
+    }
+
+    Ok(ignore_txids)
+}
+
+pub async fn insert_ignore_txid(txid: Txid, maker_amount: i64) -> Result<()> {
+    let mut conn = acquire().await?;
+
+    let query_result = sqlx::query(
+        r#"
+        INSERT INTO ignore_txid (txid, maker_amount)
+        VALUES ($1, $2)
+        "#,
+    )
+    .bind(txid.to_hex())
+    .bind(maker_amount)
+    .execute(&mut conn)
+    .await?;
+
+    if query_result.rows_affected() != 1 {
+        bail!("Failed to insert txid to be ignored");
+    }
+
+    tracing::info!("Successfully stored txid to be ignored");
+
+    Ok(())
 }

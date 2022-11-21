@@ -1,5 +1,29 @@
 {
   "db": "SQLite",
+  "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
+    "describe": {
+      "columns": [
+        {
+          "name": "txid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "maker_amount",
+          "ordinal": 1,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
+  },
   "5ab7e3ff07456c376e6cbae8bd0e7c520806d127fff255ae65994b9968e2dd6c": {
     "describe": {
       "columns": [
