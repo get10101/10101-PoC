@@ -53,6 +53,11 @@ class Menu extends StatelessWidget {
                   GoRouter.of(context).go("/cfd-trading");
                 },
               ),
+              ListTile(
+                title: Text(Service.exchange.label),
+                leading: Icon(Service.exchange.icon),
+                onTap: () {},
+              ),
             ],
           ),
           ExpansionTile(
@@ -63,11 +68,26 @@ class Menu extends StatelessWidget {
               ListTile(
                 title: Text(Service.sportsbet.label),
                 leading: Icon(Service.sportsbet.icon),
-                onTap: () {
-                  // TODO: PLug in sports bets screen
-                },
+                onTap: () {},
               ),
             ],
+          ),
+          ExpansionTile(
+            title: Text(ServiceGroup.invest.label),
+            leading: Icon(ServiceGroup.invest.icon),
+            initiallyExpanded: true,
+            children: [
+              ListTile(
+                title: Text(Service.savings.label),
+                leading: Icon(Service.savings.icon),
+                onTap: () {},
+              ),
+            ],
+          ),
+          ListTile(
+            title: const Text("Settings"),
+            leading: const Icon(Icons.settings),
+            onTap: () {},
           ),
         ],
       ),

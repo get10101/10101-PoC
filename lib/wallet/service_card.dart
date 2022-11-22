@@ -29,13 +29,13 @@ class ServiceCard extends StatelessWidget {
             Icon(
               service.icon,
               color: Colors.white,
-              size: 30.0,
+              size: 25.0,
               semanticLabel: 'Text to announce in accessibility modes',
             ),
             SizedBox(
-                width: 60,
+                width: 70,
                 child: Text(
-                  service.label,
+                  service.shortLabel,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white),
                 ))

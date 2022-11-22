@@ -107,6 +107,8 @@ class ServiceNavigation extends StatelessWidget {
             child: const ServiceCard(Service.cfd),
           ),
           const ServiceCard(Service.sportsbet),
+          const ServiceCard(Service.exchange),
+          const ServiceCard(Service.savings),
         ],
       ),
     );
