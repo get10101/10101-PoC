@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'dart:math' as math;
 
@@ -17,7 +18,7 @@ class PaymentHistoryListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget statusIcon;
-
+    var layer = "on-chain";
     switch (data.status) {
       case PaymentStatus.pending:
         statusIcon = const SizedBox(width: 20, height: 20, child: CircularProgressIndicator());
@@ -34,20 +35,25 @@ class PaymentHistoryListItem extends StatelessWidget {
             break;
           case PaymentType.cfdOpen:
             statusIcon = cfdOpenIcon();
+            layer = "off-chain";
             break;
           case PaymentType.cfdClose:
             statusIcon = cfdClosedIcon();
+            layer = "off-chain";
             break;
           case PaymentType.channelOpen:
             statusIcon = channelOpenIcon();
+            layer = "on-chain";
             break;
           case PaymentType.channelClose:
             statusIcon = channelClosedIcon();
+            layer = "on-chain";
             break;
           case PaymentType.sportsbetOpen:
           case PaymentType.sportsbetClose:
             // TODO: Handle these cases.
             statusIcon = Icon(Icons.check_circle_outline, color: Colors.green[800]);
+            layer = "off-chain";
             break;
         }
         break;
@@ -58,19 +64,42 @@ class PaymentHistoryListItem extends StatelessWidget {
 
     final amountDisplay = data.amount.display(sign: true, currency: Currency.sat);
 
-    return ListTile(
-      leading: statusIcon,
-      title: Text(data.type.display),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          AmountItem(text: amountDisplay.value, unit: AmountUnit.satoshi, iconColor: Colors.grey)
-        ],
-      ),
-    );
+    final date = data.status == PaymentStatus.pending
+        ? "pending"
+        : DateFormat("MMM d, ''yy H:mm")
+            .format(DateTime.fromMicrosecondsSinceEpoch(data.timestamp.toInt() * 1000 * 1000));
+    return Column(children: [
+      const Divider(),
+      ListTile(
+          leading: statusIcon,
+          title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(data.type.display,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(layer),
+              ]),
+          dense: true,
+          minLeadingWidth: 0,
+          contentPadding: const EdgeInsets.only(left: 0.0, right: 0.0),
+          trailing: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    AmountItem(
+                        text: amountDisplay.value, unit: AmountUnit.satoshi, iconColor: Colors.grey)
+                  ],
+                ),
+                Text(date),
+              ])),
+    ]);
   }
 
   Transform receiveOnChainIcon() {

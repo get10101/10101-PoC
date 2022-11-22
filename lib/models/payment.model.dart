@@ -32,12 +32,12 @@ enum PaymentType {
 
 extension PaymentTypeExtension on PaymentType {
   static const displays = {
-    PaymentType.receiveOnChain: "Bitcoin Received",
-    PaymentType.sendOnChain: "Bitcoin Sent",
+    PaymentType.receiveOnChain: "You received",
+    PaymentType.sendOnChain: "You sent",
     PaymentType.channelOpen: "Channel Opened",
     PaymentType.channelClose: "Channel Closed",
-    PaymentType.send: "Payment Sent",
-    PaymentType.receive: "Payment Received",
+    PaymentType.send: "You sent",
+    PaymentType.receive: "You received",
     PaymentType.cfdOpen: "CFD Opened",
     PaymentType.cfdClose: "CFD Closed",
     PaymentType.sportsbetOpen: "Sports Bet Started",
