@@ -47,7 +47,10 @@ class _CfdOverviewState extends State<CfdOverview> {
       children: cfds
           .where((cfd) => [CfdState.Closed, CfdState.Failed].contains(cfd.state))
           .map((cfd) => CfdTradeItem(
-              cfd: cfd, closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask))
+              cfd: cfd,
+              closingPrice: cfd.state == CfdState.Closed
+                  ? cfd.closePrice!
+                  : (cfd.position == Position.Long ? offer.bid : offer.ask)))
           .toList(),
     ));
 
@@ -70,7 +73,7 @@ class CfdTradeItem extends StatelessWidget {
     final updated = DateFormat('dd.MM.yy-kk:mm')
         .format(DateTime.fromMillisecondsSinceEpoch(cfd.updated * 1000));
 
-    final pnl = cfd.getOrder().calculateProfit(closingPrice: closingPrice);
+    final pnl = cfd.getOrder().calculateProfitTaker(closingPrice: closingPrice);
     final fmtPnl = Amount.fromBtc(pnl).display(sign: true, currency: Currency.sat).value;
 
     return GestureDetector(

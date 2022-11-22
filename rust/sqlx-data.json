@@ -1,30 +1,6 @@
 {
   "db": "SQLite",
-  "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
-    "describe": {
-      "columns": [
-        {
-          "name": "txid",
-          "ordinal": 0,
-          "type_info": "Text"
-        },
-        {
-          "name": "maker_amount",
-          "ordinal": 1,
-          "type_info": "Int64"
-        }
-      ],
-      "nullable": [
-        false,
-        false
-      ],
-      "parameters": {
-        "Right": 0
-      }
-    },
-    "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
-  },
-  "5ab7e3ff07456c376e6cbae8bd0e7c520806d127fff255ae65994b9968e2dd6c": {
+  "0f0c8e555c6d5883787f5c99c06bf0d6e1209980fe6818eec8e2b0318e35a25e": {
     "describe": {
       "columns": [
         {
@@ -83,13 +59,18 @@
           "type_info": "Float"
         },
         {
-          "name": "liquidation_price",
+          "name": "close_price",
           "ordinal": 11,
           "type_info": "Float"
         },
         {
-          "name": "margin",
+          "name": "liquidation_price",
           "ordinal": 12,
+          "type_info": "Float"
+        },
+        {
+          "name": "margin",
+          "ordinal": 13,
           "type_info": "Float"
         }
       ],
@@ -105,6 +86,7 @@
         false,
         false,
         false,
+        true,
         false,
         false
       ],
@@ -112,7 +94,31 @@
         "Right": 0
       }
     },
-    "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::ContractSymbol\",\n                position as \"position: crate::cfd::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                liquidation_price,\n                margin\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
+    "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::ContractSymbol\",\n                position as \"position: crate::cfd::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                close_price,\n                liquidation_price,\n                margin\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
+  },
+  "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
+    "describe": {
+      "columns": [
+        {
+          "name": "txid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "maker_amount",
+          "ordinal": 1,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
   },
   "d1f3f4266a6e59914d5f2952c0eeb3a0b98b93b05303ed43c730cef18152dd32": {
     "describe": {
@@ -123,5 +129,15 @@
       }
     },
     "query": "\n        INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price, margin)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n        "
+  },
+  "e88a210f767e0ed152c38688789f5e7c208e2320feb16494f134ca08a66497bf": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 4
+      }
+    },
+    "query": "\n        UPDATE cfd\n        SET\n            state_id = $1, updated = $2, close_price = $3\n        WHERE\n            cfd.custom_output_id = $4\n        "
   }
 }

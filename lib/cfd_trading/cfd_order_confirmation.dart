@@ -103,18 +103,15 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
                       await api.openCfd(order: order);
                       FLog.info(text: 'OpenCfd returned successfully');
 
-                      // refreshing cfd list after cfd has been opened
-                      await cfdTradingService.refreshCfdList();
-
                       // clear draft order from cfd service state
                       cfdTradingChangeNotifier.draftOrder = null;
 
                       // switch index to cfd overview tab
                       cfdTradingChangeNotifier.selectedIndex = 1;
-                      // propagate the index change
-                      cfdTradingChangeNotifier.notify();
-                      // trigger CFD list update
-                      cfdTradingChangeNotifier.update();
+
+                      // refreshing cfd list after cfd has been opened
+                      // will also implicitly propagate the index change
+                      await cfdTradingService.refreshCfdList();
 
                       // navigate back to the trading route where the index has already been propagated
                       context.go(CfdTrading.route);

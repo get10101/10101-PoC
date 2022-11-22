@@ -33,14 +33,10 @@ class CfdTradingChangeNotifier extends ChangeNotifier {
   }
 
   CfdTradingChangeNotifier init() {
+    refreshCfdList();
     Timer.periodic(const Duration(seconds: 20), (timer) {
       refreshCfdList();
     });
     return this;
-  }
-
-  void update() async {
-    cfds = await api.listCfds();
-    super.notifyListeners();
   }
 }

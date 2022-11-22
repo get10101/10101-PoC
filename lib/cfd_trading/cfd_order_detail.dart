@@ -61,7 +61,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
     final pnl = cfd
         .getOrder()
-        .calculateProfit(closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
+        .calculateProfitTaker(closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
 
     final unrealizedPL = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
 
@@ -71,6 +71,23 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final contractSymbol = cfd.contractSymbol.name.toUpperCase();
 
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
+
+    var rows = [
+      TtoRow(label: 'Position', value: cfd.position.name, type: ValueType.satoshi),
+      TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+      TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
+      TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+      TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
+      TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
+      TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
+      TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi),
+    ];
+
+    final double? closePrice = cfd.closePrice;
+    if (closePrice != null) {
+      rows.insert(2,
+          TtoRow(label: 'Closing Price', value: formatter.format(closePrice), type: ValueType.usd));
+    }
 
     return Scaffold(
         appBar: AppBar(title: const Text('CFD Order Details')),
@@ -93,17 +110,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                     ))),
                 const SizedBox(height: 35),
                 Expanded(
-                  child: TtoTable([
-                    TtoRow(label: 'Position', value: cfd.position.name, type: ValueType.satoshi),
-                    TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
-                    TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
-                    TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                    TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
-                    TtoRow(
-                        label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
-                    TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
-                    TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi)
-                  ]),
+                  child: TtoTable(rows),
                 ),
                 Container(
                   margin: const EdgeInsets.fromLTRB(0, 0, 0, 30),
@@ -140,11 +147,17 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                               child: ElevatedButton(
                                   onPressed: () async {
                                     try {
-                                      await api.settleCfd(takerAmount: 40000, makerAmount: 20000);
+                                      await api.settleCfd(cfd: cfd, offer: offer);
                                       FLog.info(text: "Successfully settled cfd.");
 
+                                      // switch index to cfd overview tab
+                                      cfdTradingChangeNotifier.selectedIndex = 1;
                                       // refreshing cfd list after cfd has been closed
+                                      // will also implicitely propagate the index change
                                       await cfdTradingService.refreshCfdList();
+
+                                      // navigate back to the trading route where the index has already been propagated
+                                      context.go(CfdTrading.route);
                                     } on FfiException catch (error) {
                                       FLog.error(
                                           text: 'Failed to settle CFD: ' + error.message,
@@ -155,16 +168,6 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                                         content: Text("Failed to settle cfd"),
                                       ));
                                     }
-
-                                    // switch index to cfd overview tab
-                                    cfdTradingChangeNotifier.selectedIndex = 1;
-                                    // propagate the index change
-                                    cfdTradingChangeNotifier.notify();
-                                    // trigger CFD list update
-                                    cfdTradingChangeNotifier.update();
-
-                                    // navigate back to the trading route where the index has already been propagated
-                                    context.go(CfdTrading.route);
                                   },
                                   child: const Text('Confirm')),
                             )
