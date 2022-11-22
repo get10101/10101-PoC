@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/send_on_chain.dart';
 
-import '../menu.dart';
-import '../payment_history_change_notifier.dart';
-import '../app_bar_with_balance.dart';
-import 'receive_on_chain.dart';
+import 'package:ten_ten_one/menu.dart';
+import 'package:ten_ten_one/payment_history_change_notifier.dart';
 
 class WalletBitcoin extends StatefulWidget {
   const WalletBitcoin({Key? key}) : super(key: key);

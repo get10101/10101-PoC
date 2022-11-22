@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart' hide Divider;
 import 'package:ten_ten_one/utilities/divider.dart';
 
-import 'balance.dart';
+import 'package:ten_ten_one/balance.dart';
 
 extension BalanceSelectorExtension on BalanceSelector {
   static const preferredHeightVals = {

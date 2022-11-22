@@ -10,9 +10,9 @@ import 'package:ten_ten_one/wallet/send.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
-import '../menu.dart';
-import '../payment_history_change_notifier.dart';
-import '../app_bar_with_balance.dart';
+import 'package:ten_ten_one/menu.dart';
+import 'package:ten_ten_one/payment_history_change_notifier.dart';
+import 'package:ten_ten_one/app_bar_with_balance.dart';
 
 class WalletLightning extends StatefulWidget {
   const WalletLightning({Key? key}) : super(key: key);

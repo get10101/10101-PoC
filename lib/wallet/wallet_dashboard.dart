@@ -12,8 +12,8 @@ import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 
-import '../menu.dart';
-import '../app_bar_with_balance.dart';
+import 'package:ten_ten_one/menu.dart';
+import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'action_card.dart';
 import 'open_channel.dart';
 
