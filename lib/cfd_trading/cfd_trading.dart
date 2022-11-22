@@ -5,6 +5,9 @@ import 'package:ten_ten_one/cfd_trading/cfd_overview.dart';
 import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 
+import '../balance.dart';
+import '../app_bar_with_balance.dart';
+
 class CfdTrading extends StatefulWidget {
   static const route = '/cfd-trading';
 
@@ -33,10 +36,12 @@ class _CfdTradingState extends State<CfdTrading> {
   Widget build(BuildContext context) {
     CfdTradingChangeNotifier cfdTradingService = context.watch<CfdTradingChangeNotifier>();
 
+    const balanceSelector = BalanceSelector.lightning;
+
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('CFD Trading'),
-        ),
+        appBar: PreferredSize(
+            child: const AppBarWithBalance(balanceSelector: balanceSelector),
+            preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
         drawer: const Menu(),
         body: _pages.elementAt(cfdTradingService.selectedIndex),
         bottomNavigationBar: BottomNavigationBar(
