@@ -78,6 +78,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
     return Visibility(
       visible: ready,
       child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
         title: 'TenTenOne',
         theme: ThemeData(primarySwatch: Colors.orange),
         routerConfig: _router,
