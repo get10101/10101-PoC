@@ -1,11 +1,13 @@
 import 'package:f_logs/f_logs.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Divider;
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/balance.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/utilities/divider.dart';
 
 class OpenChannel extends StatefulWidget {
   const OpenChannel({Key? key}) : super(key: key);
@@ -34,7 +36,6 @@ class _OpenChannelState extends State<OpenChannel> {
 
   @override
   Widget build(BuildContext context) {
-    final bitcoinBalance = context.watch<BitcoinBalance>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Open Channel'),
@@ -44,57 +45,102 @@ class _OpenChannelState extends State<OpenChannel> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text("P2P Endpoint", style: TextStyle(color: Colors.grey)),
-              const SizedBox(
-                height: 5.0,
-              ),
-              Text(peerPubkeyAndIpAddr, style: const TextStyle(fontSize: 20)),
-              const SizedBox(
-                height: 10.0,
-              ),
-              const Text("Node Name", style: TextStyle(color: Colors.grey)),
-              const SizedBox(
-                height: 5.0,
-              ),
-              const SelectableText('10101', style: TextStyle(fontSize: 20)),
-              const SizedBox(
-                height: 10.0,
-              ),
-              const Text("Your Bitcoin Balance", style: TextStyle(color: Colors.grey)),
-              const SizedBox(
-                height: 5.0,
-              ),
-              SelectableText(bitcoinBalance.amount.asSats.toString(),
-                  style: const TextStyle(fontSize: 20)),
-              const SizedBox(
-                height: 10.0,
-              ),
-              const Text("Channel Amount", style: TextStyle(color: Colors.grey)),
-              // TODO: Form validation
-              TextFormField(
-                initialValue: takerChannelAmount.toString(),
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                ),
-                inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
-                onChanged: (text) {
-                  setState(() {
-                    takerChannelAmount =
-                        text != "" ? int.parse(text).clamp(0, OpenChannel.maxChannelAmount) : 0;
-                  });
-                },
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
+              Balance(balanceSelector: BalanceSelector.bitcoin),
+              SizedBox(height: 10),
+              Padding(
+                padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                child: Divider(),
               )
             ]),
+            const SizedBox(height: 10),
+            const Center(child: Icon(Icons.private_connectivity_outlined, size: 80)),
+            const SizedBox(height: 10),
+            ListTile(
+                leading: Container(
+                  width: 50,
+                  decoration:
+                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                  child: const Center(
+                      child: Text(
+                    "1",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  )),
+                ),
+                title: const Text("Fund your bitcoin wallet"),
+                subtitle: const Text(
+                    "In order to establish a Lightning channel between 10101 and you we need to lock some bitcoin on chain.",
+                    style: TextStyle(color: Colors.grey))),
+            const SizedBox(height: 15),
+            ListTile(
+                leading: Container(
+                  width: 50,
+                  decoration:
+                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                  child: const Center(
+                      child: Text(
+                    "2",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  )),
+                ),
+                title: const Text("Enter the channel amount"),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                        "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity.",
+                        style: TextStyle(color: Colors.grey)),
+                    TextFormField(
+                      initialValue: takerChannelAmount.toString(),
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        border: UnderlineInputBorder(),
+                      ),
+                      inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+                      onChanged: (text) {
+                        setState(() {
+                          takerChannelAmount = text != ""
+                              ? int.parse(text).clamp(0, OpenChannel.maxChannelAmount)
+                              : 0;
+                        });
+                      },
+                    )
+                  ],
+                )),
+            const SizedBox(height: 15),
+            ListTile(
+                leading: Container(
+                  width: 50,
+                  decoration:
+                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                  child: const Center(
+                      child: Text(
+                    "3",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  )),
+                ),
+                title: const Text("Select your maker"),
+                subtitle: const Text(
+                    "In this version you can only trade with 10101, but in the future you will be able to choose who to connect to.",
+                    style: TextStyle(color: Colors.grey))),
+            const SizedBox(height: 15),
+            ListTile(
+                leading: Container(
+                  width: 50,
+                  decoration:
+                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                  child: const Center(
+                      child: Text(
+                    "4",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  )),
+                ),
+                title: const Text("Ready!"),
+                subtitle: const Text(
+                    "Hit the 'Open Channel' button and the channel will be created in a few moments.",
+                    style: TextStyle(color: Colors.grey))),
+            const SizedBox(height: 15),
             const Spacer(),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 20.0),
-              child: Text(
-                  "Opening the channel will transfer the specified amount of your Bitcoin balance into a Lightning channel with 10101."
-                  "\n\n"
-                  "Once the channel is open you can trade with 10101 non-custodial over Lightning!"),
-            ),
             Container(
               alignment: Alignment.bottomRight,
               child: ElevatedButton(
