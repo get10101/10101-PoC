@@ -58,7 +58,6 @@ pub struct Cfd {
     pub open_price: f64,
     pub close_price: Option<f64>,
     pub liquidation_price: f64,
-    pub margin: f64,
 }
 
 impl Cfd {
@@ -133,11 +132,10 @@ pub async fn open(order: &Order) -> Result<()> {
 
     let created = time::OffsetDateTime::now_utc().unix_timestamp();
     let updated = time::OffsetDateTime::now_utc().unix_timestamp();
-    let margin_taker = margin_taker as i64;
     let query_result = sqlx::query!(
         r#"
-        INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price, margin)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
         custom_output_id,
         order.contract_symbol,
@@ -150,7 +148,6 @@ pub async fn open(order: &Order) -> Result<()> {
         expiry,
         order.open_price,
         liquidation_price,
-        margin_taker
     ).execute(&mut connection).await?;
 
     if query_result.rows_affected() != 1 {
@@ -263,7 +260,6 @@ mod tests {
             open_price: 15_587.625,
             close_price: None,
             liquidation_price: 10_000.0,
-            margin: 0.00319536,
         };
 
         let closing_price = 16_078.615;
