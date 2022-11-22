@@ -75,11 +75,22 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   @override
   Widget build(BuildContext context) {
+    const mainColor = Colors.orange;
+
     return Visibility(
       visible: ready,
       child: MaterialApp.router(
         title: 'TenTenOne',
-        theme: ThemeData(primarySwatch: Colors.orange),
+        theme: ThemeData(
+            primarySwatch: mainColor,
+            elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(foregroundColor: Colors.white)),
+            floatingActionButtonTheme: const FloatingActionButtonThemeData(
+              foregroundColor: Colors.white,
+            ),
+            appBarTheme: const AppBarTheme(
+              foregroundColor: Colors.white,
+            )),
         routerConfig: _router,
       ),
     );
