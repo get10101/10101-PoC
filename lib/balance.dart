@@ -21,7 +21,7 @@ class Balance extends StatelessWidget {
         var bitcoinBalanceWidget = BalanceRow(
             value: bitcoinBalanceDisplay.value,
             unit: bitcoinBalanceDisplay.unit,
-            icon: Icons.currency_bitcoin_outlined,
+            icon: Icons.link,
             smaller: balanceSelector == BalanceSelector.both);
         var lightningBalanceWidget = BalanceRow(
             value: lightningBalanceDisplay.value,

@@ -54,7 +54,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
           title: "Deposit Bitcoin",
           subtitle:
               "Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning",
-          icon: Icons.currency_bitcoin));
+          icon: Icons.link));
     }
 
     if (bitcoinBalance.amount.asSats != 0 && lightningBalance.amount.asSats == 0) {
