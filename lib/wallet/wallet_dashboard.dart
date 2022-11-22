@@ -12,8 +12,8 @@ import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 
-import '../menu.dart';
-import '../app_bar_with_balance.dart';
+import 'package:ten_ten_one/menu.dart';
+import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'action_card.dart';
 import 'open_channel.dart';
 
@@ -80,12 +80,14 @@ class _WalletDashboardState extends State<WalletDashboard> {
 
     const balanceSelector = BalanceSelector.both;
 
-    return Scaffold(
-      drawer: const Menu(),
-      appBar: PreferredSize(
-          child: const AppBarWithBalance(balanceSelector: balanceSelector),
-          preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
-      body: ListView(padding: const EdgeInsets.only(left: 20, right: 20), children: widgets),
+    return SafeArea(
+      child: Scaffold(
+        drawer: const Menu(),
+        appBar: PreferredSize(
+            child: const AppBarWithBalance(balanceSelector: balanceSelector),
+            preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
+        body: ListView(padding: const EdgeInsets.only(left: 20, right: 20), children: widgets),
+      ),
     );
   }
 }

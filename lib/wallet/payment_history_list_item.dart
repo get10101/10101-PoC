@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'dart:math' as math;
 
-import '../models/payment.model.dart';
+import 'package:ten_ten_one/models/payment.model.dart';
 
 @immutable
 class PaymentHistoryListItem extends StatelessWidget {
