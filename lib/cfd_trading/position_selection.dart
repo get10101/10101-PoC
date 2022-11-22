@@ -22,7 +22,7 @@ class _PositionSelectionState extends State<PositionSelection> {
     return Row(
       children: <Widget>[
         Expanded(child: buildButton("Buy / Long", Position.Long)),
-        const SizedBox(width: 15),
+        const SizedBox(width: 20),
         Expanded(child: buildButton("Sell / Short", Position.Short)),
       ],
     );
@@ -30,7 +30,7 @@ class _PositionSelectionState extends State<PositionSelection> {
 
   Widget buildButton(String text, Position position) {
     bool selected = value == position;
-    Color color = Position.Long == position ? Colors.green : Colors.red;
+    Color color = Position.Long == position ? Colors.green.shade800 : Colors.red.shade800;
 
     return OutlinedButton(
         onPressed: () {
@@ -46,8 +46,8 @@ class _PositionSelectionState extends State<PositionSelection> {
             side: BorderSide(width: 1.0, color: color),
             backgroundColor: selected
                 ? Position.Long == position
-                    ? Colors.green
-                    : Colors.red
+                    ? Colors.green.shade800
+                    : Colors.red.shade800
                 : Colors.white));
   }
 }
