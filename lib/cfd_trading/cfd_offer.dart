@@ -121,12 +121,12 @@ class _CfdOfferState extends State<CfdOffer> {
           Container(
             margin: const EdgeInsets.only(top: 25),
             child: TtoTable([
-              TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-              TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
               TtoRow(
                   label: 'Liquidation Price',
                   value: liquidationPrice.toString(),
                   type: ValueType.usd),
+              TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+              TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
             ]),
           )
         ])
