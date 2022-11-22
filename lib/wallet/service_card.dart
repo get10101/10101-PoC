@@ -10,14 +10,17 @@ class ServiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
         child: Card(
-      elevation: 5,
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      elevation: 4,
+      color: Theme.of(context).colorScheme.primary,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
-      ),
+          borderRadius: BorderRadius.circular(15.0),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1,
+          )),
       child: SizedBox(
-        width: 100,
-        height: 100,
+        width: 80,
+        height: 80,
         child: Center(
             child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -25,11 +28,17 @@ class ServiceCard extends StatelessWidget {
           children: [
             Icon(
               service.icon,
-              color: Colors.black,
-              size: 60.0,
+              color: Colors.white,
+              size: 30.0,
               semanticLabel: 'Text to announce in accessibility modes',
             ),
-            Text(service.label)
+            SizedBox(
+                width: 60,
+                child: Text(
+                  service.label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white),
+                ))
           ],
         )),
       ),
