@@ -3,6 +3,7 @@ use maker::bitmex;
 use maker::cli::Opts;
 use maker::logger;
 use maker::routes;
+use maker::routes::SpreadPrice;
 use std::time::Duration;
 use ten_ten_one::db;
 use ten_ten_one::wallet;
@@ -67,9 +68,12 @@ async fn main() -> Result<()> {
                 routes::get_new_invoice,
                 routes::get_wallet_details,
                 routes::get_channel_details,
+                routes::get_spread,
+                routes::put_spread,
             ],
         )
         .manage(quote_receiver)
+        .manage(SpreadPrice::new(15))
         .launch()
         .await?;
 

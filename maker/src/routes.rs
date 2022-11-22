@@ -9,7 +9,8 @@ use rocket::serde::Deserialize;
 use rocket::serde::Serialize;
 use rocket::State;
 use rust_decimal::Decimal;
-use rust_decimal_macros::dec;
+use std::sync::atomic::AtomicI32;
+use std::sync::atomic::Ordering;
 use ten_ten_one::wallet::create_invoice;
 use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
@@ -36,12 +37,17 @@ pub struct Offer {
 #[rocket::get("/offer")]
 pub async fn get_offer(
     rx_quote_receiver: &State<watch::Receiver<Option<Quote>>>,
+    spread_state: &State<SpreadPrice>,
 ) -> Result<Json<Offer>, HttpApiProblem> {
     let rx_quote_receiver = rx_quote_receiver.inner().clone();
     let quote = *rx_quote_receiver.borrow();
 
-    // TODO: take spread from clap
-    let spread = dec!(0.015);
+    let spread: f32 = spread_state.inner().load();
+    let spread = Decimal::try_from(spread).map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to parse spread")
+            .detail(format!("Failed to parse spread from state: {e:#}"))
+    })?;
 
     match quote {
         Some(quote) => Ok(Json(Offer {
@@ -56,6 +62,36 @@ pub async fn get_offer(
             .title("No quotes found")
             .detail(e.to_string())
     })
+}
+// TODO: changing the spread via an api has been added for demo purposes, remove when not needed
+// anymore
+pub struct SpreadPrice(AtomicI32);
+
+impl SpreadPrice {
+    pub fn new(spread: i32) -> SpreadPrice {
+        SpreadPrice(AtomicI32::new(spread))
+    }
+    pub fn load(&self) -> f32 {
+        let spread = self.0.load(Ordering::Relaxed);
+        (spread as f32) / 1000.0
+    }
+    pub fn store(&self, spread: i32) {
+        self.0.store(spread, Ordering::Relaxed);
+    }
+}
+
+#[rocket::put("/spread/<spread>")]
+pub async fn put_spread(
+    spread_state: &State<SpreadPrice>,
+    spread: i32,
+) -> Result<(), HttpApiProblem> {
+    spread_state.inner().store(spread);
+    Ok(())
+}
+
+#[rocket::get("/spread")]
+pub async fn get_spread(spread_state: &State<SpreadPrice>) -> Result<Json<f32>, HttpApiProblem> {
+    Ok(Json(spread_state.inner().load()))
 }
 
 #[derive(Serialize)]
