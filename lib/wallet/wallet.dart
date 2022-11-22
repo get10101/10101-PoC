@@ -40,7 +40,7 @@ class _WalletState extends State<Wallet> {
               label: 'Lightning',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.currency_bitcoin),
+              icon: Icon(Icons.link),
               label: 'Bitcoin',
             ),
           ],
