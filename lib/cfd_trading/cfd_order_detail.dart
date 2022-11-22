@@ -45,7 +45,9 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
+    final formatter = NumberFormat();
+    formatter.minimumFractionDigits = 2;
+    formatter.maximumFractionDigits = 2;
 
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
 

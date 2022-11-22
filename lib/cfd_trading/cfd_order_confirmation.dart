@@ -50,7 +50,9 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
+    final formatter = NumberFormat();
+    formatter.minimumFractionDigits = 2;
+    formatter.maximumFractionDigits = 2;
 
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();

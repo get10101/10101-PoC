@@ -29,7 +29,9 @@ class _CfdOfferState extends State<CfdOffer> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
+    final formatter = NumberFormat();
+    formatter.minimumFractionDigits = 2;
+    formatter.maximumFractionDigits = 2;
 
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
