@@ -35,7 +35,8 @@ class _CfdOverviewState extends State<CfdOverview> {
     ];
     widgets.addAll(cfds
         .where((cfd) => [CfdState.Open].contains(cfd.state))
-        .map((cfd) => CfdTradeItem(cfd: cfd, closingPrice: offer.index))
+        .map((cfd) => CfdTradeItem(
+            cfd: cfd, closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask))
         .toList());
 
     widgets.add(ExpansionTile(
