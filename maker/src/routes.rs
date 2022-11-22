@@ -10,11 +10,11 @@ use rocket::serde::Serialize;
 use rocket::State;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+use ten_ten_one::wallet::create_invoice;
 use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
 use ten_ten_one::wallet::get_balance;
 use ten_ten_one::wallet::get_channel_manager;
-use ten_ten_one::wallet::get_invoice;
 use ten_ten_one::wallet::get_node_id;
 use ten_ten_one::wallet::send_lightning_payment;
 use ten_ten_one::wallet::send_to_address;
@@ -133,9 +133,9 @@ pub async fn post_pay_invoice(invoice: String) -> Result<(), HttpApiProblem> {
 }
 
 #[rocket::get("/invoice/create")]
-pub async fn get_new_invoice() -> Result<(), HttpApiProblem> {
+pub async fn get_new_invoice() -> Result<String, HttpApiProblem> {
     // FIXME: Hard-code the parameters for testing
-    get_invoice(10000, 6000).map_err(|e| {
+    create_invoice(10000, 6000, "maker's invoice".to_string()).map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed to create lightning invoice")
             .detail(format!("{e:#}"))
