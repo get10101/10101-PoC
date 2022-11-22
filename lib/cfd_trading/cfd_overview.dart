@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
@@ -9,7 +8,6 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/order.dart';
-import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -29,10 +27,7 @@ class _CfdOverviewState extends State<CfdOverview> {
     final cfds = cfdTradingChangeNotifier.cfds;
     cfds.sort((a, b) => b.updated.compareTo(a.updated));
 
-    List<Widget> widgets = [
-      const Balance(balanceSelector: BalanceSelector.lightning),
-      const Divider()
-    ];
+    List<Widget> widgets = [];
     widgets.addAll(cfds
         .where((cfd) => [CfdState.Open].contains(cfd.state))
         .map((cfd) => CfdTradeItem(cfd: cfd, closingPrice: offer.index))

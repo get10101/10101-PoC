@@ -43,10 +43,7 @@ class Balance extends StatelessWidget {
             break;
         }
 
-        return Container(
-          margin: const EdgeInsets.only(top: 15),
-          child: balanceWidgets,
-        );
+        return balanceWidgets;
       },
     );
   }

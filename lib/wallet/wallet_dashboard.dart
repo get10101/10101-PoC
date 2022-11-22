@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide Divider;
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
@@ -11,8 +11,9 @@ import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
-import 'package:ten_ten_one/utilities/divider.dart';
 
+import '../menu.dart';
+import '../app_bar_with_balance.dart';
 import 'open_channel.dart';
 
 class WalletDashboard extends StatefulWidget {
@@ -36,10 +37,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
     final paymentHistory = context.watch<PaymentHistory>();
 
     List<Widget> widgets = [
-      const Balance(balanceSelector: BalanceSelector.both),
-      const Divider(),
       const ServiceNavigation(),
-      const Divider()
     ];
 
     if (!seedBackupModel.backup) {
@@ -66,8 +64,13 @@ class _WalletDashboardState extends State<WalletDashboard> {
 
     widgets.add(paymentHistoryList);
 
+    const balanceSelector = BalanceSelector.both;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      drawer: const Menu(),
+      appBar: PreferredSize(
+          child: const AppBarWithBalance(balanceSelector: balanceSelector),
+          preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
     );
   }
