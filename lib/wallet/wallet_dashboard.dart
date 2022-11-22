@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
@@ -103,10 +102,21 @@ class ServiceNavigation extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         children: [
           GestureDetector(
-            onTap: () => {GoRouter.of(context).go(CfdTrading.route)},
+            onTap: () => {GoRouter.of(context).go(Service.cfd.route)},
             child: const ServiceCard(Service.cfd),
           ),
-          const ServiceCard(Service.sportsbet),
+          GestureDetector(
+            onTap: () => {GoRouter.of(context).go(Service.sportsbet.route)},
+            child: const ServiceCard(Service.sportsbet),
+          ),
+          GestureDetector(
+            onTap: () => {GoRouter.of(context).go(Service.exchange.route)},
+            child: const ServiceCard(Service.exchange),
+          ),
+          GestureDetector(
+            onTap: () => {GoRouter.of(context).go(Service.savings.route)},
+            child: const ServiceCard(Service.savings),
+          ),
         ],
       ),
     );

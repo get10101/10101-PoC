@@ -12,7 +12,9 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/payment.model.dart';
+import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
+import 'package:ten_ten_one/service_placeholders.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -161,6 +163,31 @@ class _TenTenOneState extends State<TenTenOneApp> {
               },
             ),
           ]),
+      GoRoute(
+        path: Service.savings.route,
+        builder: (BuildContext context, GoRouterState state) {
+          return const ServicePlaceholder(
+              service: Service.savings, description: "We bring stacking to Bitcoin!");
+        },
+      ),
+      GoRoute(
+        path: Service.exchange.route,
+        builder: (BuildContext context, GoRouterState state) {
+          return const ServicePlaceholder(
+              service: Service.exchange,
+              description:
+                  "Have you heard of Taro? We sure did - and yes, we are planning to build a non custodial exchange using Taro!");
+        },
+      ),
+      GoRoute(
+        path: Service.sportsbet.route,
+        builder: (BuildContext context, GoRouterState state) {
+          return const ServicePlaceholder(
+              service: Service.sportsbet,
+              description:
+                  "Pick your favourite team and place a bet! Binary sports-bets are in the works - more complex bets to come - soon!");
+        },
+      ),
     ],
   );
 
