@@ -61,7 +61,19 @@ class TtoTable extends StatelessWidget {
         ));
         break;
       case ValueType.usd:
-        valueChild = Text(row.value + ' \$', style: const TextStyle(fontSize: fontSize));
+        // valueChild = Text(row.value + ' \$', style: const TextStyle(fontSize: fontSize));
+        valueChild = Text.rich(TextSpan(
+          style: const TextStyle(fontSize: fontSize, wordSpacing: 10),
+          children: [
+            TextSpan(
+              text: row.value,
+              style: const TextStyle(color: Colors.black, fontSize: fontSize),
+            ),
+            const WidgetSpan(child: SizedBox(width: 3)), // space between text and icons
+            const WidgetSpan(child: Text('\$', style: TextStyle(fontSize: fontSize),)),
+            const WidgetSpan(child: SizedBox(width: 6)), // space between text and icons
+          ],
+        ));
         break;
       case ValueType.text:
         valueChild = Text(row.value, style: const TextStyle(fontSize: fontSize));
