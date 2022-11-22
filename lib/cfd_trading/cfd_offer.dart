@@ -138,7 +138,6 @@ class _CfdOfferState extends State<CfdOffer> {
             extra: CfdOrderConfirmationArgs(order, channelError),
           );
         },
-        backgroundColor: Colors.orange,
         child: const Icon(Icons.shopping_cart_checkout),
       ),
       bottomSheet: channelError != null ? ValidationError(channelError: channelError) : null,

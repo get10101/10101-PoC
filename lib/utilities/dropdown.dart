@@ -24,10 +24,7 @@ class _DropdownState extends State<Dropdown> {
       value: dropdownValue,
       elevation: 16,
       style: const TextStyle(color: Colors.black),
-      underline: Container(
-        height: 2,
-        color: Colors.orange,
-      ),
+      underline: Container(height: 2, color: Theme.of(context).colorScheme.primary),
       onChanged: (String? value) {
         if (widget.onChange != null) {
           widget.onChange!(value);

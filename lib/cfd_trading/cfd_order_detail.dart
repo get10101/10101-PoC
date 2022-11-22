@@ -103,10 +103,10 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                             const TextStyle(fontSize: 24, color: Colors.black, letterSpacing: 2)),
                     labelPadding: const EdgeInsets.only(left: 30, right: 30, top: 5, bottom: 5),
                     backgroundColor: Colors.white,
-                    shape: const StadiumBorder(
+                    shape: StadiumBorder(
                         side: BorderSide(
                       width: 1,
-                      color: Colors.orange,
+                      color: Theme.of(context).colorScheme.primary,
                     ))),
                 const SizedBox(height: 35),
                 Expanded(
@@ -125,7 +125,8 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                                 });
                               },
                               style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(width: 1.0, color: Colors.orange),
+                                  side: BorderSide(
+                                      width: 1.0, color: Theme.of(context).colorScheme.primary),
                                   backgroundColor: Colors.white),
                               child: const Text('Cancel'))),
                       Expanded(

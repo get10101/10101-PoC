@@ -54,8 +54,6 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
         icon: Icons.import_export,
         iconTheme: const IconThemeData(size: 35),
         activeIcon: Icons.close,
-        backgroundColor: Colors.orange[800],
-        foregroundColor: Colors.white,
         activeBackgroundColor: Colors.grey,
         activeForegroundColor: Colors.white,
         buttonSize: const Size(56.0, 56.0),
@@ -69,16 +67,12 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
         children: [
           SpeedDialChild(
             child: const Icon(Icons.download_sharp),
-            backgroundColor: Colors.orange[600],
-            foregroundColor: Colors.white,
             label: 'Receive',
             labelStyle: const TextStyle(fontSize: 18.0),
             onTap: () => GoRouter.of(context).go(ReceiveOnChain.route),
           ),
           SpeedDialChild(
             child: const Icon(Icons.upload_sharp),
-            backgroundColor: Colors.orange[600],
-            foregroundColor: Colors.white,
             label: 'Send',
             labelStyle: const TextStyle(fontSize: 18.0),
             onTap: () => GoRouter.of(context).go(SendOnChain.route),
