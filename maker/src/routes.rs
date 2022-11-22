@@ -45,8 +45,8 @@ pub async fn get_offer(
 
     match quote {
         Some(quote) => Ok(Json(Offer {
-            bid: (quote.ask * (Decimal::ONE + spread)),
-            ask: (quote.bid * (Decimal::ONE - spread)),
+            bid: (quote.bid * (Decimal::ONE - spread)),
+            ask: (quote.ask * (Decimal::ONE + spread)),
             index: quote.index,
         })),
         None => Err("No quotes found"),
