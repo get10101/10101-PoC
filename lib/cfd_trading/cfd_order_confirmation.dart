@@ -78,18 +78,36 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
             padding: const EdgeInsets.all(20.0),
             child: Column(children: [
               Center(
-                  child: Text(contractSymbol,
-                      style: const TextStyle(
-                          fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600))),
+                  child: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Column(
+                        children: [
+                          Text(quantity + ' ' + contractSymbol,
+                              style: const TextStyle(
+                                  fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600)),
+                          const Text('@',
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 20,
+                                  letterSpacing: 1,
+                                  fontWeight: FontWeight.w600)),
+                          Text('\$' + openPrice,
+                              style: const TextStyle(
+                                  fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600))
+                        ],
+                      ))),
               const SizedBox(height: 25),
               Expanded(
                 child: TtoTable([
-                  TtoRow(label: 'Position', value: order.position.name, type: ValueType.text),
-                  TtoRow(label: 'Quantity', value: quantity, type: ValueType.text),
-                  TtoRow(label: 'Leverage', value: order.leverage.toString(), type: ValueType.text),
-                  TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
+                  TtoRow(
+                      label: 'Position',
+                      value: 'x' + order.leverage.toString() + ' ' + order.position.name,
+                      type: ValueType.text),
+                  // TtoRow(label: 'Quantity', value: quantity, type: ValueType.text),
+                  // TtoRow(label: 'Leverage', value: order.leverage.toString(), type: ValueType.text),
                   TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                  TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+                  // TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+                  TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
                   TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi),
                   TtoRow(label: 'Expiry', value: expiry, type: ValueType.date)
                 ]),
