@@ -29,7 +29,9 @@ class _CfdOfferState extends State<CfdOffer> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
+    final formatter = NumberFormat();
+    formatter.minimumFractionDigits = 2;
+    formatter.maximumFractionDigits = 2;
 
     final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
@@ -121,12 +123,12 @@ class _CfdOfferState extends State<CfdOffer> {
           Container(
             margin: const EdgeInsets.only(top: 25),
             child: TtoTable([
-              TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-              TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
               TtoRow(
                   label: 'Liquidation Price',
                   value: liquidationPrice.toString(),
                   type: ValueType.usd),
+              TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+              TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
             ]),
           )
         ])

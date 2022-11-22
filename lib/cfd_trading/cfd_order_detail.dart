@@ -45,7 +45,9 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
+    final formatter = NumberFormat();
+    formatter.minimumFractionDigits = 2;
+    formatter.maximumFractionDigits = 2;
 
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
 
@@ -53,17 +55,19 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
     Cfd cfd = widget.cfd!;
+    Order order = cfd.getOrder();
 
     final openPrice = formatter.format(cfd.openPrice);
     final liquidationPrice = formatter.format(cfd.liquidationPrice);
-    final margin = Amount.fromBtc(cfd.margin).display(currency: Currency.sat).value;
+    final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
     final estimatedFees = Amount(txFee).display(currency: Currency.sat).value;
 
-    final pnl = cfd
-        .getOrder()
-        .calculateProfitTaker(closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
+    final closingPrice = cfd.position == Position.Long ? offer.bid : offer.ask;
+    final pnl = order.calculateProfitTaker(closingPrice: closingPrice);
 
-    final unrealizedPL = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
+    final closingPriceAsString = formatter.format(closingPrice);
+
+    final pnlFmt = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
 
     final expiry =
         DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry * 1000));
@@ -73,19 +77,24 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
 
     var rows = [
-      TtoRow(label: 'Position', value: cfd.position.name, type: ValueType.satoshi),
-      TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
-      TtoRow(label: 'Unrealized P/L', value: unrealizedPL, type: ValueType.satoshi),
+      TtoRow(
+          label: 'Position',
+          value: 'x' + order.leverage.toString() + ' ' + order.position.name,
+          type: ValueType.text),
       TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-      TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
+      TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+      TtoRow(label: 'Current Price', value: closingPriceAsString, type: ValueType.usd),
+      TtoRow(
+          label: CfdState.Closed == cfd.state ? 'P/L' : 'Unrealized P/L',
+          value: pnlFmt,
+          type: ValueType.satoshi),
       TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
-      TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
       TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi),
+      TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
     ];
-
     final double? closePrice = cfd.closePrice;
     if (closePrice != null) {
-      rows.insert(2,
+      rows.insert(6,
           TtoRow(label: 'Closing Price', value: formatter.format(closePrice), type: ValueType.usd));
     }
 
@@ -95,12 +104,21 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
           child: Container(
               padding: const EdgeInsets.all(20.0),
               child: Column(children: [
-                Center(child: Text(contractSymbol, style: const TextStyle(fontSize: 24))),
-                const SizedBox(height: 35),
+                Center(
+                    child: Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Column(
+                          children: [
+                            Text(quantity + ' ' + contractSymbol,
+                                style: const TextStyle(
+                                    fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600)),
+                          ],
+                        ))),
+                const SizedBox(height: 25),
                 Chip(
                     label: Text(cfd.state.name,
                         style:
-                            const TextStyle(fontSize: 24, color: Colors.black, letterSpacing: 2)),
+                            const TextStyle(fontSize: 20, color: Colors.black, letterSpacing: 2)),
                     labelPadding: const EdgeInsets.only(left: 30, right: 30, top: 5, bottom: 5),
                     backgroundColor: Colors.white,
                     shape: StadiumBorder(
@@ -108,9 +126,28 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                       width: 1,
                       color: Theme.of(context).colorScheme.primary,
                     ))),
-                const SizedBox(height: 35),
+                const SizedBox(height: 25),
                 Expanded(
                   child: TtoTable(rows),
+                ),
+                Center(
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
+                      child: ListTile(
+                          leading: Icon(Icons.info, color: Theme.of(context).colorScheme.primary),
+                          title: Text(
+                              'Clicking \'Settle\' will close this position at \$$closingPriceAsString. Would you like to proceed?',
+                              style: const TextStyle(fontSize: 16))),
+                    ),
+                  ),
                 ),
                 Container(
                   margin: const EdgeInsets.fromLTRB(0, 0, 0, 30),

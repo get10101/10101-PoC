@@ -50,7 +50,9 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('en');
+    final formatter = NumberFormat();
+    formatter.minimumFractionDigits = 2;
+    formatter.maximumFractionDigits = 2;
 
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
@@ -75,24 +77,61 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
           child: Container(
             padding: const EdgeInsets.all(20.0),
             child: Column(children: [
-              Center(child: Text(contractSymbol, style: const TextStyle(fontSize: 16))),
+              Center(
+                  child: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Column(
+                        children: [
+                          Text(quantity + ' ' + contractSymbol,
+                              style: const TextStyle(
+                                  fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600)),
+                          const Text('@',
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 20,
+                                  letterSpacing: 1,
+                                  fontWeight: FontWeight.w600)),
+                          Text('\$' + openPrice,
+                              style: const TextStyle(
+                                  fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600))
+                        ],
+                      ))),
               const SizedBox(height: 25),
-              TtoTable([
-                TtoRow(
-                    label: 'Position',
-                    value: order.position == Position.Long ? 'Long' : 'Short',
-                    type: ValueType.satoshi),
-                TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
-                TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                TtoRow(label: 'Expiry', value: expiry, type: ValueType.satoshi),
-                TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
-                TtoRow(label: 'Quantity', value: quantity, type: ValueType.satoshi),
-                TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi)
-              ]),
-              const SizedBox(height: 20),
-              Text(
-                  'This will open a position and lock up $margin Satoshi in a channel. Would you like to proceed?',
-                  style: const TextStyle(fontSize: 20)),
+              Expanded(
+                child: TtoTable([
+                  TtoRow(
+                      label: 'Position',
+                      value: 'x' + order.leverage.toString() + ' ' + order.position.name,
+                      type: ValueType.text),
+                  // TtoRow(label: 'Quantity', value: quantity, type: ValueType.text),
+                  // TtoRow(label: 'Leverage', value: order.leverage.toString(), type: ValueType.text),
+                  TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+                  // TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+                  TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
+                  TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi),
+                  TtoRow(label: 'Expiry', value: expiry, type: ValueType.date)
+                ]),
+              ),
+              Center(
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
+                    child: ListTile(
+                        leading: Icon(Icons.info, color: Theme.of(context).colorScheme.primary),
+                        title: Text(
+                            'This will open a position and lock up $margin sats in the channel. Would you like to proceed?',
+                            style: const TextStyle(fontSize: 16))),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 50),
             ]),
           ),
         ),
