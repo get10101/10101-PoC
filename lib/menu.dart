@@ -50,13 +50,15 @@ class Menu extends StatelessWidget {
                 title: Text(Service.cfd.label),
                 leading: Icon(Service.cfd.icon),
                 onTap: () {
-                  GoRouter.of(context).go("/cfd-trading");
+                  GoRouter.of(context).go(Service.cfd.route);
                 },
               ),
               ListTile(
                 title: Text(Service.exchange.label),
                 leading: Icon(Service.exchange.icon),
-                onTap: () {},
+                onTap: () {
+                  GoRouter.of(context).go(Service.exchange.route);
+                },
               ),
             ],
           ),
@@ -68,7 +70,9 @@ class Menu extends StatelessWidget {
               ListTile(
                 title: Text(Service.sportsbet.label),
                 leading: Icon(Service.sportsbet.icon),
-                onTap: () {},
+                onTap: () {
+                  GoRouter.of(context).go(Service.sportsbet.route);
+                },
               ),
             ],
           ),
@@ -80,7 +84,9 @@ class Menu extends StatelessWidget {
               ListTile(
                 title: Text(Service.savings.label),
                 leading: Icon(Service.savings.icon),
-                onTap: () {},
+                onTap: () {
+                  GoRouter.of(context).go(Service.savings.route);
+                },
               ),
             ],
           ),

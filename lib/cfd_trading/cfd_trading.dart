@@ -7,9 +7,10 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
+import '../models/service_model.dart';
 
 class CfdTrading extends StatefulWidget {
-  static const route = '/cfd-trading';
+  static final route = Service.cfd.route;
 
   const CfdTrading({Key? key}) : super(key: key);
 

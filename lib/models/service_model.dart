@@ -41,8 +41,15 @@ extension ServiceExtension on Service {
     Service.exchange: Icons.currency_exchange,
     Service.savings: Icons.savings
   };
+  static const routes = {
+    Service.cfd: "/cfd-trading",
+    Service.sportsbet: "/sports-bet",
+    Service.exchange: "/exchange",
+    Service.savings: "/savings"
+  };
 
   String get label => labels[this]!;
   String get shortLabel => shortLabels[this]!;
   IconData get icon => icons[this]!;
+  String get route => routes[this]!;
 }
