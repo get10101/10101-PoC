@@ -221,17 +221,17 @@ impl Order {
         ))
     }
 
-    /// Calculate the maker's margin in BTC.
-    pub(crate) fn margin_maker(&self) -> f64 {
-        Self::calculate_margin(self.open_price, self.quantity, 1)
-    }
-
     /// Calculate the total margin in BTC.
     pub(crate) fn margin_total(&self) -> f64 {
         let margin_taker = self.margin_taker().0;
         let margin_maker = self.margin_maker();
 
         margin_taker + margin_maker
+    }
+
+    /// Calculate the maker's margin in BTC.
+    fn margin_maker(&self) -> f64 {
+        Self::calculate_margin(self.open_price, self.quantity, 1)
     }
 
     /// Calculate the margin in BTC.
@@ -287,13 +287,14 @@ impl Order {
         let payout = self.calculate_payout_at_price(closing_price)?;
         let pnl = payout - margin;
 
-        tracing::debug!(%payout, %payout, %margin,"Calculated taker's PnLPayout");
+        tracing::debug!(%pnl, %payout, %margin,"Calculated taker's PnL");
 
         Ok(SyncReturn(pnl))
     }
 
     pub(crate) fn calculate_payout_at_price(&self, closing_price: f64) -> Result<f64> {
-        let uncapped_payout = {
+        let margin = self.margin_taker().0;
+        let uncapped_pnl_long = {
             let opening_price = Decimal::try_from(self.open_price)?;
             let closing_price = Decimal::try_from(closing_price)?;
             let quantity = Decimal::from(self.quantity);
@@ -305,7 +306,14 @@ impl Order {
                 .to_f64()
                 .context("Could not convert Decimal to f64")?
         };
-        let payout = uncapped_payout.min(self.margin_total());
+
+        let payout = match self.position {
+            Position::Long => margin + uncapped_pnl_long,
+            Position::Short => margin - uncapped_pnl_long,
+        };
+
+        let payout = payout.max(0.0);
+        let payout = payout.min(self.margin_total());
 
         Ok(payout)
     }

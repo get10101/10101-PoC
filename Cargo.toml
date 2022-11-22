@@ -4,10 +4,10 @@ resolver = "2"
 
 [patch.crates-io]
 bdk-ldk = { git = "https://github.com/itchysats/bdk-ldk", rev = "07dc94dcaa466d9bece8636a538757c97fe3663c" } # unreleased
-lightning = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
-lightning-background-processor = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
-lightning-block-sync = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
-lightning-invoice = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
-lightning-net-tokio = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
-lightning-persister = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
-lightning-rapid-gossip-sync = { git = "https://github.com/itchysats/rust-lightning", rev = "a4c164979300b403966bc4185a98327ebd61d294" }
+lightning = { git = "https://github.com/itchysats/rust-lightning", rev = "82ce43637d0180b4d98d4aab1e272bfac81d1b57" }
+lightning-background-processor = { git = "https://github.com/itchysats/rust-lightning", rev = "82ce43637d0180b4d98d4aab1e272bfac81d1b57" }
+lightning-block-sync = { git = "https://github.com/itchysats/rust-lightning", rev = "82ce43637d0180b4d98d4aab1e272bfac81d1b57" }
+lightning-invoice = { git = "https://github.com/itchysats/rust-lightning", rev = "82ce43637d0180b4d98d4aab1e272bfac81d1b57" }
+lightning-net-tokio = { git = "https://github.com/itchysats/rust-lightning", rev = "82ce43637d0180b4d98d4aab1e272bfac81d1b57" }
+lightning-persister = { git = "https://github.com/itchysats/rust-lightning", rev = "82ce43637d0180b4d98d4aab1e272bfac81d1b57" }
+lightning-rapid-gossip-sync = { git = "https://github.com/itchysats/rust-lightning", rev = "82ce43637d0180b4d98d4aab1e272bfac81d1b57" }

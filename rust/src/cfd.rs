@@ -84,7 +84,6 @@ pub async fn open(order: &Order) -> Result<()> {
     let margin_taker_as_btc = order.margin_taker().0;
     // Convert to msats
     let margin_taker = (margin_taker_as_btc * 100_000_000.0 * 1000.0) as u64;
-    // TODO: is this correct? why do we multiply the leverage for the maker margin?
     let margin_maker = margin_taker * order.leverage as u64;
 
     tracing::info!(
@@ -163,32 +162,36 @@ pub async fn open(order: &Order) -> Result<()> {
     Ok(())
 }
 
-pub async fn settle(cfd: &Cfd, offer: &Offer) -> Result<()> {
+fn taker_payout_sats(cfd: &Cfd, closing_price: f64) -> Result<Decimal> {
     // TODO: need to derive an order from the cfd as dependent functions are only available on the
     // order eventually the order should probably be included in the cfd.
     let order = cfd.derive_order();
 
-    let total_margin_sats = Decimal::try_from(order.margin_total())? * Decimal::from(100_000_000);
-    let taker_margin_sats = Decimal::try_from(order.margin_taker().0)? * Decimal::from(100_000_000);
+    let taker_payout_btc = order.calculate_payout_at_price(closing_price)?;
+    let taker_payout_sats =
+        Decimal::try_from(taker_payout_btc * 100_000_000.0).expect("payout to fit in Decimal");
+    let taker_payout_sats = taker_payout_sats
+        .round_dp_with_strategy(0, rust_decimal::RoundingStrategy::MidpointAwayFromZero);
 
-    let price = match order.position {
+    Ok(taker_payout_sats)
+}
+
+pub async fn settle(cfd: &Cfd, offer: &Offer) -> Result<()> {
+    let closing_price = match cfd.position {
         Position::Long => offer.bid,
         Position::Short => offer.ask,
     };
 
-    let taker_pnl_btc = Decimal::try_from(order.calculate_profit_taker(price)?.0)?;
-    let taker_pnl_sats = taker_pnl_btc * Decimal::from(100_000_000);
-
-    // the taker's losses are capped by the margin they put up when opening the CFD
-    let taker_payout_sats = (taker_margin_sats + taker_pnl_sats).max(Decimal::ZERO);
-    let taker_payout_sats = taker_payout_sats
-        .round_dp_with_strategy(0, rust_decimal::RoundingStrategy::MidpointAwayFromZero);
-
-    let maker_payout_sats = total_margin_sats - taker_payout_sats;
+    let taker_payout_sats = taker_payout_sats(cfd, closing_price)?;
 
     tracing::info!(
-        %taker_payout_sats, %maker_payout_sats, "Settling CFD"
+        %taker_payout_sats, "Settling CFD"
     );
+
+    let taker_payout_msats = taker_payout_sats * Decimal::from(1000);
+    let taker_payout_msats = taker_payout_msats
+        .to_u64()
+        .expect("decimal to fit into u64");
 
     let channel_manager = wallet::get_channel_manager()?;
 
@@ -199,18 +202,8 @@ pub async fn settle(cfd: &Cfd, offer: &Offer) -> Result<()> {
 
     let custom_output_id = CustomOutputId(custom_output_id);
 
-    let taker_payout_msats = taker_payout_sats * Decimal::from(1000);
-    let taker_payout_msats = taker_payout_msats
-        .to_u64()
-        .expect("decimal to fit into u64");
-
-    let maker_payout_msats = maker_payout_sats * Decimal::from(1000);
-    let maker_payout_msats = maker_payout_msats
-        .to_u64()
-        .expect("decimal to fit into u64");
-
     channel_manager
-        .remove_custom_output(custom_output_id, taker_payout_msats, maker_payout_msats)
+        .remove_custom_output(custom_output_id, taker_payout_msats)
         .map_err(|e| anyhow!("Failed to settle CFD: {e:?}"))?;
 
     // TODO: We shouldn't just assume that removing the custom output
@@ -232,7 +225,7 @@ pub async fn settle(cfd: &Cfd, offer: &Offer) -> Result<()> {
         "#,
         2,
         updated,
-        price,
+        closing_price,
         cfd.custom_output_id,
     )
     .execute(&mut connection)
@@ -248,4 +241,35 @@ pub async fn settle(cfd: &Cfd, offer: &Offer) -> Result<()> {
     tracing::info!("CFD settled");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_settlement() {
+        let cfd = &Cfd {
+            id: 0,
+            custom_output_id: "".to_owned(),
+            contract_symbol: ContractSymbol::BtcUsd,
+            position: Position::Long,
+            leverage: 2,
+            updated: 0,
+            created: 0,
+            state: CfdState::Open,
+            quantity: 100,
+            expiry: 1000,
+            open_price: 15_587.625,
+            close_price: None,
+            liquidation_price: 10_000.0,
+            margin: 0.00319536,
+        };
+
+        let closing_price = 16_078.615;
+
+        let payout = taker_payout_sats(cfd, closing_price).unwrap();
+
+        dbg!(payout);
+    }
 }
