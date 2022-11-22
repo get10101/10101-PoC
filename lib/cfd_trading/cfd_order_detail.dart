@@ -81,8 +81,9 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
           label: 'Position',
           value: 'x' + order.leverage.toString() + ' ' + order.position.name,
           type: ValueType.text),
-      TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
       TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+      TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+      TtoRow(label: 'Current Price', value: closingPriceAsString, type: ValueType.usd),
       TtoRow(
           label: CfdState.Closed == cfd.state ? 'P/L' : 'Unrealized P/L',
           value: pnlFmt,
