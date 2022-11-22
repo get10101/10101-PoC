@@ -60,7 +60,7 @@ class _CfdTradingState extends State<CfdTrading> {
             ),
           ],
           currentIndex: cfdTradingService.selectedIndex,
-          selectedItemColor: Colors.orange,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
           onTap: (index) {
             setState(() {
               // setting the selected index should be sufficient but for some reason
