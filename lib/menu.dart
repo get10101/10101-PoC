@@ -27,9 +27,9 @@ class Menu extends StatelessWidget {
                   child: SvgPicture.asset("assets/10101_logo.svg"),
                 ),
                 const Text("One-Stop ⚡️ Wallet", style: TextStyle(fontSize: 16)),
-                const Text(
+                Text(
                   "Trading, Bets & More",
-                  style: TextStyle(fontSize: 14, color: Colors.orange),
+                  style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.primary),
                 )
               ],
             ),

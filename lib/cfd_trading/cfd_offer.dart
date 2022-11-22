@@ -1,9 +1,8 @@
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
-import 'package:flutter/material.dart' hide Divider;
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
@@ -12,7 +11,6 @@ import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
-import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -73,8 +71,6 @@ class _CfdOfferState extends State<CfdOffer> {
 
     return Scaffold(
       body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
-        const Balance(balanceSelector: BalanceSelector.lightning),
-        const Divider(),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -142,7 +138,6 @@ class _CfdOfferState extends State<CfdOffer> {
             extra: CfdOrderConfirmationArgs(order, channelError),
           );
         },
-        backgroundColor: Colors.orange,
         child: const Icon(Icons.shopping_cart_checkout),
       ),
       bottomSheet: channelError != null ? ValidationError(channelError: channelError) : null,

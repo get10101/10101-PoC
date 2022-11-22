@@ -21,7 +21,7 @@ class Balance extends StatelessWidget {
         var bitcoinBalanceWidget = BalanceRow(
             value: bitcoinBalanceDisplay.value,
             unit: bitcoinBalanceDisplay.unit,
-            icon: Icons.currency_bitcoin_outlined,
+            icon: Icons.link,
             smaller: balanceSelector == BalanceSelector.both);
         var lightningBalanceWidget = BalanceRow(
             value: lightningBalanceDisplay.value,
@@ -43,10 +43,7 @@ class Balance extends StatelessWidget {
             break;
         }
 
-        return Container(
-          margin: const EdgeInsets.only(top: 15),
-          child: balanceWidgets,
-        );
+        return balanceWidgets;
       },
     );
   }

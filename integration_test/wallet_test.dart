@@ -5,7 +5,6 @@ import 'package:integration_test/integration_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/wallet/wallet_dashboard.dart';
 import 'package:ten_ten_one/wallet/wallet_lightning.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
@@ -61,54 +60,6 @@ void main() {
 
       balance = find.byKey(const Key('bitcoinBalance')).evaluate().first.widget as Text;
       expect(balance.data, '1,001');
-    });
-
-    testWidgets('test if seed backup warning remains after checking but without done button click',
-        (tester) async {
-      // this test will log an error as the wallet is not initialised. This can be ignored as the wallet
-      // is not needed for that test.
-
-      final seedBackupModel = SeedBackupModel();
-      await tester.pumpWidget(createWallet(LightningBalance(), seedBackupModel));
-
-      expect(find.byType(BackupSeedCard), findsOneWidget);
-
-      await tester.tap(find.byType(BackupSeedCard));
-      // seed screen should be loaded
-      await tester.pumpAndSettle();
-
-      expect(find.byType(SeedWord), findsNWidgets(12));
-      expect(find.byType(Checkbox), findsOneWidget);
-
-      // pop the last navigation, meaning go back to the screen where you came from.
-      final NavigatorState navigator = tester.state(find.byType(Navigator));
-      navigator.pop();
-      await tester.pumpAndSettle();
-
-      expect(find.byType(BackupSeedCard), findsOneWidget);
-    });
-
-    testWidgets('test if seed backup warning disappears after checkbox is checked', (tester) async {
-      // this test will log an error as the wallet is not initialised. This can be ignored as the wallet
-      // is not needed for that test.
-      final seedBackupModel = SeedBackupModel();
-      await tester.pumpWidget(createWallet(LightningBalance(), seedBackupModel));
-
-      expect(find.byType(BackupSeedCard), findsOneWidget);
-
-      await tester.tap(find.byType(BackupSeedCard));
-      // seed screen should be loaded
-      await tester.pumpAndSettle();
-
-      expect(find.byType(SeedWord), findsNWidgets(12));
-      expect(find.byType(Checkbox), findsOneWidget);
-
-      await tester.tap(find.byType(Checkbox));
-
-      expect(find.byType(ElevatedButton), findsOneWidget);
-      await tester.tap(find.byType(ElevatedButton));
-
-      expect(find.byType(BackupSeedCard), findsNothing);
     });
   });
 }
