@@ -55,10 +55,7 @@ class _OpenChannelState extends State<OpenChannel> {
             ]),
             const SizedBox(height: 10),
             const Center(child: Icon(Icons.private_connectivity_outlined, size: 80)),
-            // const Center(child: Text("How this works", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 24))),
             const SizedBox(height: 10),
-            // const Center(child: Text("Before trading non-custodial, we need to establish a secure lightning channel.", style: TextStyle(fontWeight: FontWeight.normal, fontSize: 16))),
-            // const SizedBox(height: 15),
             ListTile(
                 leading: Container(
                   width: 50,
@@ -72,7 +69,7 @@ class _OpenChannelState extends State<OpenChannel> {
                 ),
                 title: const Text("Fund your bitcoin wallet"),
                 subtitle: const Text(
-                    "In order to establish a secure channel between 10101 and you we need to lock some Bitcoin on chain through a Lightning channel.",
+                    "In order to establish a Lightning channel between 10101 and you we need to lock some bitcoin on chain.",
                     style: TextStyle(color: Colors.grey))),
             const SizedBox(height: 15),
             ListTile(
@@ -91,7 +88,7 @@ class _OpenChannelState extends State<OpenChannel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                        "Define the amount of bitcoin you want to lock to the lightning channel. 10101 will add the same amount to the Lightning channel.",
+                        "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity.",
                         style: TextStyle(color: Colors.grey)),
                     TextFormField(
                       initialValue: takerChannelAmount.toString(),
@@ -124,7 +121,7 @@ class _OpenChannelState extends State<OpenChannel> {
                 ),
                 title: const Text("Select your maker"),
                 subtitle: const Text(
-                    "This feature is coming, but in this version you can only trade with 10101.",
+                    "In this version you can only trade with 10101, but in the future you will be able to choose who to connect to.",
                     style: TextStyle(color: Colors.grey))),
             const SizedBox(height: 15),
             ListTile(
@@ -140,7 +137,7 @@ class _OpenChannelState extends State<OpenChannel> {
                 ),
                 title: const Text("Ready!"),
                 subtitle: const Text(
-                    "Hit the open channel button and the channel should be established in a few moments.",
+                    "Hit the 'Open Channel' button and the channel will be created in a few moments.",
                     style: TextStyle(color: Colors.grey))),
             const SizedBox(height: 15),
             const Spacer(),
