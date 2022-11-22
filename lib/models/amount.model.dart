@@ -71,7 +71,7 @@ class AmountItem extends StatelessWidget {
     required this.unit,
     required this.iconColor,
     this.iconSize = 24.0,
-    this.fontSize = 16.0,
+    this.fontSize = 15.0,
   }) : super(key: key);
 
   @override

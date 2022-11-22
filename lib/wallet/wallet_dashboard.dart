@@ -107,10 +107,13 @@ class BackupSeedCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: const <Widget>[
               ListTile(
-                leading: Icon(Icons.warning),
+                leading: Icon(
+                  Icons.warning,
+                ),
                 title: Text('Create Wallet Backup'),
-                subtitle:
-                    Text('You have not backed up your wallet yet, make sure you create a backup!'),
+                subtitle: Text(
+                    'You have not backed up your wallet yet, make sure you create a backup!',
+                    textAlign: TextAlign.justify),
               ),
             ],
           ),
@@ -134,7 +137,8 @@ class DepositBitcoinCard extends StatelessWidget {
                 leading: Icon(Icons.currency_bitcoin),
                 title: Text('Deposit Bitcoin'),
                 subtitle: Text(
-                    'Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning'),
+                    'Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning',
+                    textAlign: TextAlign.justify),
               ),
             ],
           ),
@@ -157,7 +161,8 @@ class OpenChannelCard extends StatelessWidget {
               ListTile(
                 leading: Icon(Icons.launch),
                 title: Text('Open Channel'),
-                subtitle: Text('Open a channel to enable trading on Lightning'),
+                subtitle: Text('Open a channel to enable trading on Lightning',
+                    textAlign: TextAlign.justify),
               ),
             ],
           ),
