@@ -104,6 +104,7 @@ class TtoTable extends StatelessWidget {
             ]),
           ),
           Container(
+            alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(top: 10, bottom: 10, left: 25),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Wrap(
