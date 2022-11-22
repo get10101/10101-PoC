@@ -68,8 +68,8 @@ class _WalletDashboardState extends State<WalletDashboard> {
 
     final paymentHistoryList = ListView.builder(
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       physics: const ClampingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
       itemCount: paymentHistory.history.length,
       itemBuilder: (context, index) {
         return PaymentHistoryListItem(data: paymentHistory.history[index]);
@@ -85,7 +85,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
       appBar: PreferredSize(
           child: const AppBarWithBalance(balanceSelector: balanceSelector),
           preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
-      body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
+      body: ListView(padding: const EdgeInsets.only(left: 20, right: 20), children: widgets),
     );
   }
 }
