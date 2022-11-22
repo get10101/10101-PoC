@@ -12,6 +12,9 @@ class OpenChannel extends StatefulWidget {
 
   static const route = '/' + subRouteName;
   static const subRouteName = 'open-channel';
+  // Max allowed amount is (16777215 / 3) - otherwise maker will not accept
+  // the request.
+  static const maxChannelAmount = 5592405;
 
   @override
   State<OpenChannel> createState() => _OpenChannelState();
@@ -25,7 +28,7 @@ class _OpenChannelState extends State<OpenChannel> {
   void initState() {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
-    takerChannelAmount = bitcoinBalance.amount.asSats;
+    takerChannelAmount = bitcoinBalance.amount.asSats.clamp(0, OpenChannel.maxChannelAmount);
     _setMakerPeerInfo();
   }
 
@@ -68,7 +71,6 @@ class _OpenChannelState extends State<OpenChannel> {
                 height: 10.0,
               ),
               const Text("Channel Amount", style: TextStyle(color: Colors.grey)),
-              // TODO: Likely we cannot use the whole balance
               // TODO: Form validation
               TextFormField(
                 initialValue: takerChannelAmount.toString(),
@@ -79,7 +81,8 @@ class _OpenChannelState extends State<OpenChannel> {
                 inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
                 onChanged: (text) {
                   setState(() {
-                    takerChannelAmount = text != "" ? int.parse(text) : 0;
+                    takerChannelAmount =
+                        text != "" ? int.parse(text).clamp(0, OpenChannel.maxChannelAmount) : 0;
                   });
                 },
               )
