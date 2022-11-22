@@ -69,40 +69,36 @@ class _SendOnChainState extends State<SendOnChain> {
                     )
                   ]),
                   Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(0, 0, 20, 30),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ElevatedButton(
-                                  onPressed: () async {
-                                    FLog.info(
-                                        text:
-                                            "Sending " + amount.toString() + " sats to " + address);
-                                    String? error;
-                                    try {
-                                      await api.sendToAddress(address: address, amount: amount);
-                                    } on FfiException catch (e) {
-                                      error = e.message;
-                                    }
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton(
+                                onPressed: () async {
+                                  FLog.info(
+                                      text: "Sending " + amount.toString() + " sats to " + address);
+                                  String? error;
+                                  try {
+                                    await api.sendToAddress(address: address, amount: amount);
+                                  } on FfiException catch (e) {
+                                    error = e.message;
+                                  }
 
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                      content: Text(error == null
-                                          ? "Sent ${amount.toString()} satoshi to $address on-chain"
-                                          : "Failed to send bitcoin on-chain: $error"),
-                                    ));
-                                    context.go('/');
-                                  },
-                                  child: const Text('Send'))
-                            ],
-                          ),
-                        ],
-                      ),
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(error == null
+                                        ? "Sent ${amount.toString()} satoshi to $address on-chain"
+                                        : "Failed to send bitcoin on-chain: $error"),
+                                  ));
+                                  context.go('/');
+                                },
+                                child: const Text('Send'))
+                          ],
+                        ),
+                      ],
                     ),
-                  )
+                  ),
                 ]))));
   }
 }

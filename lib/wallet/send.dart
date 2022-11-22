@@ -48,38 +48,35 @@ class _SendState extends State<Send> {
                     ),
                   ]),
                   Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(0, 0, 20, 30),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ElevatedButton(
-                                  onPressed: () async {
-                                    FLog.info(text: "Sending invoice" + invoice);
-                                    String? error;
-                                    try {
-                                      await api.sendLightningPayment(invoice: invoice);
-                                    } on FfiException catch (e) {
-                                      error = e.message;
-                                    }
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton(
+                                onPressed: () async {
+                                  FLog.info(text: "Sending invoice" + invoice);
+                                  String? error;
+                                  try {
+                                    await api.sendLightningPayment(invoice: invoice);
+                                  } on FfiException catch (e) {
+                                    error = e.message;
+                                  }
 
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                      content: Text(error == null
-                                          ? "Paid lightning invoice $invoice"
-                                          : "Failed to send lightning invoice: $error"),
-                                    ));
-                                    context.go('/');
-                                  },
-                                  child: const Text('Send'))
-                            ],
-                          ),
-                        ],
-                      ),
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(error == null
+                                        ? "Paid lightning invoice $invoice"
+                                        : "Failed to send lightning invoice: $error"),
+                                  ));
+                                  context.go('/');
+                                },
+                                child: const Text('Send'))
+                          ],
+                        ),
+                      ],
                     ),
-                  )
+                  ),
                 ]))));
   }
 }
