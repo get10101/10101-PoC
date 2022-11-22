@@ -75,7 +75,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   @override
   Widget build(BuildContext context) {
-    const mainColor = Colors.orange;
+    const mainColor = Colors.blue;
 
     return Visibility(
       visible: ready,
