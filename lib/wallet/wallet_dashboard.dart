@@ -14,6 +14,7 @@ import 'package:ten_ten_one/wallet/service_card.dart';
 
 import '../menu.dart';
 import '../app_bar_with_balance.dart';
+import 'action_card.dart';
 import 'open_channel.dart';
 
 class WalletDashboard extends StatefulWidget {
@@ -41,15 +42,28 @@ class _WalletDashboardState extends State<WalletDashboard> {
     ];
 
     if (!seedBackupModel.backup) {
-      widgets.add(const BackupSeedCard());
+      widgets.add(const ActionCard(
+          route: Seed.route,
+          title: "Create Wallet Backup",
+          subtitle: "You have not backed up your wallet yet, make sure you create a backup!"));
     }
 
     if (bitcoinBalance.amount.asSats == 0) {
-      widgets.add(const DepositBitcoinCard());
+      widgets.add(const ActionCard(
+          route: ReceiveOnChain.route,
+          title: "Deposit Bitcoin",
+          subtitle:
+              "Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning",
+          icon: Icons.currency_bitcoin));
     }
 
     if (bitcoinBalance.amount.asSats != 0 && lightningBalance.amount.asSats == 0) {
-      widgets.add(const OpenChannelCard());
+      widgets.add(const ActionCard(
+        route: OpenChannel.route,
+        title: "Open Channel",
+        subtitle: "Open a channel to enable trading on Lightning",
+        icon: Icons.launch,
+      ));
     }
 
     final paymentHistoryList = ListView.builder(
@@ -94,81 +108,5 @@ class ServiceNavigation extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class BackupSeedCard extends StatelessWidget {
-  const BackupSeedCard({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () => {GoRouter.of(context).go(Seed.route)},
-        child: Card(
-          shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const <Widget>[
-              ListTile(
-                leading: Icon(
-                  Icons.warning,
-                ),
-                title: Text('Create Wallet Backup'),
-                subtitle: Text(
-                    'You have not backed up your wallet yet, make sure you create a backup!',
-                    textAlign: TextAlign.justify),
-              ),
-            ],
-          ),
-        ));
-  }
-}
-
-class DepositBitcoinCard extends StatelessWidget {
-  const DepositBitcoinCard({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () => {GoRouter.of(context).go(ReceiveOnChain.route)},
-        child: Card(
-          shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const <Widget>[
-              ListTile(
-                leading: Icon(Icons.currency_bitcoin),
-                title: Text('Deposit Bitcoin'),
-                subtitle: Text(
-                    'Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning',
-                    textAlign: TextAlign.justify),
-              ),
-            ],
-          ),
-        ));
-  }
-}
-
-class OpenChannelCard extends StatelessWidget {
-  const OpenChannelCard({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-        onTap: () => {GoRouter.of(context).go(OpenChannel.route)},
-        child: Card(
-          shape: const Border(left: BorderSide(color: Colors.blueGrey, width: 5)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const <Widget>[
-              ListTile(
-                leading: Icon(Icons.launch),
-                title: Text('Open Channel'),
-                subtitle: Text('Open a channel to enable trading on Lightning',
-                    textAlign: TextAlign.justify),
-              ),
-            ],
-          ),
-        ));
   }
 }
