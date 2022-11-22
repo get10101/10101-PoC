@@ -53,15 +53,15 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
     Cfd cfd = widget.cfd!;
+    Order order = cfd.getOrder();
 
     final openPrice = formatter.format(cfd.openPrice);
     final liquidationPrice = formatter.format(cfd.liquidationPrice);
-    final margin = Amount.fromBtc(cfd.margin).display(currency: Currency.sat).value;
+    final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
     final estimatedFees = Amount(txFee).display(currency: Currency.sat).value;
 
-    final pnl = cfd
-        .getOrder()
-        .calculateProfitTaker(closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
+    final pnl = order.calculateProfitTaker(
+        closingPrice: cfd.position == Position.Long ? offer.bid : offer.ask);
 
     final unrealizedPL = Amount.fromBtc(pnl).display(currency: Currency.sat, sign: true).value;
 
