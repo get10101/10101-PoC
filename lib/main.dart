@@ -28,7 +28,7 @@ import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/wallet/send.dart';
 import 'package:ten_ten_one/wallet/send_on_chain.dart';
-import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' as bride_definitions;
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' as bridge_definitions;
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
@@ -245,10 +245,10 @@ class _TenTenOneState extends State<TenTenOneApp> {
       var amount = Amount(e.sats);
       PaymentType type;
       switch (e.flow) {
-        case bride_definitions.Flow.Inbound:
+        case bridge_definitions.Flow.Inbound:
           type = PaymentType.receive;
           break;
-        case bride_definitions.Flow.Outbound:
+        case bridge_definitions.Flow.Outbound:
           type = PaymentType.send;
           break;
       }
