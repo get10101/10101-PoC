@@ -297,7 +297,7 @@ impl Order {
             let opening_price = Decimal::try_from(self.open_price)?;
             let closing_price = Decimal::try_from(closing_price)?;
 
-            if opening_price == Decimal::ZERO && closing_price == Decimal::ZERO {
+            if opening_price == Decimal::ZERO || closing_price == Decimal::ZERO {
                 return Ok(0.0);
             }
 
