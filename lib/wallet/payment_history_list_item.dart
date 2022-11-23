@@ -29,8 +29,8 @@ class PaymentHistoryListItem extends StatelessWidget {
         layer = "on-chain";
         break;
       case PaymentType.send:
-        statusIcon = sendOnChainIcon();
-        layer = "on-chain";
+        statusIcon = sendOffChainIcon();
+        layer = "off-chain";
         break;
       case PaymentType.sendOnChain:
         statusIcon = sendOnChainIcon();
