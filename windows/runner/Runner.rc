@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "A new Flutter project." "\0"
+            VALUE "CompanyName", "com.itchysats" "\0"
+            VALUE "FileDescription", "A non-custodial Bitcoin and Lightning wallet for the masses." "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "10101" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2021 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2022 ItchySats. All rights reserved." "\0"
             VALUE "OriginalFilename", "10101.exe" "\0"
             VALUE "ProductName", "10101" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

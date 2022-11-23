@@ -8,7 +8,7 @@
 PRODUCT_NAME = 10101
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.withFlutter
+PRODUCT_BUNDLE_IDENTIFIER = com.itchysats.10101
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2022 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2022 ItchySats. All rights reserved.
