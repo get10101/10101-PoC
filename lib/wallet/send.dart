@@ -26,7 +26,7 @@ class _SendState extends State<Send> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('Send Lightning Invoice'),
+          title: const Text('Send payment'),
         ),
         body: SafeArea(
             child: Padding(
@@ -67,7 +67,7 @@ class _SendState extends State<Send> {
                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                     content: Text(error == null
                                         ? "Paid lightning invoice $invoice"
-                                        : "Failed to send lightning invoice: $error"),
+                                        : "Failed to send payment: $error"),
                                   ));
                                   context.go('/');
                                 },
