@@ -134,7 +134,7 @@ class _ReceiveState extends State<Receive> {
                               children: [
                                 Text(
                                   invoice,
-                                  overflow: TextOverflow.ellipsis,
+                                  overflow: TextOverflow.fade,
                                   style: const TextStyle(fontSize: 20),
                                 ),
                                 IconButton(
