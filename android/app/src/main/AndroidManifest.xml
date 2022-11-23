@@ -18,9 +18,8 @@
         android:label="10101"
         android:icon="@mipmap/ic_launcher"
         tools:replace="android:extractNativeLibs"
-        android:extractNativeLibs="true">
-        <!-- needed for flutter_webview_plus to render TradingView widget -->
-        android:usesCleartextTraffic="true">
+        android:extractNativeLibs="true"
+        android:usesCleartextTraffic="true"><!-- needed for flutter_webview_plus to render TradingView widget -->
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
