@@ -2,6 +2,7 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -61,7 +62,7 @@ class _ReceiveOnChainState extends State<ReceiveOnChain> {
                           Expanded(
                               child: Text(
                             address,
-                            overflow: TextOverflow.ellipsis,
+                            overflow: TextOverflow.fade,
                             style: const TextStyle(fontSize: 20),
                           )),
                           IconButton(
@@ -92,13 +93,9 @@ class _ReceiveOnChainState extends State<ReceiveOnChain> {
                         alignment: Alignment.bottomRight,
                         child: ElevatedButton(
                             onPressed: () async {
-                              await Clipboard.setData(ClipboardData(text: address));
-
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                content: Text("Copied to Clipboard"),
-                              ));
+                              GoRouter.of(context).go('/');
                             },
-                            child: const Text('Copy Address')),
+                            child: const Text('Close')),
                       )
                     ],
                   ),
