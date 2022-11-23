@@ -1,5 +1,7 @@
 use anyhow::anyhow;
+use anyhow::bail;
 use anyhow::Result;
+use reqwest::StatusCode;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -24,6 +26,14 @@ pub async fn get_offer() -> Result<Option<Offer>> {
             return Ok(None);
         }
     };
+
+    if response.status() == StatusCode::NOT_FOUND
+        || response.status() == StatusCode::INTERNAL_SERVER_ERROR
+    {
+        let response = response.text().await?;
+        bail!("Failed to fetch offer: {response}")
+    }
+
     let result = response
         .json::<Offer>()
         .await
