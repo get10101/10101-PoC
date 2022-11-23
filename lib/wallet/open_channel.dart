@@ -14,6 +14,7 @@ class OpenChannel extends StatefulWidget {
 
   static const route = '/' + subRouteName;
   static const subRouteName = 'open-channel';
+
   // Max allowed amount is (16777215 / 3) - otherwise maker will not accept
   // the request.
   static const maxChannelAmount = 5592405;
@@ -41,107 +42,116 @@ class _OpenChannelState extends State<OpenChannel> {
         title: const Text('Open Channel'),
       ),
       body: SafeArea(
-          child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
-              Balance(balanceSelector: BalanceSelector.bitcoin),
-              SizedBox(height: 10),
-              Padding(
-                padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                child: Divider(),
-              )
-            ]),
-            const SizedBox(height: 10),
-            const Center(child: Icon(Icons.private_connectivity_outlined, size: 80)),
-            const SizedBox(height: 10),
-            ListTile(
-                leading: Container(
-                  width: 50,
-                  decoration:
-                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                  child: const Center(
-                      child: Text(
-                    "1",
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  )),
-                ),
-                title: const Text("Fund your bitcoin wallet"),
-                subtitle: const Text(
-                    "In order to establish a Lightning channel between 10101 and you we need to lock some bitcoin on chain.",
-                    style: TextStyle(color: Colors.grey))),
-            const SizedBox(height: 15),
-            ListTile(
-                leading: Container(
-                  width: 50,
-                  decoration:
-                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                  child: const Center(
-                      child: Text(
-                    "2",
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  )),
-                ),
-                title: const Text("Enter the channel amount"),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                        "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity.",
-                        style: TextStyle(color: Colors.grey)),
-                    TextFormField(
-                      initialValue: takerChannelAmount.toString(),
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        border: UnderlineInputBorder(),
-                      ),
-                      inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (text) {
-                        setState(() {
-                          takerChannelAmount = text != ""
-                              ? int.parse(text).clamp(0, OpenChannel.maxChannelAmount)
-                              : 0;
-                        });
-                      },
-                    )
-                  ],
-                )),
-            const SizedBox(height: 15),
-            ListTile(
-                leading: Container(
-                  width: 50,
-                  decoration:
-                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                  child: const Center(
-                      child: Text(
-                    "3",
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  )),
-                ),
-                title: const Text("Select your maker"),
-                subtitle: const Text(
-                    "In this version you can only trade with 10101, but in the future you will be able to choose who to connect to.",
-                    style: TextStyle(color: Colors.grey))),
-            const SizedBox(height: 15),
-            ListTile(
-                leading: Container(
-                  width: 50,
-                  decoration:
-                      BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                  child: const Center(
-                      child: Text(
-                    "4",
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  )),
-                ),
-                title: const Text("Ready!"),
-                subtitle: const Text(
-                    "Hit the 'Open Channel' button and the channel will be created in a few moments.",
-                    style: TextStyle(color: Colors.grey))),
-            const SizedBox(height: 15),
-            const Spacer(),
-            Container(
+          child: ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
+                  Balance(balanceSelector: BalanceSelector.bitcoin),
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: Divider(),
+                  )
+                ]),
+                const SizedBox(height: 10),
+                const Center(child: Icon(Icons.private_connectivity_outlined, size: 80)),
+                const SizedBox(height: 10),
+                ListTile(
+                    leading: Container(
+                      width: 50,
+                      decoration: BoxDecoration(
+                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                      child: const Center(
+                          child: Text(
+                        "1",
+                        style: TextStyle(color: Colors.white, fontSize: 20),
+                      )),
+                    ),
+                    title: const Text("Fund your bitcoin wallet"),
+                    subtitle: const Text(
+                        "In order to establish a Lightning channel between 10101 and you we need to lock some bitcoin on chain.",
+                        style: TextStyle(color: Colors.grey))),
+                const SizedBox(height: 15),
+                ListTile(
+                    leading: Container(
+                      width: 50,
+                      decoration: BoxDecoration(
+                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                      child: const Center(
+                          child: Text(
+                        "2",
+                        style: TextStyle(color: Colors.white, fontSize: 20),
+                      )),
+                    ),
+                    title: const Text("Enter the channel amount"),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                            "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity.",
+                            style: TextStyle(color: Colors.grey)),
+                        TextFormField(
+                          initialValue: takerChannelAmount.toString(),
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            border: UnderlineInputBorder(),
+                          ),
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          onChanged: (text) {
+                            setState(() {
+                              takerChannelAmount = text != ""
+                                  ? int.parse(text).clamp(0, OpenChannel.maxChannelAmount)
+                                  : 0;
+                            });
+                          },
+                        )
+                      ],
+                    )),
+                const SizedBox(height: 15),
+                ListTile(
+                    leading: Container(
+                      width: 50,
+                      decoration: BoxDecoration(
+                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                      child: const Center(
+                          child: Text(
+                        "3",
+                        style: TextStyle(color: Colors.white, fontSize: 20),
+                      )),
+                    ),
+                    title: const Text("Select your maker"),
+                    subtitle: const Text(
+                        "In this version you can only trade with 10101, but in the future you will be able to choose who to connect to.",
+                        style: TextStyle(color: Colors.grey))),
+                const SizedBox(height: 15),
+                ListTile(
+                    leading: Container(
+                      width: 50,
+                      decoration: BoxDecoration(
+                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+                      child: const Center(
+                          child: Text(
+                        "4",
+                        style: TextStyle(color: Colors.white, fontSize: 20),
+                      )),
+                    ),
+                    title: const Text("Ready!"),
+                    subtitle: const Text(
+                        "Hit the 'Open Channel' button and the channel will be created in a few moments.",
+                        style: TextStyle(color: Colors.grey))),
+                const SizedBox(height: 15),
+                // const Spacer(),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 20.0),
+            child: Container(
               alignment: Alignment.bottomRight,
               child: ElevatedButton(
                   onPressed: () async {
@@ -155,9 +165,9 @@ class _OpenChannelState extends State<OpenChannel> {
                     context.go('/');
                   },
                   child: const Text('Open Channel')),
-            )
-          ],
-        ),
+            ),
+          )
+        ],
       )),
     );
   }
