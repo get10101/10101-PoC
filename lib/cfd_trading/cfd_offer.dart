@@ -60,97 +60,113 @@ class _CfdOfferState extends State<CfdOffer> {
     final balance = context.read<LightningBalance>().amount.asSats;
     final int takerAmount = Amount.fromBtc(order.marginTaker()).asSats;
 
-    ChannelError? channelError;
+    Message? channelError;
     if (balance == 0) {
-      channelError = ChannelError(
+      channelError = Message(
           title: 'No channel with 10101 maker',
-          details: 'You need an open channel with the 10101 maker before you can open a CFD.');
+          details: 'You need an open channel with the 10101 maker before you can open a CFD.',
+          type: AlertType.warning);
     } else if (takerAmount > balance) {
-      channelError = ChannelError(
+      channelError = Message(
           title: 'Insufficient funds',
-          details: 'The required margin is higher than the available balance.');
+          details: 'The required margin is higher than the available balance.',
+          type: AlertType.warning);
     }
 
-    return Scaffold(
-      body: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Row(
-              children: [
-                const Text("bid:"),
-                const SizedBox(width: 2),
-                Text(fmtBid, style: const TextStyle(fontWeight: FontWeight.w600))
-              ],
-            ),
-            Row(
-              children: [
-                const Text("ask:"),
-                const SizedBox(width: 2),
-                Text(fmtAsk, style: const TextStyle(fontWeight: FontWeight.w600))
-              ],
-            ),
-            Row(
-              children: [
-                const Text("index:"),
-                const SizedBox(width: 2),
-                Text(fmtIndex, style: const TextStyle(fontWeight: FontWeight.w600))
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 30),
-        PositionSelection(
-            onChange: (position) {
-              setState(() {
-                order.position = position!;
-                order.openPrice = Position.Long == position ? offer.ask : offer.bid;
-              });
-            },
-            value: order.position),
-        const SizedBox(height: 15),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Dropdown(
-            values: List<int>.generate(10, (i) => (i + 1) * 100)
-                .map((quantity) => quantity.toString())
-                .toList(),
-            onChange: (contracts) {
-              setState(() {
-                order.quantity = int.parse(contracts!);
-              });
-            },
-            value: order.quantity.toString(),
+    List<Widget> warnings = [];
+    if (channelError != null) {
+      warnings.addAll([
+        Expanded(child: Container()),
+        AlertMessage(message: channelError),
+        const SizedBox(height: 80)
+      ]);
+    }
+
+    List<Widget> widgets = [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Row(
+            children: [
+              const Text("bid:"),
+              const SizedBox(width: 2),
+              Text(fmtBid, style: const TextStyle(fontWeight: FontWeight.w600))
+            ],
           ),
-          Dropdown(
-              values: [ContractSymbol.BtcUsd.name.toUpperCase()],
-              onChange: (contractSymbol) {
-                order.contractSymbol = ContractSymbol.values
-                    .firstWhere((e) => e.name == contractSymbol!.toLowerCase());
-              },
-              value: order.contractSymbol.name.toUpperCase()),
-          Dropdown(
-              values: CfdOffer.leverages.map((l) => 'x$l').toList(),
-              onChange: (leverage) {
-                setState(() {
-                  order.leverage = int.parse(leverage!.substring(1));
-                });
-              },
-              value: 'x' + order.leverage.toString()),
-        ]),
-        Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
-          Container(
-            margin: const EdgeInsets.only(top: 25),
-            child: TtoTable([
-              TtoRow(
-                  label: 'Liquidation Price',
-                  value: liquidationPrice.toString(),
-                  type: ValueType.usd),
-              TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-              TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
-            ]),
-          )
-        ])
+          Row(
+            children: [
+              const Text("ask:"),
+              const SizedBox(width: 2),
+              Text(fmtAsk, style: const TextStyle(fontWeight: FontWeight.w600))
+            ],
+          ),
+          Row(
+            children: [
+              const Text("index:"),
+              const SizedBox(width: 2),
+              Text(fmtIndex, style: const TextStyle(fontWeight: FontWeight.w600))
+            ],
+          ),
+        ],
+      ),
+      const SizedBox(height: 30),
+      PositionSelection(
+          onChange: (position) {
+            setState(() {
+              order.position = position!;
+              order.openPrice = Position.Long == position ? offer.ask : offer.bid;
+            });
+          },
+          value: order.position),
+      const SizedBox(height: 15),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Dropdown(
+          values: List<int>.generate(10, (i) => (i + 1) * 100)
+              .map((quantity) => quantity.toString())
+              .toList(),
+          onChange: (contracts) {
+            setState(() {
+              order.quantity = int.parse(contracts!);
+            });
+          },
+          value: order.quantity.toString(),
+        ),
+        Dropdown(
+            values: [ContractSymbol.BtcUsd.name.toUpperCase()],
+            onChange: (contractSymbol) {
+              order.contractSymbol =
+                  ContractSymbol.values.firstWhere((e) => e.name == contractSymbol!.toLowerCase());
+            },
+            value: order.contractSymbol.name.toUpperCase()),
+        Dropdown(
+            values: CfdOffer.leverages.map((l) => 'x$l').toList(),
+            onChange: (leverage) {
+              setState(() {
+                order.leverage = int.parse(leverage!.substring(1));
+              });
+            },
+            value: 'x' + order.leverage.toString()),
       ]),
+      Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
+        Container(
+          margin: const EdgeInsets.only(top: 25),
+          child: TtoTable([
+            TtoRow(
+                label: 'Liquidation Price',
+                value: liquidationPrice.toString(),
+                type: ValueType.usd),
+            TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+            TtoRow(label: 'Expiry', value: expiry, type: ValueType.date),
+          ]),
+        )
+      ]),
+    ];
+
+    widgets.addAll(warnings);
+
+    return Scaffold(
+      body: Container(
+          padding: const EdgeInsets.only(left: 25, right: 25), child: Column(children: widgets)),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           GoRouter.of(context).go(
@@ -160,7 +176,6 @@ class _CfdOfferState extends State<CfdOffer> {
         },
         child: const Icon(Icons.shopping_cart_checkout),
       ),
-      bottomSheet: channelError != null ? ValidationError(channelError: channelError) : null,
     );
   }
 }

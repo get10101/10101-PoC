@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
@@ -57,6 +58,7 @@ class _ReceiveOnChainState extends State<ReceiveOnChain> {
                           data: address,
                         ),
                       ),
+                      const SizedBox(height: 15),
                       Row(
                         children: [
                           Expanded(
@@ -84,10 +86,13 @@ class _ReceiveOnChainState extends State<ReceiveOnChain> {
                         ],
                       ),
                       const Spacer(),
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 20.0),
-                        child: Text(
-                            "Send Bitcoin to the given address. Once your transaction is confirmed the balance will change in the wallet"),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20.0),
+                        child: AlertMessage(
+                            message: Message(
+                                title:
+                                    "Send Bitcoin to the given address. Once your transaction is confirmed the balance will change in the wallet",
+                                type: AlertType.info)),
                       ),
                       Container(
                         alignment: Alignment.bottomRight,
