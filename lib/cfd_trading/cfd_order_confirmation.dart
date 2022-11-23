@@ -15,7 +15,7 @@ import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 class CfdOrderConfirmationArgs {
   Order order;
-  ChannelError? channelError;
+  Message? channelError;
 
   CfdOrderConfirmationArgs(this.order, this.channelError);
 }
@@ -57,7 +57,7 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
     final cfdTradingService = context.read<CfdTradingChangeNotifier>();
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
     Order order = widget.args.order;
-    ChannelError? channelError = widget.args.channelError;
+    Message? channelError = widget.args.channelError;
 
     final openPrice = formatter.format(order.openPrice);
 
@@ -72,103 +72,93 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
     final contractSymbol = order.contractSymbol.name.toUpperCase();
 
     return Scaffold(
-        appBar: AppBar(title: const Text('CFD Order Confirmation')),
-        body: SafeArea(
-          child: Container(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(children: [
-              Center(
-                  child: Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Column(
-                        children: [
-                          Text(quantity + ' ' + contractSymbol,
-                              style: const TextStyle(
-                                  fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600)),
-                          const Text('@',
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 20,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w600)),
-                          Text('\$' + openPrice,
-                              style: const TextStyle(
-                                  fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600))
-                        ],
-                      ))),
-              const SizedBox(height: 25),
-              Expanded(
-                child: TtoTable([
-                  TtoRow(
-                      label: 'Position',
-                      value: 'x' + order.leverage.toString() + ' ' + order.position.name,
-                      type: ValueType.text),
-                  // TtoRow(label: 'Quantity', value: quantity, type: ValueType.text),
-                  // TtoRow(label: 'Leverage', value: order.leverage.toString(), type: ValueType.text),
-                  TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
-                  // TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
-                  TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
-                  TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi),
-                  TtoRow(label: 'Expiry', value: expiry, type: ValueType.date)
-                ]),
-              ),
-              Center(
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    borderRadius: const BorderRadius.all(Radius.circular(12)),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
-                    child: ListTile(
-                        leading: Icon(Icons.info, color: Theme.of(context).colorScheme.primary),
-                        title: Text(
-                            'This will open a position and lock up $margin sats in the channel. Would you like to proceed?',
-                            style: const TextStyle(fontSize: 16))),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 50),
-            ]),
-          ),
+      appBar: AppBar(title: const Text('CFD Order Confirmation')),
+      body: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(children: [
+            Center(
+                child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Column(
+                      children: [
+                        Text(quantity + ' ' + contractSymbol,
+                            style: const TextStyle(
+                                fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600)),
+                        const Text('@',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 20,
+                                letterSpacing: 1,
+                                fontWeight: FontWeight.w600)),
+                        Text('\$' + openPrice,
+                            style: const TextStyle(
+                                fontSize: 20, letterSpacing: 1, fontWeight: FontWeight.w600))
+                      ],
+                    ))),
+            const SizedBox(height: 25),
+            Expanded(
+              child: TtoTable([
+                TtoRow(
+                    label: 'Position',
+                    value: 'x' + order.leverage.toString() + ' ' + order.position.name,
+                    type: ValueType.text),
+                // TtoRow(label: 'Quantity', value: quantity, type: ValueType.text),
+                // TtoRow(label: 'Leverage', value: order.leverage.toString(), type: ValueType.text),
+                TtoRow(label: 'Margin', value: margin, type: ValueType.satoshi),
+                // TtoRow(label: 'Opening Price', value: openPrice, type: ValueType.usd),
+                TtoRow(label: 'Liquidation Price', value: liquidationPrice, type: ValueType.usd),
+                TtoRow(label: 'Estimated fees', value: estimatedFees, type: ValueType.satoshi),
+                TtoRow(label: 'Expiry', value: expiry, type: ValueType.date)
+              ]),
+            ),
+            Center(
+              child: channelError == null
+                  ? AlertMessage(
+                      message: Message(
+                          title:
+                              'This will open a position and lock up $margin sats in the channel. Would you like to proceed?',
+                          type: AlertType.info))
+                  : AlertMessage(message: channelError),
+            ),
+            const SizedBox(height: 50),
+          ]),
         ),
-        floatingActionButton: ElevatedButton(
-            onPressed: channelError == null
-                ? () async {
-                    try {
-                      await api.openCfd(order: order);
-                      FLog.info(text: 'OpenCfd returned successfully');
+      ),
+      floatingActionButton: ElevatedButton(
+          onPressed: channelError == null
+              ? () async {
+                  try {
+                    await api.openCfd(order: order);
+                    FLog.info(text: 'OpenCfd returned successfully');
 
-                      // clear draft order from cfd service state
-                      cfdTradingChangeNotifier.draftOrder = null;
+                    // clear draft order from cfd service state
+                    cfdTradingChangeNotifier.draftOrder = null;
 
-                      // switch index to cfd overview tab
-                      cfdTradingChangeNotifier.selectedIndex = 1;
+                    // switch index to cfd overview tab
+                    cfdTradingChangeNotifier.selectedIndex = 1;
 
-                      // refreshing cfd list after cfd has been opened
-                      // will also implicitly propagate the index change
-                      await cfdTradingService.refreshCfdList();
+                    // refreshing cfd list after cfd has been opened
+                    // will also implicitly propagate the index change
+                    await cfdTradingService.refreshCfdList();
 
-                      // navigate back to the trading route where the index has already been propagated
-                      context.go(CfdTrading.route);
-                    } on FfiException catch (error) {
-                      FLog.error(text: 'Failed to open CFD: ' + error.message, exception: error);
-
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        backgroundColor: Colors.red,
-                        content: Text("Failed to open cfd"),
-                      ));
-
-                      return;
-                    }
-
+                    // navigate back to the trading route where the index has already been propagated
                     context.go(CfdTrading.route);
+                  } on FfiException catch (error) {
+                    FLog.error(text: 'Failed to open CFD: ' + error.message, exception: error);
+
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      backgroundColor: Colors.red,
+                      content: Text("Failed to open cfd"),
+                    ));
+
+                    return;
                   }
-                : null,
-            child: const Text('Confirm')),
-        bottomSheet: channelError != null ? ValidationError(channelError: channelError) : null);
+
+                  context.go(CfdTrading.route);
+                }
+              : null,
+          child: const Text('Confirm')),
+    );
   }
 }

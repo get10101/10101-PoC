@@ -7,6 +7,7 @@ import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
+import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/order.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
@@ -131,22 +132,15 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                   child: TtoTable(rows),
                 ),
                 Center(
-                  child: Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      borderRadius: const BorderRadius.all(Radius.circular(12)),
-                    ),
+                  child: Visibility(
+                    visible: CfdState.Open == cfd.state,
                     child: Container(
-                      padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
-                      child: ListTile(
-                          leading: Icon(Icons.info, color: Theme.of(context).colorScheme.primary),
-                          title: Text(
-                              'Clicking \'Settle\' will close this position at \$$closingPriceAsString. Would you like to proceed?',
-                              style: const TextStyle(fontSize: 16))),
-                    ),
+                        padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
+                        child: AlertMessage(
+                            message: Message(
+                                title:
+                                    'Clicking \'Settle\' will close this position at \$$closingPriceAsString. Would you like to proceed?',
+                                type: AlertType.info))),
                   ),
                 ),
                 Container(
