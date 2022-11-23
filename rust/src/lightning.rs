@@ -863,7 +863,6 @@ async fn handle_ldk_events(
                     from_onchain_str
                 );
             }
-            print!("> ");
         }
         Event::PendingHTLCsForwardable { time_forwardable } => {
             tracing::debug!("EVENT: pending HTLC Forwardable");
@@ -998,10 +997,10 @@ async fn handle_ldk_events(
                 user_channel_id,
             ) {
                 Ok(_) => {
-                    println!("Channel was opened successfully");
+                    tracing::debug!("Channel was opened successfully");
                 }
                 Err(e) => {
-                    println!("Could not open channel due to {e:?}");
+                    tracing::error!("Could not open channel due to {e:?}");
                 }
             }
         }
