@@ -49,8 +49,9 @@ class _ReceiveOnChainState extends State<ReceiveOnChain> {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
+                      SizedBox(
+                        height: 250,
+                        width: 250,
                         child: QrImage(
                           data: address,
                         ),
