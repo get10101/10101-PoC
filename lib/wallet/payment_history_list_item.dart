@@ -19,44 +19,54 @@ class PaymentHistoryListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget statusIcon;
     var layer = "on-chain";
+    var layerIcon = Icons.link;
     switch (data.type) {
       case PaymentType.receive:
         statusIcon = receiveOffChainIcon();
         layer = "off-chain";
+        layerIcon = Icons.bolt;
         break;
       case PaymentType.receiveOnChain:
         statusIcon = receiveOnChainIcon();
         layer = "on-chain";
+        layerIcon = Icons.link;
         break;
       case PaymentType.send:
         statusIcon = sendOffChainIcon();
         layer = "off-chain";
+        layerIcon = Icons.bolt;
         break;
       case PaymentType.sendOnChain:
         statusIcon = sendOnChainIcon();
         layer = "on-chain";
+        layerIcon = Icons.link;
         break;
       case PaymentType.cfdOpen:
         statusIcon = cfdOpenIcon();
         layer = "off-chain";
+        layerIcon = Icons.bolt;
         break;
       case PaymentType.cfdClose:
         statusIcon = cfdClosedIcon();
         layer = "off-chain";
+        layerIcon = Icons.bolt;
         break;
       case PaymentType.channelOpen:
         statusIcon = channelOpenIcon();
         layer = "on-chain";
+        layerIcon = Icons.bolt;
         break;
       case PaymentType.channelClose:
         statusIcon = channelClosedIcon();
         layer = "on-chain";
+        layerIcon = Icons.link;
         break;
       case PaymentType.sportsbetOpen:
       case PaymentType.sportsbetClose:
         // TODO: Handle these cases.
         statusIcon = Icon(Icons.check_circle_outline, color: Colors.green[800]);
         layer = "off-chain";
+        layerIcon = Icons.bolt;
         break;
     }
 
@@ -88,7 +98,7 @@ class PaymentHistoryListItem extends StatelessWidget {
               children: [
                 Text(data.type.display,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(layer),
+                Row(children: [Icon(layerIcon), Text(layer)]),
               ]),
           dense: true,
           minLeadingWidth: 0,
