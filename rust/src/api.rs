@@ -293,10 +293,14 @@ impl Order {
     }
 
     pub(crate) fn calculate_payout_at_price(&self, closing_price: f64) -> Result<f64> {
-        let margin = self.margin_taker().0;
         let uncapped_pnl_long = {
             let opening_price = Decimal::try_from(self.open_price)?;
             let closing_price = Decimal::try_from(closing_price)?;
+
+            if opening_price == Decimal::ZERO && closing_price == Decimal::ZERO {
+                return Ok(0.0);
+            }
+
             let quantity = Decimal::from(self.quantity);
 
             let uncapped_pnl = (quantity / opening_price) - (quantity / closing_price);
@@ -307,6 +311,7 @@ impl Order {
                 .context("Could not convert Decimal to f64")?
         };
 
+        let margin = self.margin_taker().0;
         let payout = match self.position {
             Position::Long => margin + uncapped_pnl_long,
             Position::Short => margin - uncapped_pnl_long,
