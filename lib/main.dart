@@ -219,9 +219,9 @@ class _TenTenOneState extends State<TenTenOneApp> {
     }
 
     // consecutive syncs
-    runPeriodically(_callSync);
-    runPeriodically(_callSyncPaymentHistory);
-    runPeriodically(_callGetOffers);
+    runPeriodically(_callSync, seconds: 10);
+    runPeriodically(_callSyncPaymentHistory, seconds: 10);
+    runPeriodically(_callGetOffers, seconds: 5);
   }
 
   Future<void> _callSync() async {
@@ -301,7 +301,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 }
 
-void runPeriodically(void Function() callback) {
+void runPeriodically(void Function() callback, {seconds = 20}) {
   _callback() {
     try {
       callback();
@@ -312,7 +312,7 @@ void runPeriodically(void Function() callback) {
 
   _callback();
 
-  Timer.periodic(const Duration(seconds: 20), (timer) {
+  Timer.periodic(Duration(seconds: seconds), (timer) {
     _callback();
   });
 }
