@@ -1,7 +1,6 @@
 use anyhow::Result;
 use futures::TryStreamExt;
 use rust_decimal::Decimal;
-use std::str::FromStr;
 use time::OffsetDateTime;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
@@ -17,19 +16,15 @@ pub fn subscribe() -> Result<(JoinHandle<()>, watch::Receiver<Option<Quote>>)> {
             bitmex_stream::Network::Testnet,
         );
 
-        while let Some(text) = stream.try_next().await.expect("message from bitmex") {
-            tracing::trace!(%text, "Received message from bitmex");
-            let quote = Quote::from_str(&text).expect("quote from bitmex");
-            if let Some(quote) = quote {
-                tracing::debug!(
-                    "Received quote update for {:?}, bid: {}, ask: {}, index: {}, timestamp: {}",
-                    quote.symbol,
-                    quote.bid,
-                    quote.ask,
-                    quote.index,
-                    quote.timestamp
-                );
-                let _ = quote_sender.send(Some(quote));
+        // We keep track of the latest quote because not every quote
+        // update references every field. TODO: Manage each field as a
+        // separate resource
+        let mut latest_quote = Quote::new();
+
+        while let Some(wire_update) = stream.try_next().await.expect("message from bitmex") {
+            tracing::trace!(%wire_update, "Received message from bitmex");
+            if latest_quote.update(&wire_update) {
+                let _ = quote_sender.send(Some(latest_quote));
             }
         }
     });
@@ -54,25 +49,41 @@ pub enum ContractSymbol {
 }
 
 impl Quote {
-    fn from_str(text: &str) -> Result<Option<Self>> {
-        let table_message = match serde_json::from_str::<wire::TableMessage>(text) {
+    fn new() -> Self {
+        Self {
+            timestamp: OffsetDateTime::now_utc(),
+            bid: Decimal::ZERO,
+            ask: Decimal::ZERO,
+            index: Decimal::ZERO,
+            symbol: ContractSymbol::BtcUsd,
+        }
+    }
+
+    fn update(&mut self, wire_update: &str) -> bool {
+        let table_message = match serde_json::from_str::<wire::TableMessage>(wire_update) {
             Ok(table_message) => table_message,
             Err(e) => {
-                tracing::trace!(%text, %e, "Not a 'table' message, skipping...");
-                return Ok(None);
+                tracing::trace!(%wire_update, %e, "Irrelevant fields in wire update, skipping...");
+                return false;
             }
         };
-
         let [quote] = table_message.data;
 
-        let symbol = ContractSymbol::from_str(quote.symbol.as_str())?;
-        Ok(Some(Self {
-            timestamp: quote.timestamp,
-            bid: quote.bid_price,
-            ask: quote.ask_price,
-            index: quote.mark_price,
-            symbol,
-        }))
+        self.timestamp = quote.timestamp;
+
+        if let Some(bid) = quote.bid_price {
+            self.bid = bid.0;
+        }
+
+        if let Some(ask) = quote.ask_price {
+            self.ask = ask.0;
+        }
+
+        if let Some(index) = quote.mark_price {
+            self.index = index.0;
+        }
+
+        true
     }
 
     pub fn bid(&self) -> Decimal {
@@ -90,6 +101,12 @@ impl Quote {
     }
 }
 
+impl Default for Quote {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 mod wire {
     use super::*;
     use serde::Deserialize;
@@ -104,16 +121,18 @@ mod wire {
     #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
     #[serde(rename_all = "camelCase")]
     pub struct QuoteData {
-        #[serde(with = "rust_decimal::serde::float")]
-        pub bid_price: Decimal,
-        #[serde(with = "rust_decimal::serde::float")]
-        pub ask_price: Decimal,
-        #[serde(with = "rust_decimal::serde::float")]
-        pub mark_price: Decimal,
+        pub bid_price: Option<DecimalWrapper>,
+        pub ask_price: Option<DecimalWrapper>,
+        pub mark_price: Option<DecimalWrapper>,
         pub symbol: String,
         #[serde(with = "time::serde::rfc3339")]
         pub timestamp: OffsetDateTime,
     }
+
+    /// Wrapper struct for decimal to allow us to wrap it in an option one layer up.
+    #[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+    #[serde(transparent)]
+    pub struct DecimalWrapper(#[serde(with = "rust_decimal::serde::float")] pub Decimal);
 }
 
 #[cfg(test)]
@@ -123,8 +142,12 @@ mod tests {
     use time::ext::NumericalDuration;
 
     #[test]
-    fn can_deserialize_quote_message() {
-        let quote = Quote::from_str(r#"{"table":"quoteBin1m","action":"insert","data":[{"timestamp":"2021-09-21T02:40:00.000Z","symbol":"XBTUSD","bidSize":50200,"bidPrice":42640.5,"askPrice":42641,"markPrice":42641,"askSize":363600}]}"#).unwrap().unwrap();
+    fn can_update_quote() {
+        let mut quote = Quote::new();
+
+        let was_updated = quote.update(r#"{"table":"quoteBin1m","action":"insert","data":[{"timestamp":"2021-09-21T02:40:00.000Z","symbol":"XBTUSD","bidSize":50200,"bidPrice":42640.5,"askPrice":42641,"askSize":363600}]}"#);
+
+        assert!(was_updated);
 
         assert_eq!(quote.bid, dec!(42640.5));
         assert_eq!(quote.ask, dec!(42641));
