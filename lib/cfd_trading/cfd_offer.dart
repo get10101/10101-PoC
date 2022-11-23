@@ -38,9 +38,9 @@ class _CfdOfferState extends State<CfdOffer> {
 
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
-    final fmtBid = formatter.format(offer.bid);
-    final fmtAsk = formatter.format(offer.ask);
-    final fmtIndex = formatter.format(offer.index);
+    final fmtBid = "\$" + formatter.format(offer.bid);
+    final fmtAsk = "\$" + formatter.format(offer.ask);
+    final fmtIndex = "\$" + formatter.format(offer.index);
 
     cfdTradingService.draftOrder ??= Order(
         openPrice: offer.ask,
@@ -76,9 +76,27 @@ class _CfdOfferState extends State<CfdOffer> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Text("bid $fmtBid"),
-            Text("ask $fmtAsk"),
-            Text("index $fmtIndex"),
+            Row(
+              children: [
+                const Text("bid:"),
+                const SizedBox(width: 2),
+                Text(fmtBid, style: const TextStyle(fontWeight: FontWeight.w600))
+              ],
+            ),
+            Row(
+              children: [
+                const Text("ask:"),
+                const SizedBox(width: 2),
+                Text(fmtAsk, style: const TextStyle(fontWeight: FontWeight.w600))
+              ],
+            ),
+            Row(
+              children: [
+                const Text("index:"),
+                const SizedBox(width: 2),
+                Text(fmtIndex, style: const TextStyle(fontWeight: FontWeight.w600))
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 30),
