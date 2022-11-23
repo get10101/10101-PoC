@@ -208,6 +208,11 @@ class _TenTenOneState extends State<TenTenOneApp> {
           .then((value) => FLog.info(text: "ldk node stopped."))
           .catchError((error) => FLog.error(text: "ldk stopped with an error", exception: error));
 
+      // connect to the maker, this will not return unless there was an error.
+      api.connect().then((value) => FLog.error(text: "Lost connection to the maker")).catchError(
+          (error) =>
+              FLog.error(text: "Lost connection to the maker with an error", exception: error));
+
       FLog.info(text: "TenTenOne is ready!");
       setState(() {
         ready = true;

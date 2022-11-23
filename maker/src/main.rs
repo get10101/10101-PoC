@@ -73,6 +73,7 @@ async fn main() -> Result<()> {
                 routes::get_channel_details,
                 routes::get_spread,
                 routes::put_spread,
+                routes::alive,
             ],
         )
         .manage(quote_receiver)

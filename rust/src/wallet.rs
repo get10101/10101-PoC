@@ -527,17 +527,15 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     }
 
     // Open Channel
-    let (peer_manager, channel_manager, data_dir) = {
+    let (channel_manager, data_dir) = {
         let lightning = &get_wallet()?.lightning;
         (
-            lightning.peer_manager.clone(),
             lightning.channel_manager.clone(),
             lightning.data_dir.clone(),
         )
     };
 
     lightning::open_channel(
-        peer_manager,
         channel_manager,
         peer_info,
         channel_capacity,
@@ -545,6 +543,19 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
         Some(maker_amount),
     )
     .await
+}
+
+pub async fn connect() -> Result<()> {
+    let peer_manager = {
+        let lightning = &get_wallet()?.lightning;
+
+        lightning.peer_manager.clone()
+    };
+    let peer_info = maker_peer_info();
+    tracing::debug!("Connection with {peer_info}");
+    lightning::connect_peer_if_necessary(&peer_info, peer_manager).await?;
+    tracing::debug!("Connected with {peer_info}");
+    Ok(())
 }
 
 pub async fn force_close_channel(remote_node_id: PublicKey) -> Result<()> {
