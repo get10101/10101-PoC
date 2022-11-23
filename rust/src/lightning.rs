@@ -766,8 +766,8 @@ async fn handle_ldk_events(
             short_channel_id,
             ..
         } => {
-            print!(
-                "\nEVENT: Failed to send payment{} to payment hash {:?}",
+            let payment_fail_msg = format!(
+                "EVENT: Failed to send payment{} to payment hash {:?}",
                 if *all_paths_failed {
                     ""
                 } else {
@@ -775,14 +775,18 @@ async fn handle_ldk_events(
                 },
                 hex_utils::hex_str(&payment_hash.0)
             );
-            if let Some(scid) = short_channel_id {
-                print!(" because of failure at channel {}", scid);
-            }
-            if *payment_failed_permanently {
-                println!(": re-attempting the payment will not succeed");
+
+            let payment_fail_msg = if let Some(scid) = short_channel_id {
+                payment_fail_msg + &format!(" because of failure at channel {}", scid)
             } else {
-                println!(": exhausted payment retry attempts");
-            }
+                payment_fail_msg
+            };
+            let payment_fail_msg = if *payment_failed_permanently {
+                payment_fail_msg + ": re-attempting the payment will not succeed"
+            } else {
+                payment_fail_msg + ": exhausted payment retry attempts"
+            };
+            tracing::error!(payment_fail_msg);
 
             let mut payments = outbound_payments.lock().unwrap();
             if payments.contains_key(payment_hash) {
@@ -796,6 +800,14 @@ async fn handle_ldk_events(
             prev_channel_id,
             next_channel_id,
         } => {
+            tracing::debug!(
+                ?fee_earned_msat,
+                ?claim_from_onchain_tx,
+                ?prev_channel_id,
+                ?next_channel_id,
+                "Payment forwarded"
+            );
+
             let read_only_network_graph = network_graph.read_only();
             let nodes = read_only_network_graph.nodes();
             let channels = channel_manager.list_channels();
@@ -839,19 +851,25 @@ async fn handle_ldk_events(
                 "from HTLC fulfill message"
             };
             if let Some(fee_earned) = fee_earned_msat {
-                println!(
+                tracing::debug!(
                     "\nEVENT: Forwarded payment{}{}, earning {} msat {}",
-                    from_prev_str, to_next_str, fee_earned, from_onchain_str
+                    from_prev_str,
+                    to_next_str,
+                    fee_earned,
+                    from_onchain_str
                 );
             } else {
-                println!(
+                tracing::debug!(
                     "\nEVENT: Forwarded payment{}{}, claiming onchain {}",
-                    from_prev_str, to_next_str, from_onchain_str
+                    from_prev_str,
+                    to_next_str,
+                    from_onchain_str
                 );
             }
             print!("> ");
         }
         Event::PendingHTLCsForwardable { time_forwardable } => {
+            tracing::debug!("EVENT: pending HTLC Forwardable");
             let forwarding_channel_manager = channel_manager.clone();
             let min = time_forwardable.as_millis() as u64;
             tokio::spawn(async move {
@@ -861,6 +879,7 @@ async fn handle_ldk_events(
             });
         }
         Event::SpendableOutputs { outputs } => {
+            tracing::debug!(?outputs, "EVENT: spendable outputs");
             let destination_address = wallet.get_unused_address().unwrap();
             let output_descriptors = &outputs.iter().collect::<Vec<_>>();
             let tx_feerate = wallet.get_est_sat_per_1000_weight(ConfirmationTarget::Normal);
@@ -889,19 +908,20 @@ async fn handle_ldk_events(
         Event::DiscardFunding { .. } => {
             // A "real" node should probably "lock" the UTXOs spent in funding transactions until
             // the funding transaction either confirms, or this event is generated.
+            tracing::error!("Event::DiscardFunding is not yet implemented");
         }
         Event::PaymentFailed {
             payment_id: _,
             payment_hash: _,
         } => {
-            eprintln!("Event::PaymentFailed is not yet implemented");
+            tracing::error!("Event::PaymentFailed is not yet implemented");
         }
         Event::PaymentPathSuccessful {
             payment_id: _,
             payment_hash: _,
             path: _,
         } => {
-            eprintln!("Event::PaymentPathSuccessful is not yet implemented");
+            tracing::error!("Event::PaymentPathSuccessful is not yet implemented");
         }
         Event::PaymentClaimed {
             payment_hash,
@@ -947,8 +967,27 @@ async fn handle_ldk_events(
                 }
             }
         }
-        Event::ProbeSuccessful { .. } => {}
-        Event::ProbeFailed { .. } => {}
+        Event::ProbeSuccessful {
+            payment_id,
+            payment_hash,
+            path,
+        } => {
+            tracing::debug!(?payment_id, ?payment_hash, ?path, "Probe successful");
+        }
+        Event::ProbeFailed {
+            payment_id,
+            payment_hash,
+            path,
+            short_channel_id,
+        } => {
+            tracing::error!(
+                ?payment_id,
+                ?payment_hash,
+                ?path,
+                ?short_channel_id,
+                "Probe failed"
+            )
+        }
         Event::OpenChannelRequest {
             temporary_channel_id,
             counterparty_node_id,
@@ -969,7 +1008,16 @@ async fn handle_ldk_events(
                 }
             }
         }
-        Event::HTLCHandlingFailed { .. } => {}
+        Event::HTLCHandlingFailed {
+            prev_channel_id,
+            failed_next_destination,
+        } => {
+            tracing::error!(
+                ?prev_channel_id,
+                ?failed_next_destination,
+                "HTLC handling failed"
+            );
+        }
         // Maker
         Event::RemoteSentAddCustomOutputEvent { custom_output_id } => {
             // TODO: Remove unwrap
