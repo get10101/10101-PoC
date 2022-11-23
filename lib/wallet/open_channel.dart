@@ -60,32 +60,14 @@ class _OpenChannelState extends State<OpenChannel> {
                 const Center(child: Icon(Icons.private_connectivity_outlined, size: 80)),
                 const SizedBox(height: 10),
                 ListTile(
-                    leading: Container(
-                      width: 50,
-                      decoration: BoxDecoration(
-                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                      child: const Center(
-                          child: Text(
-                        "1",
-                        style: TextStyle(color: Colors.white, fontSize: 20),
-                      )),
-                    ),
+                    leading: addCircle("1"),
                     title: const Text("Fund your bitcoin wallet"),
                     subtitle: const Text(
                         "In order to establish a Lightning channel between 10101 and you we need to lock some bitcoin on chain.",
                         style: TextStyle(color: Colors.grey))),
                 const SizedBox(height: 15),
                 ListTile(
-                    leading: Container(
-                      width: 50,
-                      decoration: BoxDecoration(
-                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                      child: const Center(
-                          child: Text(
-                        "2",
-                        style: TextStyle(color: Colors.white, fontSize: 20),
-                      )),
-                    ),
+                    leading: addCircle("2"),
                     title: const Text("Enter the channel amount"),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,32 +96,14 @@ class _OpenChannelState extends State<OpenChannel> {
                     )),
                 const SizedBox(height: 15),
                 ListTile(
-                    leading: Container(
-                      width: 50,
-                      decoration: BoxDecoration(
-                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                      child: const Center(
-                          child: Text(
-                        "3",
-                        style: TextStyle(color: Colors.white, fontSize: 20),
-                      )),
-                    ),
+                    leading: addCircle("3"),
                     title: const Text("Select your maker"),
                     subtitle: const Text(
                         "In this version you can only trade with 10101, but in the future you will be able to choose who to connect to.",
                         style: TextStyle(color: Colors.grey))),
                 const SizedBox(height: 15),
                 ListTile(
-                    leading: Container(
-                      width: 50,
-                      decoration: BoxDecoration(
-                          color: Colors.blue, borderRadius: BorderRadius.circular(100)),
-                      child: const Center(
-                          child: Text(
-                        "4",
-                        style: TextStyle(color: Colors.white, fontSize: 20),
-                      )),
-                    ),
+                    leading: addCircle("4"),
                     title: const Text("Ready!"),
                     subtitle: const Text(
                         "Hit the 'Open Channel' button and the channel will be created in a few moments.",
@@ -168,6 +132,19 @@ class _OpenChannelState extends State<OpenChannel> {
             ),
           )
         ],
+      )),
+    );
+  }
+
+  Container addCircle(String value) {
+    return Container(
+      width: 45,
+      height: 45,
+      decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(100)),
+      child: Center(
+          child: Text(
+        value,
+        style: const TextStyle(color: Colors.white, fontSize: 20),
       )),
     );
   }
