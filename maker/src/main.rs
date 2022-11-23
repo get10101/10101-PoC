@@ -7,6 +7,7 @@ use maker::routes::SpreadPrice;
 use std::time::Duration;
 use ten_ten_one::db;
 use ten_ten_one::wallet;
+use tokio::sync::watch;
 use tracing::metadata::LevelFilter;
 
 #[rocket::main]
@@ -53,6 +54,8 @@ async fn main() -> Result<()> {
 
     let (_, quote_receiver) = bitmex::subscribe()?;
 
+    let (spread_sender, spread_receiver) = watch::channel(SpreadPrice::new(15));
+
     let figment = rocket::Config::figment()
         .merge(("address", http_address.ip()))
         .merge(("port", http_address.port()));
@@ -73,7 +76,8 @@ async fn main() -> Result<()> {
             ],
         )
         .manage(quote_receiver)
-        .manage(SpreadPrice::new(15))
+        .manage(spread_sender)
+        .manage(spread_receiver)
         .launch()
         .await?;
 

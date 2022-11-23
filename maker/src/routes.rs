@@ -9,8 +9,6 @@ use rocket::serde::Deserialize;
 use rocket::serde::Serialize;
 use rocket::State;
 use rust_decimal::Decimal;
-use std::sync::atomic::AtomicI32;
-use std::sync::atomic::Ordering;
 use ten_ten_one::wallet::create_invoice;
 use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
@@ -37,12 +35,12 @@ pub struct Offer {
 #[rocket::get("/offer")]
 pub async fn get_offer(
     rx_quote_receiver: &State<watch::Receiver<Option<Quote>>>,
-    spread_state: &State<SpreadPrice>,
+    spread_receiver: &State<watch::Receiver<SpreadPrice>>,
 ) -> Result<Json<Offer>, HttpApiProblem> {
     let rx_quote_receiver = rx_quote_receiver.inner().clone();
     let quote = *rx_quote_receiver.borrow();
 
-    let spread: f32 = spread_state.inner().load();
+    let spread = spread_receiver.inner().clone().borrow().load();
     let spread = Decimal::try_from(spread).map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed to parse spread")
@@ -63,35 +61,43 @@ pub async fn get_offer(
             .detail(e.to_string())
     })
 }
-// TODO: changing the spread via an api has been added for demo purposes, remove when not needed
-// anymore
-pub struct SpreadPrice(AtomicI32);
+
+/// Spread applied
+#[derive(Clone, Copy)]
+pub struct SpreadPrice(f32);
 
 impl SpreadPrice {
+    /// For ease of PUT request, we expect spread multiplied by 1000
     pub fn new(spread: i32) -> SpreadPrice {
-        SpreadPrice(AtomicI32::new(spread))
+        SpreadPrice(spread as f32 / 1000.0)
     }
     pub fn load(&self) -> f32 {
-        let spread = self.0.load(Ordering::Relaxed);
-        (spread as f32) / 1000.0
-    }
-    pub fn store(&self, spread: i32) {
-        self.0.store(spread, Ordering::Relaxed);
+        self.0
     }
 }
 
+// TODO: changing the spread via an api has been added for demo purposes, remove when not needed
+// anymore
 #[rocket::put("/spread/<spread>")]
 pub async fn put_spread(
-    spread_state: &State<SpreadPrice>,
+    spread_sender: &State<watch::Sender<SpreadPrice>>,
     spread: i32,
 ) -> Result<(), HttpApiProblem> {
-    spread_state.inner().store(spread);
+    spread_sender
+        .inner()
+        .send(SpreadPrice::new(spread))
+        .map_err(|_| {
+            HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR).title("cannot set the spread")
+        })?;
     Ok(())
 }
 
 #[rocket::get("/spread")]
-pub async fn get_spread(spread_state: &State<SpreadPrice>) -> Result<Json<f32>, HttpApiProblem> {
-    Ok(Json(spread_state.inner().load()))
+pub async fn get_spread(
+    spread_receiver: &State<watch::Receiver<SpreadPrice>>,
+) -> Result<Json<f32>, HttpApiProblem> {
+    let spread = spread_receiver.inner().clone().borrow().load();
+    Ok(Json(spread))
 }
 
 #[derive(Serialize)]
