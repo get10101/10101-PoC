@@ -19,46 +19,56 @@ class PaymentHistoryListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget statusIcon;
     var layer = "on-chain";
+    switch (data.type) {
+      case PaymentType.receive:
+        statusIcon = receiveOffChainIcon();
+        layer = "off-chain";
+        break;
+      case PaymentType.receiveOnChain:
+        statusIcon = receiveOnChainIcon();
+        layer = "on-chain";
+        break;
+      case PaymentType.send:
+        statusIcon = sendOnChainIcon();
+        layer = "on-chain";
+        break;
+      case PaymentType.sendOnChain:
+        statusIcon = sendOnChainIcon();
+        layer = "on-chain";
+        break;
+      case PaymentType.cfdOpen:
+        statusIcon = cfdOpenIcon();
+        layer = "off-chain";
+        break;
+      case PaymentType.cfdClose:
+        statusIcon = cfdClosedIcon();
+        layer = "off-chain";
+        break;
+      case PaymentType.channelOpen:
+        statusIcon = channelOpenIcon();
+        layer = "on-chain";
+        break;
+      case PaymentType.channelClose:
+        statusIcon = channelClosedIcon();
+        layer = "on-chain";
+        break;
+      case PaymentType.sportsbetOpen:
+      case PaymentType.sportsbetClose:
+        // TODO: Handle these cases.
+        statusIcon = Icon(Icons.check_circle_outline, color: Colors.green[800]);
+        layer = "off-chain";
+        break;
+    }
+
     switch (data.status) {
       case PaymentStatus.pending:
         statusIcon = const SizedBox(width: 20, height: 20, child: CircularProgressIndicator());
         break;
-      case PaymentStatus.finalized:
-        switch (data.type) {
-          case PaymentType.receive:
-          case PaymentType.receiveOnChain:
-            statusIcon = receiveOnChainIcon();
-            break;
-          case PaymentType.send:
-          case PaymentType.sendOnChain:
-            statusIcon = sendOnChainIcon();
-            break;
-          case PaymentType.cfdOpen:
-            statusIcon = cfdOpenIcon();
-            layer = "off-chain";
-            break;
-          case PaymentType.cfdClose:
-            statusIcon = cfdClosedIcon();
-            layer = "off-chain";
-            break;
-          case PaymentType.channelOpen:
-            statusIcon = channelOpenIcon();
-            layer = "on-chain";
-            break;
-          case PaymentType.channelClose:
-            statusIcon = channelClosedIcon();
-            layer = "on-chain";
-            break;
-          case PaymentType.sportsbetOpen:
-          case PaymentType.sportsbetClose:
-            // TODO: Handle these cases.
-            statusIcon = Icon(Icons.check_circle_outline, color: Colors.green[800]);
-            layer = "off-chain";
-            break;
-        }
-        break;
       case PaymentStatus.failed:
         statusIcon = Icon(FontAwesomeIcons.xmark, color: Colors.red[800]);
+        break;
+      case PaymentStatus.finalized:
+        // Already handled by data type switch statement
         break;
     }
 
@@ -112,6 +122,27 @@ class PaymentHistoryListItem extends StatelessWidget {
   }
 
   Transform sendOnChainIcon() {
+    return Transform.rotate(
+      angle: 135 * math.pi / 180,
+      child: Icon(
+        FontAwesomeIcons.arrowLeft,
+        color: Colors.red[800],
+      ),
+    );
+  }
+
+  // TODO: come up with a lightning receive icon
+  Transform receiveOffChainIcon() {
+    return Transform.rotate(
+        angle: -135 * math.pi / 180,
+        child: Icon(
+          FontAwesomeIcons.arrowLeft,
+          color: Colors.green[800],
+        ));
+  }
+
+  // TODO: come up with a lightning send icon
+  Transform sendOffChainIcon() {
     return Transform.rotate(
       angle: 135 * math.pi / 180,
       child: Icon(
