@@ -1422,6 +1422,7 @@ dependencies = [
  "bitmex-stream",
  "clap",
  "futures",
+ "hex",
  "http-api-problem",
  "rocket",
  "rust_decimal",
