@@ -26,14 +26,12 @@ class OpenChannel extends StatefulWidget {
 
 class _OpenChannelState extends State<OpenChannel> {
   int takerChannelAmount = 0;
-  String peerPubkeyAndIpAddr = "";
 
   @override
   void initState() {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
     takerChannelAmount = bitcoinBalance.amount.asSats.clamp(0, OpenChannel.maxChannelAmount);
-    _setMakerPeerInfo();
   }
 
   @override
@@ -110,7 +108,6 @@ class _OpenChannelState extends State<OpenChannel> {
                         "Hit the 'Open Channel' button and the channel will be created in a few moments.",
                         style: TextStyle(color: Colors.grey))),
                 const SizedBox(height: 15),
-                // const Spacer(),
               ],
             ),
           ),
@@ -155,11 +152,5 @@ class _OpenChannelState extends State<OpenChannel> {
         style: const TextStyle(color: Colors.white, fontSize: 20),
       )),
     );
-  }
-
-// This is pre-set in the backend, so no need to hook up to a change provider
-  Future<void> _setMakerPeerInfo() async {
-    final makerPubkeyAndIpAddr = await api.makerPeerInfo();
-    setState(() => peerPubkeyAndIpAddr = makerPubkeyAndIpAddr);
   }
 }
