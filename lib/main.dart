@@ -79,23 +79,29 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Widget build(BuildContext context) {
     const mainColor = Colors.blue;
 
-    return Visibility(
-      visible: ready,
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'TenTenOne',
-        theme: ThemeData(
-            primarySwatch: mainColor,
-            elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(foregroundColor: Colors.white)),
-            floatingActionButtonTheme: const FloatingActionButtonThemeData(
-              foregroundColor: Colors.white,
-            ),
-            appBarTheme: const AppBarTheme(
-              foregroundColor: Colors.white,
-            )),
-        routerConfig: _router,
-      ),
+    if (!ready) {
+      return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+              body: Container(
+                  color: Colors.white,
+                  child: Center(
+                      child: Image.asset('assets/10101_logo.png', width: 130, height: 130)))));
+    }
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'TenTenOne',
+      theme: ThemeData(
+          primarySwatch: mainColor,
+          elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(foregroundColor: Colors.white)),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            foregroundColor: Colors.white,
+          ),
+          appBarTheme: const AppBarTheme(
+            foregroundColor: Colors.white,
+          )),
+      routerConfig: _router,
     );
   }
 
