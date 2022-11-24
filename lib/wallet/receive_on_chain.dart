@@ -64,7 +64,7 @@ class _ReceiveOnChainState extends State<ReceiveOnChain> {
                           Expanded(
                               child: Text(
                             address,
-                            overflow: TextOverflow.fade,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 20),
                           )),
                           IconButton(
