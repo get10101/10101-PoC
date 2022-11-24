@@ -54,11 +54,14 @@ pub static TESTNET_MEMPOOL: &str = "https://mempool.space/testnet/api/v1";
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 
-static MAKER_IP: &str = "127.0.0.1";
+// 0244946473b7926c427be70925e8e99cafc3ea76dffe708e6cba8896576cf0b14d@35.189.57.114:9045
+
+// corresponds to testnet.itchysats.network
+static MAKER_IP: &str = "35.189.57.114";
 static MAKER_PORT_LIGHTNING: u64 = 9045;
-static MAKER_PORT_HTTP: u64 = 8000;
-// Maker PK is derived from our checked in regtest maker seed
-static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
+static MAKER_PORT_HTTP: u64 = 8888;
+// Maker PK logged in tentenone-maker testnet container
+static MAKER_PK: &str = "0244946473b7926c427be70925e8e99cafc3ea76dffe708e6cba8896576cf0b14d";
 
 pub static TCP_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -75,7 +78,7 @@ pub fn maker_peer_info() -> PeerInfo {
         pubkey: maker_pk(),
         peer_addr: format!("{MAKER_IP}:{MAKER_PORT_LIGHTNING}")
             .parse()
-            .expect("Hard-coded PK to be valid"),
+            .expect("Hard-coded IP and port to be valid"),
     }
 }
 
@@ -555,7 +558,7 @@ pub async fn connect() -> Result<()> {
     let peer_info = maker_peer_info();
     tracing::debug!("Connection with {peer_info}");
     lightning::connect_peer_if_necessary(&peer_info, peer_manager).await?;
-    tracing::debug!("Connected with {peer_info}");
+
     Ok(())
 }
 

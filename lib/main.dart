@@ -198,8 +198,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
       final appSupportDir = await getApplicationSupportDirectory();
       FLog.info(text: "App data will be stored in: " + appSupportDir.toString());
 
-      await api.initWallet(network: Network.Regtest, path: appSupportDir.path);
-      await api.initDb(network: Network.Regtest, appDir: appSupportDir.path);
+      await api.initWallet(network: Network.Testnet, path: appSupportDir.path);
+      await api.initDb(network: Network.Testnet, appDir: appSupportDir.path);
       await api.testDbConnection(); // TODO: Remove this call after testing DB
 
       FLog.info(text: "Starting ldk node");

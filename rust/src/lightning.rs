@@ -646,6 +646,7 @@ pub async fn connect_peer_if_necessary(
     .await
     {
         Some(connection_closed_future) => {
+            tracing::info!("Connected with {peer}");
             let mut connection_closed_future = Box::pin(connection_closed_future);
             loop {
                 match futures::poll!(&mut connection_closed_future) {
