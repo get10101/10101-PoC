@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide Divider;
 import 'package:flutter/services.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 
@@ -25,13 +26,28 @@ class OpenChannel extends StatefulWidget {
 }
 
 class _OpenChannelState extends State<OpenChannel> {
+
+  final controller = TextEditingController();
   int takerChannelAmount = 0;
+  bool submit = true;
 
   @override
   void initState() {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
     takerChannelAmount = bitcoinBalance.amount.asSats.clamp(0, OpenChannel.maxChannelAmount);
+    controller.text = NumberFormat().format(takerChannelAmount);
+    controller.addListener(() {
+      setState(() {
+        submit = controller.text.isNotEmpty;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -75,7 +91,7 @@ class _OpenChannelState extends State<OpenChannel> {
                             "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity.",
                             style: TextStyle(color: Colors.grey)),
                         TextFormField(
-                          initialValue: takerChannelAmount.toString(),
+                          controller: controller,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
                             border: UnderlineInputBorder(),
@@ -85,9 +101,13 @@ class _OpenChannelState extends State<OpenChannel> {
                           ],
                           onChanged: (text) {
                             setState(() {
-                              takerChannelAmount = text != ""
-                                  ? int.parse(text).clamp(0, OpenChannel.maxChannelAmount)
-                                  : 0;
+                              if (text != "") {
+                                takerChannelAmount = int.parse(text).clamp(0, OpenChannel.maxChannelAmount);
+                                controller.text = NumberFormat().format(takerChannelAmount);
+                                controller.selection = TextSelection.fromPosition(TextPosition(offset: controller.text.length));
+                              } else {
+                                takerChannelAmount = 0;
+                              }
                             });
                           },
                         )
@@ -116,7 +136,7 @@ class _OpenChannelState extends State<OpenChannel> {
             child: Container(
               alignment: Alignment.bottomRight,
               child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: !submit ? null : () async {
                     FLog.info(
                         text: "Opening Channel with capacity " + takerChannelAmount.toString());
                     try {
