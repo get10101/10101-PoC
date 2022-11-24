@@ -22,6 +22,8 @@ class CfdTradingChangeNotifier extends ChangeNotifier {
     super.notifyListeners();
   }
 
+  bool hasOpenCfds() => cfds.where((cfd) => cfd.state == CfdState.Open).isNotEmpty;
+
   Future<void> refreshCfdList() async {
     cfds = await api.listCfds();
     super.notifyListeners();

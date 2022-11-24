@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
+import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
+import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/receive.dart';
@@ -48,6 +50,19 @@ class _WalletLightningState extends State<WalletLightning> {
 
     const balanceSelector = BalanceSelector.lightning;
 
+    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
+    final hasOpenCfds = cfdTradingService.hasOpenCfds();
+
+    if (hasOpenCfds) {
+      widgets.insert(
+          0,
+          AlertMessage(
+              message: Message(
+                  title:
+                      "Cannot send or receive Lightning payments when you have an open CFD. Coming soon.",
+                  type: AlertType.info)));
+    }
+
     return SafeArea(
       child: Scaffold(
         drawer: const Menu(),
@@ -62,7 +77,7 @@ class _WalletLightningState extends State<WalletLightning> {
           activeBackgroundColor: Colors.grey,
           activeForegroundColor: Colors.white,
           buttonSize: const Size(56.0, 56.0),
-          visible: true,
+          visible: !hasOpenCfds,
           closeManually: false,
           curve: Curves.bounceIn,
           overlayColor: Colors.black,
