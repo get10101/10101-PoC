@@ -15,6 +15,7 @@ import 'package:ten_ten_one/models/payment.model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
+import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -56,6 +57,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier().init()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
+    ChangeNotifierProvider(create: (context) => ChannelChangeNotifier()),
   ], child: const TenTenOneApp()));
 }
 

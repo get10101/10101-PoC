@@ -1,14 +1,14 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart' hide Divider;
 import 'package:flutter/services.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 
-import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
+import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 
 class OpenChannel extends StatefulWidget {
   const OpenChannel({Key? key}) : super(key: key);
@@ -25,15 +25,28 @@ class OpenChannel extends StatefulWidget {
 }
 
 class _OpenChannelState extends State<OpenChannel> {
+  final controller = TextEditingController();
   int takerChannelAmount = 0;
-  String peerPubkeyAndIpAddr = "";
+  bool validForm = true;
+  bool submitting = false;
 
   @override
   void initState() {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
     takerChannelAmount = bitcoinBalance.amount.asSats.clamp(0, OpenChannel.maxChannelAmount);
-    _setMakerPeerInfo();
+    controller.text = NumberFormat().format(takerChannelAmount);
+    controller.addListener(() {
+      setState(() {
+        validForm = controller.text.isNotEmpty;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -77,7 +90,8 @@ class _OpenChannelState extends State<OpenChannel> {
                             "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity.",
                             style: TextStyle(color: Colors.grey)),
                         TextFormField(
-                          initialValue: takerChannelAmount.toString(),
+                          controller: controller,
+                          readOnly: submitting,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
                             border: UnderlineInputBorder(),
@@ -87,9 +101,15 @@ class _OpenChannelState extends State<OpenChannel> {
                           ],
                           onChanged: (text) {
                             setState(() {
-                              takerChannelAmount = text != ""
-                                  ? int.parse(text).clamp(0, OpenChannel.maxChannelAmount)
-                                  : 0;
+                              if (text != "") {
+                                takerChannelAmount =
+                                    int.parse(text).clamp(0, OpenChannel.maxChannelAmount);
+                                controller.text = NumberFormat().format(takerChannelAmount);
+                                controller.selection = TextSelection.fromPosition(
+                                    TextPosition(offset: controller.text.length));
+                              } else {
+                                takerChannelAmount = 0;
+                              }
                             });
                           },
                         )
@@ -110,38 +130,53 @@ class _OpenChannelState extends State<OpenChannel> {
                         "Hit the 'Open Channel' button and the channel will be created in a few moments.",
                         style: TextStyle(color: Colors.grey))),
                 const SizedBox(height: 15),
-                // const Spacer(),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: Container(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                  onPressed: () async {
-                    FLog.info(
-                        text: "Opening Channel with capacity " + takerChannelAmount.toString());
-                    try {
-                      await api.openChannel(takerAmount: takerChannelAmount);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Waiting for channel to get established"),
-                      ));
-                      context.go('/');
-                    } on FfiException catch (error) {
-                      FLog.error(text: "Failed to open channel.", exception: error);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        backgroundColor: Colors.red,
-                        content: Text("Failed to open channel. Is the maker online?"),
-                      ));
-                    }
-                  },
-                  child: const Text('Open Channel')),
-            ),
-          )
+              padding: const EdgeInsets.only(right: 20.0),
+              child: Container(
+                alignment: Alignment.bottomRight,
+                child: ElevatedButton.icon(
+                    label: const Text('Open Channel'),
+                    icon: !submitting
+                        ? Container()
+                        : Container(
+                            width: 18,
+                            height: 18,
+                            padding: const EdgeInsets.all(2.0),
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          ),
+                    onPressed: !validForm || submitting ? null : openChannel),
+              ))
         ],
       )),
     );
+  }
+
+  void openChannel() {
+    setState(() {
+      submitting = true;
+    });
+    FLog.info(text: "Opening Channel with capacity " + takerChannelAmount.toString());
+    context.read<ChannelChangeNotifier>().open(takerChannelAmount).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Waiting for channel to get established"),
+      ));
+      context.go('/');
+    }).catchError((error) {
+      setState(() {
+        submitting = false;
+      });
+      FLog.error(text: "Failed to open channel.", exception: error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        backgroundColor: Colors.red,
+        content: Text("Failed to open channel. Is the maker online?"),
+      ));
+    });
   }
 
   Container addCircle(String value) {
@@ -155,11 +190,5 @@ class _OpenChannelState extends State<OpenChannel> {
         style: const TextStyle(color: Colors.white, fontSize: 20),
       )),
     );
-  }
-
-// This is pre-set in the backend, so no need to hook up to a change provider
-  Future<void> _setMakerPeerInfo() async {
-    final makerPubkeyAndIpAddr = await api.makerPeerInfo();
-    setState(() => peerPubkeyAndIpAddr = makerPubkeyAndIpAddr);
   }
 }
