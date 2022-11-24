@@ -132,9 +132,6 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
                     await api.openCfd(order: order);
                     FLog.info(text: 'OpenCfd returned successfully');
 
-                    // clear draft order from cfd service state
-                    cfdTradingChangeNotifier.draftOrder = null;
-
                     // switch index to cfd overview tab
                     cfdTradingChangeNotifier.selectedIndex = 1;
 

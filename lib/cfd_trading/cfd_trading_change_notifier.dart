@@ -18,11 +18,6 @@ class CfdTradingChangeNotifier extends ChangeNotifier {
   // hence we have to manage that state here as app state.
   bool expanded = false;
 
-  // manages the draft order state, so that the user can navigate through the app
-  // and does not lose her selection when coming back. the draft order will be set
-  // to null once the order has been confirmed.
-  Order? draftOrder;
-
   void notify() {
     super.notifyListeners();
   }
