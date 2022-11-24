@@ -172,9 +172,9 @@ class _OpenChannelState extends State<OpenChannel> {
         submitting = false;
       });
       FLog.error(text: "Failed to open channel.", exception: error);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: Colors.red,
-        content: Text("Failed to open channel. Is the maker online?"),
+        content: Text("Failed to open channel. Error: " + error.toString()),
       ));
     });
   }
