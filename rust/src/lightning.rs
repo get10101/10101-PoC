@@ -67,6 +67,7 @@ use lightning_persister::FilesystemPersister;
 use rand::thread_rng;
 use rand::Rng;
 use rand::RngCore;
+use serde::Serialize;
 use state::Storage;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
@@ -107,6 +108,7 @@ pub struct LightningSystem {
     pub network: Network,
 }
 
+#[derive(Serialize)]
 pub struct PeerInfo {
     pub pubkey: PublicKey,
     pub peer_addr: SocketAddr,
@@ -128,17 +130,12 @@ impl LightningSystem {
 }
 
 pub async fn open_channel(
-    peer_manager: Arc<PeerManager>,
     channel_manager: Arc<ChannelManager>,
     peer_info: PeerInfo,
     channel_amount_sat: u64,
     data_dir: &Path,
     initial_send_amount_sats: Option<u64>,
 ) -> Result<()> {
-    tracing::debug!("Connection with {peer_info}");
-    connect_peer_if_necessary(&peer_info, peer_manager).await?;
-    tracing::debug!("Connected to {peer_info}");
-
     let config = UserConfig {
         channel_handshake_limits: ChannelHandshakeLimits {
             // lnd's max to_self_delay is 2016, so we want to be compatible.

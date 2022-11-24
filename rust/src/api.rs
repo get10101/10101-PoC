@@ -104,16 +104,50 @@ pub fn maker_peer_info() -> String {
 }
 
 #[tokio::main(flavor = "current_thread")]
+pub async fn connect() -> Result<()> {
+    let mut connected = false;
+    loop {
+        tracing::debug!("Checking if maker is alive");
+        let client = reqwest::Client::builder()
+            .timeout(crate::wallet::TCP_TIMEOUT)
+            .build()?;
+        let result = client
+            .get(wallet::maker_endpoint() + "/api/alive")
+            .send()
+            .await;
+
+        match result {
+            Ok(_) => {
+                tracing::debug!("Maker is alive!");
+                if !connected {
+                    let result = wallet::connect().await;
+                    match result {
+                        Ok(()) => {
+                            tracing::info!("Successfully connected to maker");
+                            connected = true;
+                        }
+                        Err(err) => {
+                            tracing::warn!("Failed to connect to maker! {err:?}");
+                            connected = false;
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                tracing::warn!("Maker is offline! {err:?}");
+                connected = false;
+            }
+        };
+
+        // looping here indefinitely to keep the connection with the maker alive.
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+    }
+}
+
+#[tokio::main(flavor = "current_thread")]
 pub async fn open_channel(taker_amount: u64) -> Result<()> {
     let peer_info = wallet::maker_peer_info();
-    // TODO: stream updates back to the UI (if possible)?
-    if let Err(e) = wallet::open_channel(peer_info, taker_amount).await {
-        tracing::error!("Unable to open channel: {e:#}")
-    }
-    loop {
-        // looping here indefinitely to keep the connection with the maker alive.
-        tokio::time::sleep(std::time::Duration::from_secs(1000)).await;
-    }
+    wallet::open_channel(peer_info, taker_amount).await
 }
 
 pub fn send_to_address(address: String, amount: u64) -> Result<String> {

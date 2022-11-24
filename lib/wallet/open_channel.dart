@@ -1,6 +1,7 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart' hide Divider;
 import 'package:flutter/services.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
@@ -121,12 +122,19 @@ class _OpenChannelState extends State<OpenChannel> {
                   onPressed: () async {
                     FLog.info(
                         text: "Opening Channel with capacity " + takerChannelAmount.toString());
-
-                    api.openChannel(takerAmount: takerChannelAmount);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("Waiting for channel to get established"),
-                    ));
-                    context.go('/');
+                    try {
+                      await api.openChannel(takerAmount: takerChannelAmount);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Waiting for channel to get established"),
+                      ));
+                      context.go('/');
+                    } on FfiException catch (error) {
+                      FLog.error(text: "Failed to open channel.", exception: error);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        backgroundColor: Colors.red,
+                        content: Text("Failed to open channel. Is the maker online?"),
+                      ));
+                    }
                   },
                   child: const Text('Open Channel')),
             ),

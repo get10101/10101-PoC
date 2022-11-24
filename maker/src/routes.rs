@@ -9,6 +9,8 @@ use rocket::serde::Deserialize;
 use rocket::serde::Serialize;
 use rocket::State;
 use rust_decimal::Decimal;
+use ten_ten_one::lightning::PeerInfo;
+use ten_ten_one::wallet;
 use ten_ten_one::wallet::create_invoice;
 use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
@@ -132,6 +134,11 @@ pub fn get_wallet_details() -> Result<Json<WalletDetails>, HttpApiProblem> {
         balance,
         node_id,
     }))
+}
+
+#[rocket::get("/alive")]
+pub async fn alive() -> Result<Json<PeerInfo>, HttpApiProblem> {
+    Ok(Json(wallet::maker_peer_info()))
 }
 
 #[rocket::post("/channel/close/<remote_node_id>")]
