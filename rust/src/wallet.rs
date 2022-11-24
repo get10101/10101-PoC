@@ -1,3 +1,7 @@
+use crate::config;
+use crate::config::maker_endpoint;
+use crate::config::maker_peer_info;
+use crate::config::TCP_TIMEOUT;
 use crate::db;
 use crate::lightning;
 use crate::lightning::ChannelManager;
@@ -32,9 +36,6 @@ use rust_decimal::prelude::FromPrimitive;
 use serde::Deserialize;
 use serde::Serialize;
 use state::Storage;
-use std::fmt;
-use std::fmt::Display;
-use std::fmt::Formatter;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::str::FromStr;
@@ -44,58 +45,8 @@ use std::sync::MutexGuard;
 use std::time::Duration;
 use tokio::task::JoinHandle;
 
-pub const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
-pub const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
-pub const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
-
-pub static MAINNET_MEMPOOL: &str = "https://mempool.space/api/v1";
-pub static TESTNET_MEMPOOL: &str = "https://mempool.space/testnet/api/v1";
-
 /// Wallet has to be managed by Rust as generics are not support by frb
 static WALLET: Storage<Mutex<Wallet>> = Storage::new();
-
-static MAKER_IP: &str = "127.0.0.1";
-static MAKER_PORT_LIGHTNING: u64 = 9045;
-static MAKER_PORT_HTTP: u64 = 8000;
-// Maker PK is derived from our checked in regtest maker seed
-static MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
-
-pub static TCP_TIMEOUT: Duration = Duration::from_secs(10);
-
-pub fn maker_pk() -> PublicKey {
-    MAKER_PK.parse().expect("Hard-coded PK to be valid")
-}
-
-pub fn maker_endpoint() -> String {
-    format!("http://{MAKER_IP}:{MAKER_PORT_HTTP}")
-}
-
-pub fn maker_peer_info() -> PeerInfo {
-    PeerInfo {
-        pubkey: maker_pk(),
-        peer_addr: format!("{MAKER_IP}:{MAKER_PORT_LIGHTNING}")
-            .parse()
-            .expect("Hard-coded PK to be valid"),
-    }
-}
-
-#[derive(Clone)]
-pub enum Network {
-    Mainnet,
-    Testnet,
-    Regtest,
-}
-
-impl Display for Network {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Network::Mainnet => "mainnet",
-            Network::Testnet => "testnet",
-            Network::Regtest => "regtest",
-        }
-        .fmt(f)
-    }
-}
 
 #[derive(Clone)]
 pub struct Wallet {
@@ -120,8 +71,11 @@ pub struct OnChain {
 }
 
 impl Wallet {
-    pub fn new(network: Network, electrum_url: &str, data_dir: &Path) -> Result<Wallet> {
-        let network: bitcoin::Network = network.into();
+    pub fn new(data_dir: &Path) -> Result<Wallet> {
+        let network = config::network();
+        let electrum_str = config::electrum_url();
+        tracing::info!(?network, electrum_str, "Creating the wallet");
+
         let data_dir = data_dir.join(&network.to_string());
         if !data_dir.exists() {
             std::fs::create_dir(&data_dir)
@@ -131,7 +85,7 @@ impl Wallet {
         let seed = Bip39Seed::initialize(&seed_path)?;
         let ext_priv_key = seed.derive_extended_priv_key(network)?;
 
-        let client = Client::new(electrum_url)?;
+        let client = Client::new(&electrum_str)?;
         let blockchain = ElectrumBlockchain::from(client);
 
         let bdk_wallet = bdk::Wallet::new(
@@ -375,9 +329,9 @@ fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
 
-pub fn init_wallet(network: Network, electrum_url: &str, data_dir: &Path) -> Result<()> {
+pub fn init_wallet(data_dir: &Path) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
-    WALLET.set(Mutex::new(Wallet::new(network, electrum_url, data_dir)?));
+    WALLET.set(Mutex::new(Wallet::new(data_dir)?));
     Ok(())
 }
 
@@ -489,7 +443,8 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
         fund_amount: maker_amount,
     };
 
-    let maker_api = format!("http://{MAKER_IP}:{MAKER_PORT_HTTP}/api/channel/open");
+    let endpoint = maker_endpoint();
+    let maker_api = format!("{endpoint}/api/channel/open");
 
     tracing::info!("Sending request to open channel to maker at: {maker_api}");
 
@@ -555,7 +510,7 @@ pub async fn connect() -> Result<()> {
     let peer_info = maker_peer_info();
     tracing::debug!("Connection with {peer_info}");
     lightning::connect_peer_if_necessary(&peer_info, peer_manager).await?;
-    tracing::debug!("Connected with {peer_info}");
+
     Ok(())
 }
 
@@ -585,16 +540,6 @@ pub fn create_invoice(amount_msat: u64, expiry_secs: u32, description: String) -
 
 pub fn get_fee_recommendation() -> Result<u32> {
     get_wallet()?.get_fee_recommendation()
-}
-
-impl From<Network> for bitcoin::Network {
-    fn from(network: Network) -> Self {
-        match network {
-            Network::Mainnet => bitcoin::Network::Bitcoin,
-            Network::Testnet => bitcoin::Network::Testnet,
-            Network::Regtest => bitcoin::Network::Regtest,
-        }
-    }
 }
 
 pub enum LightningTransactionType {

@@ -1,11 +1,10 @@
+use crate::config::maker_endpoint;
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Result;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use serde::Serialize;
-
-use crate::wallet::maker_endpoint;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Offer {
@@ -16,7 +15,7 @@ pub struct Offer {
 
 pub async fn get_offer() -> Result<Option<Offer>> {
     let client = reqwest::Client::builder()
-        .timeout(crate::wallet::TCP_TIMEOUT)
+        .timeout(crate::config::TCP_TIMEOUT)
         .build()?;
     let result = client.get(maker_endpoint() + "/api/offer").send().await;
     let response = match result {

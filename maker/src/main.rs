@@ -15,14 +15,13 @@ async fn main() -> Result<()> {
     let opts = Opts::read();
 
     let path = opts.data_dir()?;
-    let network = opts.network();
     let lightning_p2p_address = opts.lightning_p2p_address;
     let http_address = opts.http_address;
-    let electrum_url = opts.electrum();
 
     logger::init_tracing(LevelFilter::DEBUG, false)?;
-    wallet::init_wallet(network.clone(), electrum_url.as_str(), path.as_path())?;
+    wallet::init_wallet(path.as_path())?;
 
+    let network = ten_ten_one::config::network();
     db::init_db(&path.join(network.to_string()).join("maker.sqlite"))
         .await
         .expect("maker db to initialise");
