@@ -230,10 +230,14 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 
   Future<void> _callSync() async {
-    final balance = await api.getBalance();
-    bitcoinBalance.update(Amount(balance.onChain.confirmed));
-    lightningBalance.update(Amount(balance.offChain));
-    FLog.trace(text: 'Successfully synced Bitcoin wallet');
+    try {
+      final balance = await api.getBalance();
+      bitcoinBalance.update(Amount(balance.onChain.confirmed));
+      lightningBalance.update(Amount(balance.offChain));
+      FLog.trace(text: 'Successfully synced Bitcoin wallet');
+    } catch (error) {
+      FLog.error(text: "Failed to sync wallet:" + error.toString());
+    }
   }
 
   Future<void> _callGetOffers() async {
