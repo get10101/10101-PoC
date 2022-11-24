@@ -9,6 +9,7 @@ use rocket::serde::Deserialize;
 use rocket::serde::Serialize;
 use rocket::State;
 use rust_decimal::Decimal;
+use ten_ten_one::lightning::NodeInfo;
 use ten_ten_one::lightning::PeerInfo;
 use ten_ten_one::wallet;
 use ten_ten_one::wallet::create_invoice;
@@ -16,7 +17,6 @@ use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
 use ten_ten_one::wallet::get_balance;
 use ten_ten_one::wallet::get_channel_manager;
-use ten_ten_one::wallet::get_node_id;
 use ten_ten_one::wallet::send_lightning_payment;
 use ten_ten_one::wallet::send_to_address;
 use ten_ten_one::wallet::Balance;
@@ -124,7 +124,7 @@ pub fn get_wallet_details() -> Result<Json<WalletDetails>, HttpApiProblem> {
             .detail(format!("Internal wallet error: {e:#}"))
     })?;
 
-    let node_id = get_node_id().map_err(|e| {
+    let node_info = wallet::get_node_info().map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed get new address")
             .detail(format!("Internal wallet error: {e:#}"))
@@ -132,7 +132,7 @@ pub fn get_wallet_details() -> Result<Json<WalletDetails>, HttpApiProblem> {
     Ok(Json(WalletDetails {
         address,
         balance,
-        node_id,
+        node_id: node_info.node_id,
     }))
 }
 
@@ -203,4 +203,14 @@ pub async fn get_channel_details() -> Result<(), HttpApiProblem> {
 
     tracing::info!(?list, "Open channels: {}", list.len());
     Ok(())
+}
+
+#[rocket::get("/node/info")]
+pub async fn get_node_info() -> Result<Json<NodeInfo>, HttpApiProblem> {
+    let info = wallet::get_node_info().map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to retrieve node info")
+            .detail(format!("{e:#}"))
+    })?;
+    Ok(Json(info))
 }

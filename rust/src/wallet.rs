@@ -3,6 +3,7 @@ use crate::lightning;
 use crate::lightning::ChannelManager;
 use crate::lightning::HTLCStatus;
 use crate::lightning::LightningSystem;
+use crate::lightning::NodeInfo;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
 use ::lightning::chain::chaininterface::ConfirmationTarget;
@@ -574,11 +575,8 @@ pub fn send_to_address(address: Address, amount: u64) -> Result<Txid> {
     get_wallet()?.send_to_address(address, amount)
 }
 
-pub fn get_node_id() -> Result<PublicKey> {
-    let guard = get_wallet()?;
-    let node_id = guard.get_node_id();
-
-    Ok(node_id)
+pub fn get_node_info() -> Result<NodeInfo> {
+    Ok(get_wallet()?.lightning.node_info())
 }
 
 pub fn create_invoice(amount_msat: u64, expiry_secs: u32, description: String) -> Result<String> {
