@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
@@ -25,7 +24,18 @@ class CfdOffer extends StatefulWidget {
 }
 
 class _CfdOfferState extends State<CfdOffer> {
-  late Order order;
+  late int quantity;
+  late int leverage;
+  late Position position;
+
+  @override
+  void initState() {
+    super.initState();
+
+    quantity = 100;
+    leverage = 2;
+    position = Position.Long;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,24 +43,20 @@ class _CfdOfferState extends State<CfdOffer> {
     formatter.minimumFractionDigits = 2;
     formatter.maximumFractionDigits = 2;
 
-    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
-
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
     final fmtBid = "\$" + formatter.format(offer.bid);
     final fmtAsk = "\$" + formatter.format(offer.ask);
     final fmtIndex = "\$" + formatter.format(offer.index);
 
-    cfdTradingService.draftOrder ??= Order(
-        openPrice: offer.ask,
-        quantity: 100,
-        leverage: 2,
+    var order = Order(
+        openPrice: position == Position.Long ? offer.ask : offer.bid,
+        quantity: quantity,
+        leverage: leverage,
         contractSymbol: ContractSymbol.BtcUsd,
-        position: Position.Long,
+        position: position,
         bridge: api);
-
-    order = cfdTradingService.draftOrder!;
 
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
     final expiry = DateFormat('dd.MM.yy-kk:mm')
@@ -113,8 +119,7 @@ class _CfdOfferState extends State<CfdOffer> {
       PositionSelection(
           onChange: (position) {
             setState(() {
-              order.position = position!;
-              order.openPrice = Position.Long == position ? offer.ask : offer.bid;
+              position = position;
             });
           },
           value: order.position),
@@ -126,7 +131,7 @@ class _CfdOfferState extends State<CfdOffer> {
               .toList(),
           onChange: (contracts) {
             setState(() {
-              order.quantity = int.parse(contracts!);
+              quantity = int.parse(contracts!);
             });
           },
           value: order.quantity.toString(),
@@ -140,9 +145,9 @@ class _CfdOfferState extends State<CfdOffer> {
             value: order.contractSymbol.name.toUpperCase()),
         Dropdown(
             values: CfdOffer.leverages.map((l) => 'x$l').toList(),
-            onChange: (leverage) {
+            onChange: (lev) {
               setState(() {
-                order.leverage = int.parse(leverage!.substring(1));
+                leverage = int.parse(lev!.substring(1));
               });
             },
             value: 'x' + order.leverage.toString()),
