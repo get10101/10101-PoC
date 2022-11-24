@@ -80,7 +80,7 @@ class _SeedState extends State<Seed> {
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(
                         text:
-                            "Make sure to write it down as shown here, including both numbers and words. You have to verify this later.")
+                            "Make sure to write it down as shown here, including both numbers and words.")
                   ])),
             ),
             Expanded(
