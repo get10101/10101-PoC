@@ -26,10 +26,10 @@ class OpenChannel extends StatefulWidget {
 }
 
 class _OpenChannelState extends State<OpenChannel> {
-
   final controller = TextEditingController();
   int takerChannelAmount = 0;
-  bool submit = true;
+  bool validForm = true;
+  bool submitting = false;
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class _OpenChannelState extends State<OpenChannel> {
     controller.text = NumberFormat().format(takerChannelAmount);
     controller.addListener(() {
       setState(() {
-        submit = controller.text.isNotEmpty;
+        validForm = controller.text.isNotEmpty;
       });
     });
   }
@@ -92,6 +92,7 @@ class _OpenChannelState extends State<OpenChannel> {
                             style: TextStyle(color: Colors.grey)),
                         TextFormField(
                           controller: controller,
+                          readOnly: submitting,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
                             border: UnderlineInputBorder(),
@@ -102,9 +103,11 @@ class _OpenChannelState extends State<OpenChannel> {
                           onChanged: (text) {
                             setState(() {
                               if (text != "") {
-                                takerChannelAmount = int.parse(text).clamp(0, OpenChannel.maxChannelAmount);
+                                takerChannelAmount =
+                                    int.parse(text).clamp(0, OpenChannel.maxChannelAmount);
                                 controller.text = NumberFormat().format(takerChannelAmount);
-                                controller.selection = TextSelection.fromPosition(TextPosition(offset: controller.text.length));
+                                controller.selection = TextSelection.fromPosition(
+                                    TextPosition(offset: controller.text.length));
                               } else {
                                 takerChannelAmount = 0;
                               }
@@ -132,33 +135,57 @@ class _OpenChannelState extends State<OpenChannel> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: Container(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                  onPressed: !submit ? null : () async {
-                    FLog.info(
-                        text: "Opening Channel with capacity " + takerChannelAmount.toString());
-                    try {
-                      await api.openChannel(takerAmount: takerChannelAmount);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Waiting for channel to get established"),
-                      ));
-                      context.go('/');
-                    } on FfiException catch (error) {
-                      FLog.error(text: "Failed to open channel.", exception: error);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        backgroundColor: Colors.red,
-                        content: Text("Failed to open channel. Is the maker online?"),
-                      ));
-                    }
-                  },
-                  child: const Text('Open Channel')),
-            ),
-          )
+              padding: const EdgeInsets.only(right: 20.0),
+              child: Container(
+                alignment: Alignment.bottomRight,
+                child: ElevatedButton.icon(
+                  label: const Text('Open Channel'),
+                  icon: !submitting
+                      ? Container()
+                      : Container(
+                          width: 18,
+                          height: 18,
+                          padding: const EdgeInsets.all(2.0),
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        ),
+                  onPressed: !validForm || submitting
+                      ? null
+                      : () {
+                          setState(() {
+                            submitting = true;
+                          });
+
+                          openChannel();
+                        },
+                ),
+              ))
         ],
       )),
     );
+  }
+
+  Future<void> openChannel() async {
+    FLog.info(text: "Opening Channel with capacity " + takerChannelAmount.toString());
+    try {
+      await api.openChannel(takerAmount: takerChannelAmount);
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Waiting for channel to get established"),
+      ));
+      context.go('/');
+    } on FfiException catch (error) {
+      setState(() {
+        submitting = false;
+      });
+      FLog.error(text: "Failed to open channel.", exception: error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        backgroundColor: Colors.red,
+        content: Text("Failed to open channel. Is the maker online?"),
+      ));
+    }
   }
 
   Container addCircle(String value) {
