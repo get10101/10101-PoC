@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2022-11-24
+
 ### Added
 
 - A mobile Lightning node that can be used to send and receive payments.
@@ -34,5 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backup seed view
 - Mocked CFD trading view
 
-[Unreleased]: https://github.com/itchysats/10101/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/itchysats/10101/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/itchysats/10101/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/itchysats/10101/compare/fe2edaf79caea892b10d61b4f23a4e76fec808d2...0.1.0
