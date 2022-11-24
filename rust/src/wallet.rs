@@ -276,7 +276,7 @@ impl Wallet {
             }
         }
 
-        tracing::debug!(?tx_history, "Transaction history");
+        tracing::trace!(?tx_history, "Transaction history");
         Ok(tx_history)
     }
 
@@ -397,7 +397,7 @@ pub fn node_id() -> Result<PublicKey> {
 }
 
 pub fn get_balance() -> Result<Balance> {
-    tracing::debug!("Wallet sync called");
+    tracing::trace!("Wallet sync called");
     get_wallet()?.sync()
 }
 
