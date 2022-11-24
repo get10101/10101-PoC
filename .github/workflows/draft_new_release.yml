@@ -74,4 +74,4 @@ jobs:
         env:
           # Using a bot account is important to trigger subsequent workflows.
           # See https://devopsdirective.com/posts/2020/07/stupid-github-actions/#2----recursive-action.
-          GITHUB_TOKEN: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ITCHY_GITHUB_TOKEN }}
