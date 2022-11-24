@@ -920,17 +920,57 @@ async fn handle_ldk_events(
             tracing::error!("Event::DiscardFunding is not yet implemented");
         }
         Event::PaymentFailed {
-            payment_id: _,
-            payment_hash: _,
+            payment_id,
+            payment_hash,
         } => {
-            tracing::error!("Event::PaymentFailed is not yet implemented");
+            tracing::info!(?payment_id, ?payment_hash, "EVENT: Payment path failed",);
+
+            let mut payments = outbound_payments.lock().unwrap();
+            match payments.entry(*payment_hash) {
+                Entry::Occupied(mut e) => {
+                    let payment = e.get_mut();
+                    payment.status = HTLCStatus::Failed;
+                    payment.timestamp = get_timestamp();
+                    // TODO: should we claim our funds here if the outbound payment failed?
+                }
+                Entry::Vacant(e) => {
+                    tracing::error!(?e, "Found vacant entry");
+                }
+            }
         }
         Event::PaymentPathSuccessful {
-            payment_id: _,
-            payment_hash: _,
-            path: _,
+            payment_id,
+            payment_hash,
+            path,
         } => {
-            tracing::error!("Event::PaymentPathSuccessful is not yet implemented");
+            let payment_hash_str = if let Some(payment_hash) = payment_hash {
+                hex_utils::hex_str(&payment_hash.0)
+            } else {
+                "NONE".to_string()
+            };
+
+            tracing::info!(
+                ?path,
+                "EVENT: Payment path successful from {payment_hash_str}",
+            );
+
+            if let Some(payment_hash) = payment_hash {
+                let mut payments = inbound_payments.lock().unwrap();
+                match payments.entry(*payment_hash) {
+                    Entry::Occupied(mut e) => {
+                        let payment = e.get_mut();
+                        payment.status = HTLCStatus::Succeeded;
+                        payment.timestamp = get_timestamp();
+
+                        channel_manager.claim_funds(payment.preimage.unwrap());
+                    }
+                    Entry::Vacant(e) => {
+                        tracing::error!(?e, "Found vacant entry");
+                    }
+                }
+            } else {
+                tracing::error!(?payment_id, "no payment hash in successful payment path");
+            }
         }
         Event::PaymentClaimed {
             payment_hash,
@@ -1138,7 +1178,7 @@ pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> R
 #[allow(clippy::too_many_arguments)]
 pub fn create_invoice(
     amt_msat: u64,
-    payment_storage: PaymentInfoStorage,
+    inbound_payments: PaymentInfoStorage,
     channel_manager: Arc<ChannelManager>,
     keys_manager: Arc<KeysManager>,
     network: Network,
@@ -1146,7 +1186,7 @@ pub fn create_invoice(
     expiry_secs: u32,
     logger: Arc<disk::FilesystemLogger>,
 ) -> Result<String> {
-    let mut payments = payment_storage
+    let mut payments = inbound_payments
         .lock()
         .map_err(|e| anyhow!("could not acquire lock: {e:#}"))?;
     let currency = match network {
