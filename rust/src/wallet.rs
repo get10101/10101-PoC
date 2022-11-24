@@ -559,14 +559,14 @@ pub async fn connect() -> Result<()> {
     Ok(())
 }
 
-pub async fn force_close_channel(remote_node_id: PublicKey) -> Result<()> {
+pub async fn close_channel(remote_node_id: PublicKey, force: bool) -> Result<()> {
     let channel_manager = {
         let lightning = &get_wallet()?.lightning;
 
         lightning.channel_manager.clone()
     };
 
-    lightning::force_close_channel(channel_manager, remote_node_id).await?;
+    lightning::close_channel(channel_manager, remote_node_id, force).await?;
 
     Ok(())
 }

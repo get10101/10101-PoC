@@ -12,8 +12,8 @@ use rust_decimal::Decimal;
 use ten_ten_one::lightning::NodeInfo;
 use ten_ten_one::lightning::PeerInfo;
 use ten_ten_one::wallet;
+use ten_ten_one::wallet::close_channel;
 use ten_ten_one::wallet::create_invoice;
-use ten_ten_one::wallet::force_close_channel;
 use ten_ten_one::wallet::get_address;
 use ten_ten_one::wallet::get_balance;
 use ten_ten_one::wallet::get_channel_manager;
@@ -141,17 +141,22 @@ pub async fn alive() -> Result<Json<PeerInfo>, HttpApiProblem> {
     Ok(Json(wallet::maker_peer_info()))
 }
 
-#[rocket::post("/channel/close/<remote_node_id>")]
-pub async fn post_force_close_channel(remote_node_id: String) -> Result<(), HttpApiProblem> {
+#[rocket::post("/channel/close/<remote_node_id>?<force>")]
+pub async fn post_close_channel(
+    remote_node_id: String,
+    force: Option<bool>,
+) -> Result<(), HttpApiProblem> {
+    let force = force.unwrap_or_default();
+
     let remote_node_id = remote_node_id.parse().map_err(|e| {
         HttpApiProblem::new(StatusCode::BAD_REQUEST)
             .title("Failed to force-close channel")
             .detail(format!("Could not parse remote node ID: {e:#}"))
     })?;
 
-    force_close_channel(remote_node_id).await.map_err(|e| {
+    close_channel(remote_node_id, force).await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .title("Failed to force-close channel")
+            .title("Failed to close channel")
             .detail(format!("{e:#}"))
     })?;
 
