@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' hide Balance;
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
@@ -28,12 +27,24 @@ class _CfdOfferState extends State<CfdOffer> {
   late Order order;
 
   @override
+  void initState() {
+    super.initState();
+
+    order = Order(
+        openPrice: 0,
+        quantity: 100,
+        leverage: 2,
+        contractSymbol: ContractSymbol.BtcUsd,
+        position: Position.Long,
+        bridge: api);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat();
     formatter.minimumFractionDigits = 2;
     formatter.maximumFractionDigits = 2;
 
-    final cfdTradingService = context.watch<CfdTradingChangeNotifier>();
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
 
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
@@ -42,15 +53,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final fmtAsk = "\$" + formatter.format(offer.ask);
     final fmtIndex = "\$" + formatter.format(offer.index);
 
-    cfdTradingService.draftOrder ??= Order(
-        openPrice: offer.ask,
-        quantity: 100,
-        leverage: 2,
-        contractSymbol: ContractSymbol.BtcUsd,
-        position: Position.Long,
-        bridge: api);
-
-    order = cfdTradingService.draftOrder!;
+    order.openPrice = order.position == Position.Long ? offer.ask : offer.bid;
 
     final liquidationPrice = formatter.format(order.calculateLiquidationPrice());
     final expiry = DateFormat('dd.MM.yy-kk:mm')
