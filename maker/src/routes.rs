@@ -1,5 +1,6 @@
 use crate::bitmex::Quote;
 use anyhow::Result;
+use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::bitcoin::Address;
 use http_api_problem::HttpApiProblem;
@@ -196,8 +197,40 @@ pub async fn get_new_invoice() -> Result<String, HttpApiProblem> {
     })
 }
 
+#[derive(Serialize)]
+pub struct ChannelDetail {
+    pub channel_id: String,
+    pub counterparty: String,
+    pub funding_txo: Option<String>,
+    pub channel_type: Option<String>,
+    pub channel_value_satoshis: u64,
+    pub unspendable_punishment_reserve: Option<u64>,
+    pub user_channel_id: u64,
+    pub balance_msat: u64,
+    pub outbound_capacity_msat: u64,
+    pub next_outbound_htlc_limit_msat: u64,
+    pub inbound_capacity_msat: u64,
+    pub confirmations_required: Option<u32>,
+    pub force_close_spend_delay: Option<u16>,
+    pub is_outbound: bool,
+    pub is_channel_ready: bool,
+    pub is_usable: bool,
+    pub is_public: bool,
+    pub inbound_htlc_minimum_msat: Option<u64>,
+    pub inbound_htlc_maximum_msat: Option<u64>,
+    pub config: Option<ChannelConfig>,
+}
+#[derive(Serialize)]
+pub struct ChannelConfig {
+    pub forwarding_fee_proportional_millionths: u32,
+    pub forwarding_fee_base_msat: u32,
+    pub cltv_expiry_delta: u16,
+    pub max_dust_htlc_exposure_msat: u64,
+    pub force_close_avoidance_max_fee_satoshis: u64,
+}
+
 #[rocket::get("/channel/list")]
-pub async fn get_channel_details() -> Result<(), HttpApiProblem> {
+pub async fn get_channel_details() -> Result<Json<Vec<ChannelDetail>>, HttpApiProblem> {
     let list = get_channel_manager()
         .map_err(|e| {
             HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
@@ -206,8 +239,42 @@ pub async fn get_channel_details() -> Result<(), HttpApiProblem> {
         })?
         .list_channels();
 
+    let vec = list
+        .iter()
+        .map(|cd| ChannelDetail {
+            channel_id: hex::encode(cd.channel_id),
+            counterparty: cd.counterparty.node_id.to_hex(),
+            funding_txo: cd
+                .funding_txo
+                .map(|ft| format!("{}{}", ft.txid.to_hex(), ft.index)),
+            channel_type: cd.channel_type.clone().map(|ct| ct.to_string()),
+            channel_value_satoshis: cd.channel_value_satoshis,
+            unspendable_punishment_reserve: cd.unspendable_punishment_reserve,
+            user_channel_id: cd.user_channel_id,
+            balance_msat: cd.balance_msat,
+            outbound_capacity_msat: cd.outbound_capacity_msat,
+            next_outbound_htlc_limit_msat: cd.next_outbound_htlc_limit_msat,
+            inbound_capacity_msat: cd.inbound_capacity_msat,
+            confirmations_required: cd.confirmations_required,
+            force_close_spend_delay: cd.force_close_spend_delay,
+            is_outbound: cd.is_outbound,
+            is_channel_ready: cd.is_channel_ready,
+            is_usable: cd.is_usable,
+            is_public: cd.is_public,
+            inbound_htlc_minimum_msat: cd.inbound_htlc_minimum_msat,
+            inbound_htlc_maximum_msat: cd.inbound_htlc_maximum_msat,
+            config: cd.config.map(|c| ChannelConfig {
+                forwarding_fee_proportional_millionths: c.forwarding_fee_proportional_millionths,
+                forwarding_fee_base_msat: c.forwarding_fee_base_msat,
+                cltv_expiry_delta: c.cltv_expiry_delta,
+                max_dust_htlc_exposure_msat: c.max_dust_htlc_exposure_msat,
+                force_close_avoidance_max_fee_satoshis: c.force_close_avoidance_max_fee_satoshis,
+            }),
+        })
+        .collect::<Vec<_>>();
+
     tracing::info!(?list, "Open channels: {}", list.len());
-    Ok(())
+    Ok(Json(vec))
 }
 
 #[rocket::get("/node/info")]
