@@ -90,6 +90,15 @@ use tokio::task::JoinHandle;
 /// has to be managed by Rust as generics are not support by frb
 static INVOICE_PAYER: Storage<Mutex<Arc<BdkLdkInvoicePayer>>> = Storage::new();
 
+#[derive(Serialize)]
+pub struct NodeInfo {
+    pub node_id: PublicKey,
+    pub num_channels: usize,
+    pub num_usable_channels: usize,
+    pub num_peers: usize,
+    pub peers: Vec<PublicKey>,
+}
+
 /// Container to keep all the components of the lightning network in one place
 #[derive(Clone)]
 pub struct LightningSystem {
@@ -126,6 +135,16 @@ impl LightningSystem {
             &*self.channel_manager as &dyn chain::Confirm,
             &*self.chain_monitor as &dyn chain::Confirm,
         ]
+    }
+
+    pub fn node_info(&self) -> NodeInfo {
+        NodeInfo {
+            node_id: self.channel_manager.get_our_node_id(),
+            num_channels: self.channel_manager.list_channels().len(),
+            num_usable_channels: self.channel_manager.list_usable_channels().len(),
+            num_peers: self.peer_manager.get_peer_node_ids().len(),
+            peers: self.peer_manager.get_peer_node_ids(),
+        }
     }
 }
 
