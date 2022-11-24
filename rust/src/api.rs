@@ -3,6 +3,7 @@ use crate::cfd;
 use crate::cfd::Cfd;
 use crate::cfd::Order;
 use crate::cfd::Position;
+use crate::config;
 use crate::db;
 use crate::logger;
 use crate::offer;
@@ -10,10 +11,6 @@ use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::Balance;
 use crate::wallet::LightningTransaction;
-use crate::wallet::Network;
-use crate::wallet::MAINNET_ELECTRUM;
-use crate::wallet::REGTEST_ELECTRUM;
-use crate::wallet::TESTNET_ELECTRUM;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
@@ -48,7 +45,8 @@ impl Address {
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn init_db(app_dir: String, network: Network) -> Result<()> {
+pub async fn init_db(app_dir: String) -> Result<()> {
+    let network = config::network();
     db::init_db(
         &Path::new(app_dir.as_str())
             .join(network.to_string())
@@ -67,13 +65,8 @@ pub async fn test_db_connection() -> Result<()> {
     Ok(())
 }
 
-pub fn init_wallet(network: Network, path: String) -> Result<()> {
-    let electrum_url = match network {
-        Network::Mainnet => MAINNET_ELECTRUM,
-        Network::Testnet => TESTNET_ELECTRUM,
-        Network::Regtest => REGTEST_ELECTRUM,
-    };
-    wallet::init_wallet(network, electrum_url, Path::new(path.as_str()))
+pub fn init_wallet(path: String) -> Result<()> {
+    wallet::init_wallet(Path::new(path.as_str()))
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -100,7 +93,7 @@ pub fn get_address() -> Result<Address> {
 }
 
 pub fn maker_peer_info() -> String {
-    wallet::maker_peer_info().to_string()
+    config::maker_peer_info().to_string()
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -109,10 +102,10 @@ pub async fn connect() -> Result<()> {
     loop {
         tracing::trace!("Checking if maker is alive");
         let client = reqwest::Client::builder()
-            .timeout(crate::wallet::TCP_TIMEOUT)
+            .timeout(crate::config::TCP_TIMEOUT)
             .build()?;
         let result = client
-            .get(wallet::maker_endpoint() + "/api/alive")
+            .get(config::maker_endpoint() + "/api/alive")
             .send()
             .await;
 
@@ -146,7 +139,7 @@ pub async fn connect() -> Result<()> {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn open_channel(taker_amount: u64) -> Result<()> {
-    let peer_info = wallet::maker_peer_info();
+    let peer_info = config::maker_peer_info();
     wallet::open_channel(peer_info, taker_amount).await
 }
 
@@ -355,26 +348,5 @@ impl Order {
         let payout = payout.min(self.margin_total());
 
         Ok(payout)
-    }
-}
-
-// Tests are in the api layer as they became rather integration than unit tests (and need the
-// runtime) TODO: Move them to `tests` directory
-#[cfg(test)]
-mod tests {
-
-    use crate::api::init_wallet;
-    use std::env::temp_dir;
-
-    use super::Network;
-
-    #[test]
-    fn wallet_support_for_different_bitcoin_networks() {
-        init_wallet(Network::Mainnet, temp_dir().to_string_lossy().to_string())
-            .expect("wallet to be initialized");
-        init_wallet(Network::Testnet, temp_dir().to_string_lossy().to_string())
-            .expect("wallet to be initialized");
-        init_wallet(Network::Regtest, temp_dir().to_string_lossy().to_string())
-            .expect_err("wallet should not succeed to initialize");
     }
 }

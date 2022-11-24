@@ -1,7 +1,7 @@
+use crate::config::maker_pk;
 use crate::db;
 use crate::offer::Offer;
 use crate::wallet;
-use crate::wallet::maker_pk;
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Context;
