@@ -107,7 +107,7 @@ pub fn maker_peer_info() -> String {
 pub async fn connect() -> Result<()> {
     let mut connected = false;
     loop {
-        tracing::debug!("Checking if maker is alive");
+        tracing::trace!("Checking if maker is alive");
         let client = reqwest::Client::builder()
             .timeout(crate::wallet::TCP_TIMEOUT)
             .build()?;

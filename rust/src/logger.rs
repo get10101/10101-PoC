@@ -21,10 +21,12 @@ static INIT_LOGGER_ONCE: Once = Once::new();
 static LOG_STREAM_SINK: Storage<StreamSink<LogEntry>> = Storage::new();
 
 // Tracing log directives config
-fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> {
+pub fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> {
     let filter = env
         .add_directive(Directive::from(level))
         .add_directive("hyper=warn".parse()?)
+        .add_directive("sqlx=warn".parse()?) // sqlx logs all queries on INFO
+        .add_directive("reqwest=warn".parse()?)
         .add_directive("rustls=warn".parse()?)
         // set to debug to show ldk logs (they're also in logs.txt)
         .add_directive("ldk=warn".parse()?)

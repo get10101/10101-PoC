@@ -276,7 +276,7 @@ impl Wallet {
             }
         }
 
-        tracing::debug!(?tx_history, "Transaction history");
+        tracing::trace!(?tx_history, "Transaction history");
         Ok(tx_history)
     }
 
@@ -397,7 +397,7 @@ pub fn node_id() -> Result<PublicKey> {
 }
 
 pub fn get_balance() -> Result<Balance> {
-    tracing::debug!("Wallet sync called");
+    tracing::trace!("Wallet sync called");
     get_wallet()?.sync()
 }
 
@@ -559,14 +559,14 @@ pub async fn connect() -> Result<()> {
     Ok(())
 }
 
-pub async fn force_close_channel(remote_node_id: PublicKey) -> Result<()> {
+pub async fn close_channel(remote_node_id: PublicKey, force: bool) -> Result<()> {
     let channel_manager = {
         let lightning = &get_wallet()?.lightning;
 
         lightning.channel_manager.clone()
     };
 
-    lightning::force_close_channel(channel_manager, remote_node_id).await?;
+    lightning::close_channel(channel_manager, remote_node_id, force).await?;
 
     Ok(())
 }

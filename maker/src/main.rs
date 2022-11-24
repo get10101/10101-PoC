@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
             "/api",
             rocket::routes![
                 routes::get_offer,
-                routes::post_force_close_channel,
+                routes::post_close_channel,
                 routes::post_open_channel,
                 routes::post_pay_invoice,
                 routes::get_new_invoice,

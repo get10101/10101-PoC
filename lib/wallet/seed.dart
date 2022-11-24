@@ -76,13 +76,11 @@ class _SeedState extends State<Seed> {
                       style: TextStyle(color: Colors.black, fontSize: 18),
                       children: [
                     TextSpan(
-                        text:
-                            "This list of words is your wallet backup. Save it somewhere safe (not on this phone)! "),
-                    TextSpan(
-                        text: "\n\nDo not share it with anyone. Do not lose it. ",
+                        text: "This is your recovery phrase\n\n",
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(
-                        text: "If you lose your words list and your phone, you've lost your funds.")
+                        text:
+                            "Make sure to write it down as shown here, including both numbers and words.")
                   ])),
             ),
             Expanded(
