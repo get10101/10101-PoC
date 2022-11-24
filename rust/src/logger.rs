@@ -24,6 +24,10 @@ static LOG_STREAM_SINK: Storage<StreamSink<LogEntry>> = Storage::new();
 fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> {
     let filter = env
         .add_directive(Directive::from(level))
+        .add_directive("hyper=warn".parse()?)
+        .add_directive("rustls=warn".parse()?)
+        // set to debug to show ldk logs (they're also in logs.txt)
+        .add_directive("ldk=warn".parse()?)
         .add_directive("bdk=warn".parse()?); // bdk is quite spamy on debug
     Ok(filter)
 }
