@@ -1,8 +1,8 @@
 use anyhow::Context;
 use anyhow::Result;
+use ten_ten_one::logger::log_base_directives;
 use time::macros::format_description;
 use tracing::metadata::LevelFilter;
-use tracing_subscriber::filter::Directive;
 use tracing_subscriber::fmt::time::UtcTime;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -12,18 +12,6 @@ use tracing_subscriber::Layer;
 // TODO: Share the logging infrastructure (it's just a copy for now for expedience)
 
 const RUST_LOG_ENV: &str = "RUST_LOG";
-
-// Tracing log directives config
-fn log_base_directives(env: EnvFilter, level: LevelFilter) -> Result<EnvFilter> {
-    let filter = env
-        .add_directive(Directive::from(level))
-        .add_directive("hyper=warn".parse()?)
-        .add_directive("rustls=warn".parse()?)
-        // set to debug to show ldk logs (they're also in logs.txt)
-        .add_directive("ldk=warn".parse()?)
-        .add_directive("bdk=warn".parse()?); // bdk is quite spamy on debug
-    Ok(filter)
-}
 
 // Configure and initalise tracing subsystem
 pub fn init_tracing(level: LevelFilter, json_format: bool) -> Result<()> {
