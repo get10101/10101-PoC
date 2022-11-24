@@ -1,37 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class ActionCard extends StatelessWidget {
-  const ActionCard(
-      {required this.route, required this.title, required this.subtitle, IconData? icon, Key? key})
-      : super(key: key);
-
+class CardDetails {
   final String title;
   final String route;
   final String subtitle;
-  final IconData icon = Icons.warning;
+  final Widget icon;
+  bool disabled;
+
+  CardDetails(
+      {required this.title,
+      required this.route,
+      required this.subtitle,
+      required this.icon,
+      this.disabled = false});
+}
+
+class ActionCard extends StatelessWidget {
+  final CardDetails details;
+
+  const ActionCard(this.details, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onTap: () => {GoRouter.of(context).go(route)},
+        onTap: details.disabled ? null : () => {GoRouter.of(context).go(details.route)},
         child: Card(
+          color: details.disabled ? Colors.grey.shade300 : Colors.white,
           elevation: 4,
           child: ClipPath(
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 border: Border(
-                  left: BorderSide(color: Theme.of(context).colorScheme.primary, width: 5),
+                  left: BorderSide(
+                      color: details.disabled ? Colors.grey : Theme.of(context).colorScheme.primary,
+                      width: 5),
                 ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   ListTile(
-                    leading: Icon(icon),
-                    title: Text(title),
-                    subtitle: Text(subtitle, textAlign: TextAlign.justify),
+                    leading: details.icon,
+                    title: Text(details.title),
+                    subtitle: Text(details.subtitle, textAlign: TextAlign.justify),
                   ),
                 ],
               ),

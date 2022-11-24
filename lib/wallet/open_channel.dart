@@ -1,15 +1,14 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart' hide Divider;
 import 'package:flutter/services.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 
-import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
+import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 
 class OpenChannel extends StatefulWidget {
   const OpenChannel({Key? key}) : super(key: key);
@@ -139,44 +138,36 @@ class _OpenChannelState extends State<OpenChannel> {
               child: Container(
                 alignment: Alignment.bottomRight,
                 child: ElevatedButton.icon(
-                  label: const Text('Open Channel'),
-                  icon: !submitting
-                      ? Container()
-                      : Container(
-                          width: 18,
-                          height: 18,
-                          padding: const EdgeInsets.all(2.0),
-                          child: const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
+                    label: const Text('Open Channel'),
+                    icon: !submitting
+                        ? Container()
+                        : Container(
+                            width: 18,
+                            height: 18,
+                            padding: const EdgeInsets.all(2.0),
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
                           ),
-                        ),
-                  onPressed: !validForm || submitting
-                      ? null
-                      : () {
-                          setState(() {
-                            submitting = true;
-                          });
-
-                          openChannel();
-                        },
-                ),
+                    onPressed: !validForm || submitting ? null : openChannel),
               ))
         ],
       )),
     );
   }
 
-  Future<void> openChannel() async {
+  void openChannel() {
+    setState(() {
+      submitting = true;
+    });
     FLog.info(text: "Opening Channel with capacity " + takerChannelAmount.toString());
-    try {
-      await api.openChannel(takerAmount: takerChannelAmount);
-
+    context.read<ChannelChangeNotifier>().open(takerChannelAmount).then((value) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Waiting for channel to get established"),
       ));
       context.go('/');
-    } on FfiException catch (error) {
+    }).catchError((error) {
       setState(() {
         submitting = false;
       });
@@ -185,7 +176,7 @@ class _OpenChannelState extends State<OpenChannel> {
         backgroundColor: Colors.red,
         content: Text("Failed to open channel. Is the maker online?"),
       ));
-    }
+    });
   }
 
   Container addCircle(String value) {

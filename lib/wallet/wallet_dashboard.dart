@@ -6,6 +6,7 @@ import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
+import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
@@ -35,34 +36,47 @@ class _WalletDashboardState extends State<WalletDashboard> {
     final bitcoinBalance = context.watch<BitcoinBalance>();
     final lightningBalance = context.watch<LightningBalance>();
     final paymentHistory = context.watch<PaymentHistory>();
+    final channel = context.watch<ChannelChangeNotifier>();
 
     List<Widget> widgets = [
       const ServiceNavigation(),
     ];
 
     if (!seedBackupModel.backup) {
-      widgets.add(const ActionCard(
+      widgets.add(ActionCard(CardDetails(
           route: Seed.route,
           title: "Create Wallet Backup",
-          subtitle: "You have not backed up your wallet yet, make sure you create a backup!"));
+          subtitle: "You have not backed up your wallet yet, make sure you create a backup!",
+          icon: const Icon(Icons.warning))));
     }
 
     if (bitcoinBalance.amount.asSats == 0) {
-      widgets.add(const ActionCard(
+      widgets.add(ActionCard(CardDetails(
           route: ReceiveOnChain.route,
           title: "Deposit Bitcoin",
           subtitle:
               "Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning",
-          icon: Icons.link));
+          icon: const Icon(Icons.link))));
     }
 
     if (bitcoinBalance.amount.asSats != 0 && lightningBalance.amount.asSats == 0) {
-      widgets.add(const ActionCard(
+      widgets.add(ActionCard(CardDetails(
         route: OpenChannel.route,
         title: "Open Channel",
         subtitle: "Open a channel to enable trading on Lightning",
-        icon: Icons.launch,
-      ));
+        disabled: channel.isInitialising(),
+        icon: channel.isInitialising()
+            ? Container(
+                width: 22,
+                height: 22,
+                padding: const EdgeInsets.all(2.0),
+                child: const CircularProgressIndicator(
+                  color: Colors.grey,
+                  strokeWidth: 3,
+                ),
+              )
+            : const Icon(Icons.launch),
+      )));
     }
 
     final paymentHistoryList = ListView.builder(
