@@ -264,9 +264,11 @@ class _TenTenOneState extends State<TenTenOneApp> {
       switch (e.flow) {
         case bridge_definitions.Flow.Inbound:
           type = PaymentType.receive;
+          amount = Amount(e.sats);
           break;
         case bridge_definitions.Flow.Outbound:
           type = PaymentType.send;
+          amount = Amount(-e.sats);
           break;
       }
       PaymentStatus status;
