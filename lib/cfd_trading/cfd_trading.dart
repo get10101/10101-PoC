@@ -11,7 +11,7 @@ import 'package:ten_ten_one/app_bar_with_balance.dart';
 import '../models/service_model.dart';
 
 class CfdTrading extends StatefulWidget {
-  static final route = Service.cfd.route;
+  static final route = Service.trade.route;
 
   const CfdTrading({Key? key}) : super(key: key);
 
@@ -47,7 +47,7 @@ class _CfdTradingState extends State<CfdTrading> {
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.format_list_bulleted_sharp),
-                label: 'My CFDs',
+                label: 'Positions',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.candlestick_chart_sharp),
