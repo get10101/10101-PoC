@@ -1,7 +1,7 @@
 name: ten_ten_one
 description: A non-custodial Bitcoin and Lightning wallet for the masses.  Trade derivatives, bet on your favorite team or set up a non-custodial savings account on Bitcoin. Powered by Lightning and DLCs. Built with ❤️.
 publish_to: none
-version: 0.2.0
+version: 0.2.1
 environment:
   sdk: ">=2.17.0 <3.0.0"
 dependencies:
