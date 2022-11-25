@@ -86,7 +86,9 @@ To run on `regtest` you have to change the default network (`testnet`) to `regte
 
 Example command for maker:
 
-`NETWORK=regtest make maker`
+`make maker`
+
+(`make` runs prepend NETWORK=regtest automatically)
 
 Example command for taker:
 

@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := help
 PROJECTNAME=$(shell basename "$(PWD)")
+# Default bitcoin network to run the project with `make`
+BITCOIN_NETWORK=regtest
 
 # Menu (visible if you type `make` or `make help`)
 .PHONY: help
@@ -13,7 +15,7 @@ help: Makefile
 ## lint: Lint all the code (both Rust and Flutter)
 lint: clippy lint-flutter
 
-## all: Re-generate bindings, compile Rust lib, and run the Flutter project
+## all: Re-generate bindings, compile Rust lib, and run the Flutter project on regtest
 all: FORCE gen native run
 
 ## deps: Install missing dependencies.
@@ -48,7 +50,7 @@ flutter-format:
 clean:
 	flutter clean
 	cargo clean
-	# mobile targets don't build whole workspace, but just ten_ten_one crate 
+	# mobile targets don't build whole workspace, but just ten_ten_one crate
 	cd rust && cargo clean
 
 ## native: Build Rust library for native target (to run on your desktop)
@@ -87,7 +89,7 @@ gen: FORCE
 
 ## run: Run the app (need to pick the target, if no mobile emulator is running)
 run:
-	flutter run
+	NETWORK=${BITCOIN_NETWORK} flutter run
 
 clippy: FORCE
 	cargo clippy --all-targets -- -D warnings
@@ -99,8 +101,8 @@ lint-flutter:
 test: FORCE
 	cargo test
 
-## maker: Build & run the maker (counterparty to 10101 trading component)
+## maker: Build & run the maker on regtest (counterparty to 10101 trading component)
 maker: FORCE
-	cargo run --bin maker
+	NETWORK=${BITCOIN_NETWORK} cargo run --bin maker
 
 FORCE: ;
