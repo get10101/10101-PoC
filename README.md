@@ -80,7 +80,21 @@ note: Flutter might ask you which target you'd like to run.
 
 Running 10101 for `web` target is currently unsupported.
 
-#### Regtest
+### `regtest`
+
+To run on `regtest` you have to change the default network (`testnet`) to `regtest` by setting the `NETWORK` environment variable.
+
+Example command for maker:
+
+`NETWORK=regtest make maker`
+
+Example command for taker:
+
+`NETWORK=regtest flutter run`
+
+Note that the `iOS` simulator will _not_ pick up the environment variable, so make sure you run on a `native` target when testing with regtest!
+
+#### Running a `regtest` setup
 
 For regtest you need to run a local electrs server on `localhost:50000`.
 We make use of (nigiri)[https://github.com/vulpemventures/nigiri] for this.
@@ -99,7 +113,7 @@ nigiri faucet <address>
 
 To generate a block, simply call the faucet again.
 
-#### Run maker in docker
+### Run maker in docker
 
 ```bash
 DATA_DIR=$(pwd)
