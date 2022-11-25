@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
@@ -40,6 +41,9 @@ PaymentHistory paymentHistory = PaymentHistory();
 CfdOfferChangeNotifier cfdOffersChangeNotifier = CfdOfferChangeNotifier();
 
 void main() {
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
   };
@@ -81,14 +85,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Widget build(BuildContext context) {
     const mainColor = Colors.blue;
 
-    if (!ready) {
-      return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          home: Scaffold(
-              body: Container(
-                  color: Colors.white,
-                  child: Center(
-                      child: Image.asset('assets/10101_logo.png', width: 130, height: 130)))));
+    if (ready) {
+      FlutterNativeSplash.remove();
     }
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
