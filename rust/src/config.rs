@@ -9,9 +9,6 @@ const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
 const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 
-pub static MAINNET_MEMPOOL: &str = "https://mempool.space/api/v1";
-pub static TESTNET_MEMPOOL: &str = "https://mempool.space/testnet/api/v1";
-
 static REGTEST_MAKER_IP: &str = "127.0.0.1";
 static REGTEST_MAKER_PORT_HTTP: u64 = 8000;
 // Maker PK is derived from our checked in regtest maker seed

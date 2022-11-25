@@ -335,9 +335,16 @@ pub fn setup(
     // Step 4: Initialize Persist
     let persister = Arc::new(FilesystemPersister::new(ldk_data_dir.clone()));
 
+    // TODO: Maybe we don't really need to have the transaction filter (this one
+    // was removed in ldk-example)
+    // Step 5: Initialize the Transaction Filter
+
+    // LightningWallet implements the Filter trait for us
+    let filter = lightning_wallet.clone();
+
     // Step 6: Initialize the ChainMonitor
     let chain_monitor: Arc<ChainMonitor> = Arc::new(chainmonitor::ChainMonitor::new(
-        None, // TODO: Consider re-enabling the filter (lightning_wallet.clone())
+        Some(filter.clone()),
         broadcaster.clone(),
         logger.clone(),
         fee_estimator.clone(),
@@ -420,10 +427,9 @@ pub fn setup(
 
     // Make sure our filter is initialized with all the txs and outputs
     // that we need to be watching based on our set of channel monitors
-    // TODO: Re-enable this if added filter
-    // for (_, monitor) in channelmonitors.iter() {
-    //     monitor.load_outputs_to_watch(&filter.clone());
-    // }
+    for (_, monitor) in channelmonitors.iter() {
+        monitor.load_outputs_to_watch(&filter.clone());
+    }
 
     // `Confirm` trait is not implemented on an individual ChannelMonitor
     // but on a tuple consisting of (channel_monitor, broadcaster, fee_estimator, logger)
