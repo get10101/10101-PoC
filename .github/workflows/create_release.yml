@@ -128,5 +128,5 @@ jobs:
         with:
           artifacts: ${{ needs.build.outputs.ANDROID_APK_NAME }}
           body: ${{ steps.changelog.outputs.description }}
-          token: ${{ secrets.TENTENONE_GITHUB_TOKEN }}
+          token: ${{ secrets.ITCHY_GITHUB_TOKEN }}
           tag: ${{ steps.extract-version.outputs.version }}
