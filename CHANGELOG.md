@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Opening CFDs works again.
+  We had introduced a regression with patch 38c09b25c8903e2aeb6831c637493f88e5731ff1 which prevented the taker from noticing that the channel was ready.
+- Stopped hanging on the splash screen if the 10101 maker is unreachable.
+
+### Changed
+
+- Improve UI error message after opening a channel fails.
+
 ## [0.2.0] - 2022-11-24
 
 ### Added
