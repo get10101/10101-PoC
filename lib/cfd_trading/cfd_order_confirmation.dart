@@ -72,7 +72,7 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
     final contractSymbol = order.contractSymbol.name.toUpperCase();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('CFD Order Confirmation')),
+      appBar: AppBar(title: const Text('Order Confirmation')),
       body: SafeArea(
         child: Container(
           padding: const EdgeInsets.all(20.0),

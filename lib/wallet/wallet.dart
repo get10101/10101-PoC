@@ -7,7 +7,7 @@ import 'package:ten_ten_one/wallet/wallet_dashboard.dart';
 import 'package:ten_ten_one/wallet/wallet_lightning.dart';
 
 class Wallet extends StatefulWidget {
-  static const route = '/cfd-trading';
+  static const route = '/trading';
 
   const Wallet({Key? key}) : super(key: key);
 

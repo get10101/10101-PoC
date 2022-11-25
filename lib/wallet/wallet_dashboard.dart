@@ -116,16 +116,12 @@ class ServiceNavigation extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         children: [
           GestureDetector(
-            onTap: () => {GoRouter.of(context).go(Service.cfd.route)},
-            child: const ServiceCard(Service.cfd),
+            onTap: () => {GoRouter.of(context).go(Service.trade.route)},
+            child: const ServiceCard(Service.trade),
           ),
           GestureDetector(
-            onTap: () => {GoRouter.of(context).go(Service.sportsbet.route)},
-            child: const ServiceCard(Service.sportsbet),
-          ),
-          GestureDetector(
-            onTap: () => {GoRouter.of(context).go(Service.exchange.route)},
-            child: const ServiceCard(Service.exchange),
+            onTap: () => {GoRouter.of(context).go(Service.dca.route)},
+            child: const ServiceCard(Service.dca),
           ),
           GestureDetector(
             onTap: () => {GoRouter.of(context).go(Service.savings.route)},

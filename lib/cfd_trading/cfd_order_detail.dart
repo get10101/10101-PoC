@@ -100,7 +100,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     }
 
     return Scaffold(
-        appBar: AppBar(title: const Text('CFD Order Details')),
+        appBar: AppBar(title: const Text('Order Details')),
         body: SafeArea(
           child: Container(
               padding: const EdgeInsets.all(20.0),

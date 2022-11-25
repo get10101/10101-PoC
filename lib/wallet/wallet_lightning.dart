@@ -116,9 +116,9 @@ class ServiceNavigation extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () => {GoRouter.of(context).go(CfdTrading.route)},
-            child: const ServiceCard(Service.cfd),
+            child: const ServiceCard(Service.trade),
           ),
-          const ServiceCard(Service.sportsbet),
+          const ServiceCard(Service.dca),
         ],
       ),
     );

@@ -41,46 +41,25 @@ class Menu extends StatelessWidget {
               GoRouter.of(context).go("/");
             },
           ),
-          ExpansionTile(
-            title: Text(ServiceGroup.trade.label),
-            leading: Icon(ServiceGroup.trade.icon),
-            initiallyExpanded: true,
-            children: [
-              ListTile(
-                title: Text(Service.cfd.label),
-                leading: Icon(Service.cfd.icon),
-                onTap: () {
-                  GoRouter.of(context).go(Service.cfd.route);
-                },
-              ),
-              ListTile(
-                title: Text(Service.exchange.label),
-                leading: Icon(Service.exchange.icon),
-                onTap: () {
-                  GoRouter.of(context).go(Service.exchange.route);
-                },
-              ),
-            ],
-          ),
-          ExpansionTile(
-            title: Text(ServiceGroup.bets.label),
-            leading: Icon(ServiceGroup.bets.icon),
-            initiallyExpanded: true,
-            children: [
-              ListTile(
-                title: Text(Service.sportsbet.label),
-                leading: Icon(Service.sportsbet.icon),
-                onTap: () {
-                  GoRouter.of(context).go(Service.sportsbet.route);
-                },
-              ),
-            ],
+          ListTile(
+            title: Text(Service.trade.label),
+            leading: Icon(Service.trade.icon),
+            onTap: () {
+              GoRouter.of(context).go(Service.trade.route);
+            },
           ),
           ExpansionTile(
             title: Text(ServiceGroup.invest.label),
             leading: Icon(ServiceGroup.invest.icon),
             initiallyExpanded: true,
             children: [
+              ListTile(
+                title: Text(Service.dca.label),
+                leading: Icon(Service.dca.icon),
+                onTap: () {
+                  GoRouter.of(context).go(Service.dca.route);
+                },
+              ),
               ListTile(
                 title: Text(Service.savings.label),
                 leading: Icon(Service.savings.icon),
