@@ -111,7 +111,6 @@ pub async fn connect() -> Result<()> {
 
         match result {
             Ok(_) => {
-                tracing::debug!("Maker is alive!");
                 if !connected {
                     let result = wallet::connect().await;
                     match result {

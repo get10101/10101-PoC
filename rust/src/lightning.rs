@@ -173,7 +173,7 @@ pub async fn open_channel(
     let _temp_channel_id = match initial_send_amount_sats {
         None => channel_manager
             .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, Some(config))
-            .map_err(|_| anyhow!("Could not create channel with {peer_info}"))?,
+            .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?,
         Some(amount) => channel_manager
             .create_channel(
                 peer_info.pubkey,
@@ -182,7 +182,7 @@ pub async fn open_channel(
                 0,
                 Some(config),
             )
-            .map_err(|_| anyhow!("Could not create channel with {peer_info}"))?,
+            .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?,
     };
 
     tracing::debug!("Created channel with {peer_info}");
