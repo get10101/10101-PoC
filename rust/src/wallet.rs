@@ -82,7 +82,7 @@ impl Wallet {
                 .context(format!("Could not create data dir for {network}"))?;
         }
         let seed_path = data_dir.join("seed");
-        let seed = Bip39Seed::initialize(&seed_path)?;
+        let seed = Bip39Seed::initialize(seed_path)?;
         let ext_priv_key = seed.derive_extended_priv_key(network)?;
 
         let client = Client::new(&electrum_str)?;
@@ -331,6 +331,11 @@ pub fn init_wallet(data_dir: &Path) -> Result<()> {
     tracing::debug!(?data_dir, "Wallet will be stored on disk");
     WALLET.set(Mutex::new(Wallet::new(data_dir)?));
     Ok(())
+}
+
+pub fn restore(mnemonic: String) -> Result<()> {
+    tracing::info!("Restoring wallet from mnemonic");
+    get_wallet()?.seed.restore(mnemonic)
 }
 
 pub async fn run_ldk() -> Result<BackgroundProcessor> {

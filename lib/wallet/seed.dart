@@ -1,4 +1,5 @@
 import 'package:f_logs/f_logs.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +21,8 @@ class Seed extends StatefulWidget {
 class _SeedState extends State<Seed> {
   bool checked = false;
   bool visibility = false;
+  final controller = TextEditingController();
+  bool valid = false;
 
   // initialise the phrase with empty words - in order for the widget to not throw
   // an error while waiting for the rust api. Seems to be the easiest way of handling
@@ -31,6 +34,11 @@ class _SeedState extends State<Seed> {
   void initState() {
     _callGetSeedPhrase();
     super.initState();
+    controller.addListener(() {
+      setState(() {
+        valid = controller.text.trim().split(" ").where((word) => word.isNotEmpty).length == 12;
+      });
+    });
   }
 
   Future<void> _callGetSeedPhrase() async {
@@ -120,6 +128,46 @@ class _SeedState extends State<Seed> {
                   ],
                 ),
               ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 50),
+              child: Visibility(
+                  // only show restore in dev mode for now.
+                  visible: kDebugMode,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'Enter your recovery BIP39 seed phrase'),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      ElevatedButton(
+                          onPressed: !valid
+                              ? null
+                              : () async {
+                                  try {
+                                    await api.restore(mnemonic: controller.text);
+                                    setState(() {
+                                      phrase = controller.text
+                                          .split(" ")
+                                          .where((word) => word.isNotEmpty)
+                                          .toList();
+                                    });
+                                  } on FfiException catch (error) {
+                                    FLog.error(text: "Failed to restore seed.", exception: error);
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                      backgroundColor: Colors.red,
+                                      content: Text("Failed to restore seed."),
+                                    ));
+                                  }
+                                },
+                          child: const Text("Recover"))
+                    ],
+                  )),
             ),
             Center(
               child: Column(
