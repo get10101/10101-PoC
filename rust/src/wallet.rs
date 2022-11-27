@@ -248,8 +248,6 @@ impl Wallet {
     }
 
     pub fn send_to_address(&self, send_to: Address, amount: u64) -> Result<Txid> {
-        self.sync()?;
-
         let wallet = self.lightning.wallet.get_wallet()?;
 
         let estimated_fee_rate = self
