@@ -1,4 +1,5 @@
 use anyhow::Result;
+use bdk::bitcoin::Network;
 use maker::bitmex;
 use maker::cli::Opts;
 use maker::logger;
@@ -55,7 +56,13 @@ async fn main() -> Result<()> {
                     tracing::error!(sync_time_in_seconds, "Could not retrieve balance: {e:#}")
                 }
             }
-            tokio::time::sleep(Duration::from_secs(10)).await;
+            let sync_time = match network {
+                Network::Bitcoin => 5 * 60,
+                Network::Testnet => 2 * 60,
+                Network::Signet => 60,
+                Network::Regtest => 30,
+            };
+            tokio::time::sleep(Duration::from_secs(sync_time)).await;
         }
     });
 
