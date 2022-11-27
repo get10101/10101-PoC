@@ -400,7 +400,7 @@ pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             tx_type: LightningTransactionType::Payment,
             flow: Flow::Outbound,
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
-            status: payment_info.status.clone().into(),
+            status: payment_info.status.clone(),
             timestamp: payment_info.updated_timestamp,
         })
         .collect();
@@ -411,7 +411,7 @@ pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             tx_type: LightningTransactionType::Payment,
             flow: Flow::Inbound,
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
-            status: payment_info.status.clone().into(),
+            status: payment_info.status.clone(),
             timestamp: payment_info.updated_timestamp,
         })
         .collect::<Vec<_>>();
@@ -567,28 +567,11 @@ pub struct LightningTransaction {
     pub tx_type: LightningTransactionType,
     pub flow: Flow,
     pub sats: u64,
-    pub status: TransactionStatus,
+    pub status: HTLCStatus,
     pub timestamp: u64,
 }
 
 pub enum Flow {
     Inbound,
     Outbound,
-}
-
-// TODO: Remove this? Seems to be exactly the same as HTLCStatus
-pub enum TransactionStatus {
-    Failed,
-    Succeeded,
-    Pending,
-}
-
-impl From<HTLCStatus> for TransactionStatus {
-    fn from(s: HTLCStatus) -> Self {
-        match s {
-            HTLCStatus::Succeeded => TransactionStatus::Succeeded,
-            HTLCStatus::Failed => TransactionStatus::Failed,
-            HTLCStatus::Pending => TransactionStatus::Pending,
-        }
-    }
 }

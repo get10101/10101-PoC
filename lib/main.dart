@@ -271,13 +271,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
       }
       PaymentStatus status;
       switch (e.status) {
-        case TransactionStatus.Failed:
+        case HTLCStatus.Failed:
           status = PaymentStatus.failed;
           break;
-        case TransactionStatus.Succeeded:
+        case HTLCStatus.Succeeded:
           status = PaymentStatus.finalized;
           break;
-        case TransactionStatus.Pending:
+        case HTLCStatus.Pending:
           status = PaymentStatus.pending;
           break;
       }
