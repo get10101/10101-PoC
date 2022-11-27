@@ -401,7 +401,7 @@ pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             flow: Flow::Outbound,
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
             status: payment_info.status.clone().into(),
-            timestamp: payment_info.timestamp,
+            timestamp: payment_info.updated_timestamp,
         })
         .collect();
 
@@ -412,7 +412,7 @@ pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             flow: Flow::Inbound,
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
             status: payment_info.status.clone().into(),
-            timestamp: payment_info.timestamp,
+            timestamp: payment_info.updated_timestamp,
         })
         .collect::<Vec<_>>();
 

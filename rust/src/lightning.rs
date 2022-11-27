@@ -257,7 +257,8 @@ pub struct PaymentInfo {
     secret: Option<PaymentSecret>,
     pub status: HTLCStatus,
     pub amt_msat: MillisatAmount,
-    pub timestamp: u64,
+    pub created_timestamp: u64,
+    pub updated_timestamp: u64,
 }
 
 pub type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
@@ -946,7 +947,7 @@ async fn handle_ldk_events(
                 Entry::Occupied(mut e) => {
                     let payment = e.get_mut();
                     payment.status = HTLCStatus::Failed;
-                    payment.timestamp = get_timestamp();
+                    payment.updated_timestamp = get_timestamp();
                     // TODO: should we claim our funds here if the outbound payment failed?
                 }
                 Entry::Vacant(e) => {
@@ -976,7 +977,7 @@ async fn handle_ldk_events(
                     Entry::Occupied(mut e) => {
                         let payment = e.get_mut();
                         payment.status = HTLCStatus::Succeeded;
-                        payment.timestamp = get_timestamp();
+                        payment.updated_timestamp = get_timestamp();
 
                         channel_manager.claim_funds(payment.preimage.unwrap());
                     }
@@ -1013,10 +1014,7 @@ async fn handle_ldk_events(
                     payment.status = HTLCStatus::Succeeded;
                     payment.preimage = payment_preimage;
                     payment.secret = payment_secret;
-                    payment.timestamp = SystemTime::now()
-                        .duration_since(SystemTime::UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs();
+                    payment.updated_timestamp = get_timestamp();
                 }
                 Entry::Vacant(e) => {
                     e.insert(PaymentInfo {
@@ -1024,10 +1022,8 @@ async fn handle_ldk_events(
                         secret: payment_secret,
                         status: HTLCStatus::Succeeded,
                         amt_msat: MillisatAmount(Some(*amount_msat)),
-                        timestamp: SystemTime::now()
-                            .duration_since(SystemTime::UNIX_EPOCH)
-                            .unwrap()
-                            .as_secs(),
+                        created_timestamp: get_timestamp(),
+                        updated_timestamp: get_timestamp(),
                     });
                 }
             }
@@ -1185,7 +1181,8 @@ pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> R
             secret: payment_secret,
             status,
             amt_msat: MillisatAmount(invoice.amount_milli_satoshis()),
-            timestamp: get_timestamp(),
+            updated_timestamp: get_timestamp(),
+            created_timestamp: get_timestamp(),
         },
     );
     Ok(())
@@ -1237,7 +1234,8 @@ pub fn create_invoice(
             secret: Some(*invoice.payment_secret()),
             status: HTLCStatus::Pending,
             amt_msat: MillisatAmount(Some(amt_msat)),
-            timestamp: get_timestamp(),
+            updated_timestamp: get_timestamp(),
+            created_timestamp: get_timestamp(),
         },
     );
     Ok(invoice.to_string())
