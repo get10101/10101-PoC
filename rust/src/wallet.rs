@@ -481,19 +481,15 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     }
 
     // Open Channel
-    let (channel_manager, data_dir) = {
+    let channel_manager = {
         let lightning = &get_wallet()?.lightning;
-        (
-            lightning.channel_manager.clone(),
-            lightning.data_dir.clone(),
-        )
+        lightning.channel_manager.clone()
     };
 
     lightning::open_channel(
         channel_manager,
         peer_info,
         channel_capacity,
-        data_dir.as_path(),
         Some(maker_amount),
     )
     .await

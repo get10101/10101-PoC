@@ -17,7 +17,6 @@ use bdk::blockchain::ElectrumBlockchain;
 use bdk::database::MemoryDatabase;
 use bdk::wallet::time::get_timestamp;
 use bitcoin_bech32::WitnessProgram;
-use futures::executor::block_on;
 use lightning::chain;
 use lightning::chain::chaininterface::BroadcasterInterface;
 use lightning::chain::chaininterface::ConfirmationTarget;
@@ -152,7 +151,6 @@ pub async fn open_channel(
     channel_manager: Arc<ChannelManager>,
     peer_info: PeerInfo,
     channel_amount_sat: u64,
-    data_dir: &Path,
     initial_send_amount_sats: Option<u64>,
 ) -> Result<()> {
     let config = UserConfig {
@@ -186,13 +184,7 @@ pub async fn open_channel(
     };
 
     tracing::debug!("Created channel with {peer_info}");
-
-    let path = data_dir.join("channel_peer_data");
-    disk::persist_channel_peer(&path, &peer_info.to_string())
-        .context("could not persist channel peer")?;
-
     tracing::info!("Channel has been successfully created");
-
     Ok(())
 }
 
@@ -574,8 +566,6 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
     INVOICE_PAYER.set(Mutex::new(invoice_payer.clone()));
 
     // Step 19: Background Processing
-    // TODO: Do we need to stop the background processor on the wallet, or will it be sufficient to
-    // simple kill it with the app.
     let background_processor = BackgroundProcessor::start(
         system.persister.clone(),
         invoice_payer.clone(),
@@ -586,22 +576,6 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         system.logger.clone(),
         Some(scorer),
     );
-
-    let peer_data_path = format!("{ldk_data_dir}/channel_peer_data");
-    let mut info = disk::read_channel_peer_data(Path::new(&peer_data_path))?;
-    for (pubkey, peer_addr) in info.drain() {
-        for chan_info in system.channel_manager.list_channels() {
-            if pubkey == chan_info.counterparty.node_id {
-                block_on(async {
-                    let _ = connect_peer_if_necessary(
-                        &PeerInfo { pubkey, peer_addr },
-                        system.peer_manager.clone(),
-                    )
-                    .await;
-                });
-            }
-        }
-    }
 
     let node_id = system.channel_manager.get_our_node_id();
 

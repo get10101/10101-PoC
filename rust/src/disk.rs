@@ -5,7 +5,6 @@ use crate::lightning::PeerInfo;
 use anyhow::bail;
 use anyhow::Result;
 use bdk::bitcoin;
-use bitcoin::secp256k1::PublicKey;
 use bitcoin::BlockHash;
 use chrono::Utc;
 use lightning::routing::gossip::NetworkGraph;
@@ -16,12 +15,9 @@ use lightning::util::logger::Logger;
 use lightning::util::logger::Record;
 use lightning::util::ser::ReadableArgs;
 use lightning::util::ser::Writer;
-use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::io::BufRead;
 use std::io::BufReader;
-use std::net::SocketAddr;
 use std::net::ToSocketAddrs;
 use std::path::Path;
 use std::sync::Arc;
@@ -87,32 +83,6 @@ impl Logger for FilesystemLogger {
             .write_all(log.as_bytes())
             .unwrap();
     }
-}
-
-pub(crate) fn persist_channel_peer(path: &Path, peer_info: &str) -> std::io::Result<()> {
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
-    file.write_all(format!("{}\n", peer_info).as_bytes())
-}
-
-pub(crate) fn read_channel_peer_data(path: &Path) -> Result<HashMap<PublicKey, SocketAddr>> {
-    let mut peer_data = HashMap::new();
-    if !Path::new(&path).exists() {
-        return Ok(HashMap::new());
-    }
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    for line in reader.lines() {
-        match parse_peer_info(line.unwrap()) {
-            Ok(PeerInfo { pubkey, peer_addr }) => {
-                peer_data.insert(pubkey, peer_addr);
-            }
-            Err(e) => return Err(e),
-        }
-    }
-    Ok(peer_data)
 }
 
 pub(crate) fn read_network(
