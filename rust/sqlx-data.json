@@ -1,6 +1,30 @@
 {
   "db": "SQLite",
-  "0f0c8e555c6d5883787f5c99c06bf0d6e1209980fe6818eec8e2b0318e35a25e": {
+  "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
+    "describe": {
+      "columns": [
+        {
+          "name": "txid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "maker_amount",
+          "ordinal": 1,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
+  },
+  "a1ce0920b9ba534467e45c3b1a53e2aefec6809308c213b9eb143c3e87221475": {
     "describe": {
       "columns": [
         {
@@ -14,12 +38,12 @@
           "type_info": "Text"
         },
         {
-          "name": "contract_symbol: crate::cfd::ContractSymbol",
+          "name": "contract_symbol: crate::cfd::models::ContractSymbol",
           "ordinal": 2,
           "type_info": "Text"
         },
         {
-          "name": "position: crate::cfd::Position",
+          "name": "position: crate::cfd::models::Position",
           "ordinal": 3,
           "type_info": "Text"
         },
@@ -39,7 +63,7 @@
           "type_info": "Int64"
         },
         {
-          "name": "state: crate::cfd::CfdState",
+          "name": "state: crate::cfd::models::CfdState",
           "ordinal": 7,
           "type_info": "Text"
         },
@@ -94,31 +118,7 @@
         "Right": 0
       }
     },
-    "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::ContractSymbol\",\n                position as \"position: crate::cfd::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                close_price,\n                liquidation_price,\n                margin\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
-  },
-  "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
-    "describe": {
-      "columns": [
-        {
-          "name": "txid",
-          "ordinal": 0,
-          "type_info": "Text"
-        },
-        {
-          "name": "maker_amount",
-          "ordinal": 1,
-          "type_info": "Int64"
-        }
-      ],
-      "nullable": [
-        false,
-        false
-      ],
-      "parameters": {
-        "Right": 0
-      }
-    },
-    "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
+    "query": "\n            select\n                cfd.id as id,\n                custom_output_id,\n                contract_symbol as \"contract_symbol: crate::cfd::models::ContractSymbol\",\n                position as \"position: crate::cfd::models::Position\",\n                leverage,\n                updated,\n                created,\n                cfd_state.state as \"state: crate::cfd::models::CfdState\",\n                quantity,\n                expiry,\n                open_price,\n                close_price,\n                liquidation_price,\n                margin\n            from\n                cfd\n            inner join cfd_state on cfd.state_id = cfd_state.id\n            "
   },
   "d1f3f4266a6e59914d5f2952c0eeb3a0b98b93b05303ed43c730cef18152dd32": {
     "describe": {
