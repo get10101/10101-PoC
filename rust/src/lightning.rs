@@ -895,11 +895,13 @@ async fn handle_ldk_events(
             tracing::debug!("EVENT: pending HTLC Forwardable");
             let forwarding_channel_manager = channel_manager.clone();
             let min = time_forwardable.as_millis() as u64;
-            tokio::spawn(async move {
+            tokio::task::spawn_blocking(move || {
                 let millis_to_sleep = thread_rng().gen_range(min, min * 5) as u64;
-                tokio::time::sleep(Duration::from_millis(millis_to_sleep)).await;
+                std::thread::sleep(Duration::from_millis(millis_to_sleep));
                 forwarding_channel_manager.process_pending_htlc_forwards();
-            });
+            })
+            .await
+            .unwrap();
         }
         Event::SpendableOutputs { outputs } => {
             tracing::debug!(?outputs, "EVENT: spendable outputs");
