@@ -247,7 +247,7 @@ impl Order {
     pub fn calculate_liquidation_price(&self) -> SyncReturn<f64> {
         let initial_price = Decimal::try_from(self.open_price).expect("Price to fit");
 
-        tracing::debug!("Initial price: {}", self.open_price);
+        tracing::trace!("Initial price: {}", self.open_price);
 
         let leverage = Decimal::from(self.leverage);
 
@@ -261,7 +261,7 @@ impl Order {
         };
 
         let liquidation_price = liquidation_price.to_f64().expect("price to fit into f64");
-        tracing::info!("Liquidation_price: {liquidation_price}");
+        tracing::trace!("Liquidation_price: {liquidation_price}");
 
         SyncReturn(liquidation_price)
     }
@@ -272,7 +272,7 @@ impl Order {
         let payout = self.calculate_payout_at_price(closing_price)?;
         let pnl = payout - margin;
 
-        tracing::debug!(%pnl, %payout, %margin,"Calculated taker's PnL");
+        tracing::trace!(%pnl, %payout, %margin,"Calculated taker's PnL");
 
         Ok(SyncReturn(pnl))
     }
