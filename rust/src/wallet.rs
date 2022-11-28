@@ -5,6 +5,7 @@ use crate::config::TCP_TIMEOUT;
 use crate::db;
 use crate::lightning;
 use crate::lightning::ChannelManager;
+use crate::lightning::Flow;
 use crate::lightning::HTLCStatus;
 use crate::lightning::LightningSystem;
 use crate::lightning::NodeInfo;
@@ -569,9 +570,4 @@ pub struct LightningTransaction {
     pub sats: u64,
     pub status: HTLCStatus,
     pub timestamp: u64,
-}
-
-pub enum Flow {
-    Inbound,
-    Outbound,
 }

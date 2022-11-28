@@ -230,6 +230,13 @@ pub enum HTLCStatus {
     Failed,
 }
 
+/// Direction of the lightning payment
+#[derive(Clone, Debug, PartialEq, Eq, sqlx::Type)]
+pub enum Flow {
+    Inbound,
+    Outbound,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MillisatAmount(pub Option<u64>);
 
@@ -256,6 +263,7 @@ pub struct PaymentInfo {
     pub hash: PaymentHash,
     pub preimage: Option<PaymentPreimage>,
     pub secret: Option<PaymentSecret>,
+    pub flow: Flow,
     pub status: HTLCStatus,
     pub amt_msat: MillisatAmount,
     pub created_timestamp: u64,
@@ -1022,6 +1030,7 @@ async fn handle_ldk_events(
                         hash: *payment_hash,
                         preimage: payment_preimage,
                         secret: payment_secret,
+                        flow: Flow::Inbound,
                         status: HTLCStatus::Succeeded,
                         amt_msat: MillisatAmount(Some(*amount_msat)),
                         created_timestamp: get_timestamp(),
@@ -1134,7 +1143,7 @@ impl EventHandler for BdkLdkEventHandler {
     }
 }
 
-pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> Result<()> {
+pub fn send_payment(invoice: &Invoice, outbound_payments: PaymentInfoStorage) -> Result<()> {
     let status = {
         let invoice_payer = INVOICE_PAYER
             .try_get()
@@ -1173,7 +1182,7 @@ pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> R
     let payment_hash = PaymentHash((*invoice.payment_hash()).into_inner());
     let payment_secret = Some(*invoice.payment_secret());
 
-    let mut payments = payment_storage
+    let mut payments = outbound_payments
         .lock()
         .map_err(|e| anyhow!("cannot get lock to outgoing payments: {e:#}"))?;
     payments.insert(
@@ -1182,6 +1191,7 @@ pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> R
             hash: payment_hash,
             preimage: None,
             secret: payment_secret,
+            flow: Flow::Outbound,
             status,
             amt_msat: MillisatAmount(invoice.amount_milli_satoshis()),
             updated_timestamp: get_timestamp(),
@@ -1237,6 +1247,7 @@ pub fn create_invoice(
             preimage: None,
             secret: Some(*invoice.payment_secret()),
             status: HTLCStatus::Pending,
+            flow: Flow::Inbound,
             amt_msat: MillisatAmount(Some(amt_msat)),
             updated_timestamp: get_timestamp(),
             created_timestamp: get_timestamp(),

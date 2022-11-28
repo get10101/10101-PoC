@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS payments (
     payment_hash TEXT UNIQUE NOT NULL,
     preimage TEXT,
     secret TEXT,
+    flow TEXT NOT NULL,
     htlc_status TEXT NOT NULL,
     amount_msat INTEGER,
     created INTEGER NOT NULL,

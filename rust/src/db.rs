@@ -126,6 +126,7 @@ pub async fn insert_payment(payment: &PaymentInfo) -> Result<()> {
         hash,
         preimage,
         secret,
+        flow,
         status,
         amt_msat,
         created_timestamp,
@@ -134,15 +135,16 @@ pub async fn insert_payment(payment: &PaymentInfo) -> Result<()> {
 
     let query_result = sqlx::query(
         r#"
-        INSERT INTO payments (payment_hash, preimage, secret, htlc_status, amount_msat, created, updated)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO payments (payment_hash, preimage, secret, flow, htlc_status, amount_msat, created, updated)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
     )
     .bind(base64::encode(hash.0))
     .bind(preimage.map(|x| base64::encode(x.0)))
     .bind(secret.map(|x| base64::encode(x.0)))
+    .bind(flow)
     .bind(status)
-        .bind(amt_msat.0.map(|msat| msat as i64))
+    .bind(amt_msat.0.map(|msat| msat as i64))
     .bind(created_timestamp as i64)
     .bind(updated_timestamp as i64)
     .execute(&mut conn)
@@ -201,6 +203,7 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
                 payment_hash,
                 preimage,
                 secret,
+                flow as "flow: crate::lightning::Flow",
                 htlc_status as "status: crate::lightning::HTLCStatus",
                 amount_msat,
                 updated,
@@ -222,6 +225,7 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
             secret: row
                 .secret
                 .map(|x| PaymentSecret(into_array(base64::decode(x).unwrap()))),
+            flow: row.flow,
             status: row.status,
             amt_msat: row
                 .amount_msat
@@ -238,6 +242,7 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::lightning::Flow;
     use crate::lightning::MillisatAmount;
     use bdk::wallet::time::get_timestamp;
     use std::env::temp_dir;
@@ -252,6 +257,7 @@ mod tests {
             hash: PaymentHash([0u8; 32]),
             preimage: None,
             secret: None,
+            flow: Flow::Inbound,
             status: crate::lightning::HTLCStatus::Pending,
             amt_msat: MillisatAmount(Some(100000)),
             created_timestamp: get_timestamp(),
