@@ -179,6 +179,23 @@ pub async fn post_open_channel(
     Ok(Json(OpenChannelResponse { funding_txid }))
 }
 
+#[rocket::post("/send/<address>/<amount>")]
+pub async fn post_send_to_address(address: String, amount: u64) -> Result<String, HttpApiProblem> {
+    let address = address.parse().map_err(|_| {
+        HttpApiProblem::new(StatusCode::BAD_REQUEST)
+            .title("Failed to send bitcoin to address")
+            .detail("Invalid address")
+    })?;
+
+    let txid = send_to_address(address, amount).map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to send bitcoin to address")
+            .detail(format!("{e:#}"))
+    })?;
+
+    Ok(txid.to_string())
+}
+
 #[rocket::post("/invoice/send/<invoice>")]
 pub async fn post_pay_invoice(invoice: String) -> Result<(), HttpApiProblem> {
     send_lightning_payment(&invoice).map_err(|e| {

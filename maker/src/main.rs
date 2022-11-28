@@ -87,6 +87,7 @@ async fn main() -> Result<()> {
                 routes::post_close_channel,
                 routes::post_open_channel,
                 routes::post_pay_invoice,
+                routes::post_send_to_address,
                 routes::get_new_invoice,
                 routes::get_wallet_details,
                 routes::get_channel_details,
