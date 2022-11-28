@@ -209,7 +209,7 @@ pub async fn close_channel(
         channel_manager
             .close_channel(&channel.channel_id, &channel.counterparty.node_id)
             .map_err(|e| anyhow!("Could not collaborative-close channel: {e:?}"))?;
-        tracing::info!("Channel has been successfully collaboratively closed");
+        tracing::info!("Channel collaborative-close triggered successfully");
     };
 
     Ok(())

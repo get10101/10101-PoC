@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2022-11-25
 
+### Added
+
+- The taker can collaboratively close the channel with the 10101 maker.
+
 ### Fixed
 
 - Opening CFDs works again.

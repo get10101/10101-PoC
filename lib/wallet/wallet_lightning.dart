@@ -6,6 +6,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/service_model.dart';
+import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/receive.dart';
 import 'package:ten_ten_one/wallet/send.dart';
@@ -59,7 +60,7 @@ class _WalletLightningState extends State<WalletLightning> {
           AlertMessage(
               message: Message(
                   title:
-                      "Cannot send or receive Lightning payments when you have an open CFD. Coming soon.",
+                      "Cannot send or receive payments or close the channel when you have an open CFD. This feature is coming soon.",
                   type: AlertType.info)));
     }
 
@@ -85,6 +86,12 @@ class _WalletLightningState extends State<WalletLightning> {
           elevation: 8.0,
           shape: const CircleBorder(),
           children: [
+            SpeedDialChild(
+              child: const Icon(Icons.link),
+              label: 'Close channel',
+              labelStyle: const TextStyle(fontSize: 18.0),
+              onTap: () => GoRouter.of(context).go(CloseChannel.route),
+            ),
             SpeedDialChild(
               child: const Icon(Icons.download_sharp),
               label: 'Receive',
