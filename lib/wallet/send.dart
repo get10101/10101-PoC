@@ -1,8 +1,8 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/ffi.io.dart';
+import 'package:ten_ten_one/utilities/async_button.dart';
 
 class Send extends StatefulWidget {
   const Send({Key? key}) : super(key: key);
@@ -53,30 +53,28 @@ class _SendState extends State<Send> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            ElevatedButton(
-                                onPressed: () async {
-                                  FLog.info(text: "Sending invoice" + invoice);
-                                  String? error;
-                                  try {
-                                    await api.sendLightningPayment(invoice: invoice);
-                                  } on FfiException catch (e) {
-                                    error = e.message;
-                                  }
-
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(error == null
-                                        ? "Paid lightning invoice $invoice"
-                                        : "Failed to send payment: $error"),
-                                  ));
-                                  context.go('/');
-                                },
-                                child: const Text('Send'))
-                          ],
+                          children: [AsyncButton(onPressedFunction: send, label: "Pay Invoice")],
                         ),
                       ],
                     ),
                   ),
                 ]))));
+  }
+
+  Future<void> send() async {
+    FLog.info(text: "Paying invoice $invoice");
+    await api.sendLightningPayment(invoice: invoice).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Paid invoice $invoice"),
+      ));
+
+      context.go('/');
+    }).catchError((error) {
+      FLog.error(text: "Failed to pay invoice $invoice.", exception: error);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red,
+        content: Text("Failed to pay invoice $invoice. Error: " + error.toString()),
+      ));
+    });
   }
 }
