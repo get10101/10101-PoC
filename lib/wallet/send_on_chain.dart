@@ -74,7 +74,7 @@ class _SendOnChainState extends State<SendOnChain> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [AsyncButton(onPressedFunction: sendOnChain, label: "Send")],
+                          children: [AsyncButton(onPressed: sendOnChain, label: "Send")],
                         ),
                       ],
                     ),

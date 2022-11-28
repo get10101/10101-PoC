@@ -174,7 +174,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                             Visibility(
                               visible: confirm,
                               child: AsyncButton(
-                                  onPressedFunction: () async {
+                                  onPressed: () async {
                                     await settleCfd(cfd, offer, cfdTradingChangeNotifier);
                                   },
                                   label: 'Confirm'),

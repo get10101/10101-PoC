@@ -139,7 +139,7 @@ class _OpenChannelState extends State<OpenChannel> {
               child: Container(
                 alignment: Alignment.bottomRight,
                 child: AsyncButton(
-                  onPressedFunction: openChannel,
+                  onPressed: openChannel,
                   label: 'Open Channel',
                   isButtonDisabled: !validForm,
                 ),

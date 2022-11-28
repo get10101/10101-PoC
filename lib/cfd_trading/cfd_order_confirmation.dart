@@ -126,7 +126,7 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
                 child: Container(
                   alignment: Alignment.bottomRight,
                   child: AsyncButton(
-                    onPressedFunction: () async {
+                    onPressed: () async {
                       await openCfd(order, cfdTradingChangeNotifier);
                     },
                     label: 'Confirm',

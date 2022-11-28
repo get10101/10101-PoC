@@ -53,7 +53,7 @@ class _SendState extends State<Send> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [AsyncButton(onPressedFunction: send, label: "Pay Invoice")],
+                          children: [AsyncButton(onPressed: send, label: "Pay Invoice")],
                         ),
                       ],
                     ),

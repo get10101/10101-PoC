@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AsyncButton extends StatefulWidget {
-  final Future<void> Function() onPressedFunction;
+  final Future<void> Function() onPressed;
   final String label;
   final bool isButtonDisabled;
 
   const AsyncButton(
-      {required this.onPressedFunction,
-      required this.label,
-      this.isButtonDisabled = false,
-      Key? key})
+      {required this.onPressed, required this.label, this.isButtonDisabled = false, Key? key})
       : super(key: key);
 
   @override
@@ -42,7 +39,7 @@ class _AsyncButtonState extends State<AsyncButton> {
                 });
 
                 try {
-                  await widget.onPressedFunction();
+                  await widget.onPressed();
                 } on Exception {
                   rethrow;
                 } finally {
