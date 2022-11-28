@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 
 import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/utilities/async_button.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 
@@ -137,40 +138,27 @@ class _OpenChannelState extends State<OpenChannel> {
               padding: const EdgeInsets.only(right: 20.0),
               child: Container(
                 alignment: Alignment.bottomRight,
-                child: ElevatedButton.icon(
-                    label: const Text('Open Channel'),
-                    icon: !submitting
-                        ? Container()
-                        : Container(
-                            width: 18,
-                            height: 18,
-                            padding: const EdgeInsets.all(2.0),
-                            child: const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 3,
-                            ),
-                          ),
-                    onPressed: !validForm || submitting ? null : openChannel),
+                child: AsyncButton(
+                  onPressedFunction: openChannel,
+                  label: 'Open Channel',
+                  isButtonDisabled: !validForm,
+                ),
               ))
         ],
       )),
     );
   }
 
-  void openChannel() {
-    setState(() {
-      submitting = true;
-    });
+  Future<void> openChannel() async {
     FLog.info(text: "Opening Channel with capacity " + takerChannelAmount.toString());
+
+    // We don't await here because we display the status on the "open channel" card on the Dashboard
     context.read<ChannelChangeNotifier>().open(takerChannelAmount).then((value) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Waiting for channel to get established"),
       ));
       context.go('/');
     }).catchError((error) {
-      setState(() {
-        submitting = false;
-      });
       FLog.error(text: "Failed to open channel.", exception: error);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: Colors.red,
