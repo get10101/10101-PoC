@@ -1,6 +1,5 @@
 import 'package:f_logs/model/flog/flog.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
+import 'package:ten_ten_one/utilities/async_button.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
@@ -54,7 +54,6 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
     formatter.minimumFractionDigits = 2;
     formatter.maximumFractionDigits = 2;
 
-    final cfdTradingService = context.read<CfdTradingChangeNotifier>();
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
     Order order = widget.args.order;
     Message? channelError = widget.args.channelError;
@@ -122,40 +121,45 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
                   : AlertMessage(message: channelError),
             ),
             const SizedBox(height: 50),
+            Padding(
+                padding: const EdgeInsets.only(right: 20.0),
+                child: Container(
+                  alignment: Alignment.bottomRight,
+                  child: AsyncButton(
+                    onPressedFunction: () async {
+                      await openCfd(order, cfdTradingChangeNotifier);
+                    },
+                    label: 'Confirm',
+                    isButtonDisabled: channelError == null,
+                  ),
+                )),
           ]),
         ),
       ),
-      floatingActionButton: ElevatedButton(
-          onPressed: channelError == null
-              ? () async {
-                  try {
-                    await api.openCfd(order: order);
-                    FLog.info(text: 'OpenCfd returned successfully');
-
-                    // switch index to cfd overview tab
-                    cfdTradingChangeNotifier.selectedIndex = 1;
-
-                    // refreshing cfd list after cfd has been opened
-                    // will also implicitly propagate the index change
-                    await cfdTradingService.refreshCfdList();
-
-                    // navigate back to the trading route where the index has already been propagated
-                    context.go(CfdTrading.route);
-                  } on FfiException catch (error) {
-                    FLog.error(text: 'Failed to open CFD: ' + error.message, exception: error);
-
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      backgroundColor: Colors.red,
-                      content: Text("Failed to open cfd"),
-                    ));
-
-                    return;
-                  }
-
-                  context.go(CfdTrading.route);
-                }
-              : null,
-          child: const Text('Confirm')),
     );
+  }
+
+  Future<void> openCfd(Order order, CfdTradingChangeNotifier cfdTradingChangeNotifier) async {
+    FLog.info(text: "Opening CFD with order " + order.toString());
+    await api.openCfd(order: order).then((value) async {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("CFD opened"),
+      ));
+
+      // switch index to cfd overview tab
+      cfdTradingChangeNotifier.selectedIndex = 1;
+
+      // refreshing cfd list after cfd has been opened
+      // will also implicitly propagate the index change
+      await cfdTradingChangeNotifier.refreshCfdList();
+
+      context.go(CfdTrading.route);
+    }).catchError((error) {
+      FLog.error(text: "Failed to open CFD.", exception: error);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red,
+        content: Text("Failed to open CFD. Error: " + error.toString()),
+      ));
+    });
   }
 }

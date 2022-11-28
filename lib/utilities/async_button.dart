@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AsyncButton extends StatefulWidget {
-  final void Function() onPressedFunction;
+  final Future<void> Function() onPressedFunction;
   final String label;
   final bool isButtonDisabled;
 
