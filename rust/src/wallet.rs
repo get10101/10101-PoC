@@ -105,12 +105,15 @@ impl Wallet {
         Ok(Wallet { lightning, seed })
     }
 
-    pub fn sync(&self) -> Result<Balance> {
+    pub fn sync(&self) -> Result<()> {
         self.lightning
             .wallet
             .sync(self.lightning.confirmables())
             .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
+        Ok(())
+    }
 
+    pub fn get_balance(&self) -> Result<Balance> {
         let bdk_balance = self.get_bdk_balance()?;
         let ldk_balance = self.get_ldk_balance();
         Ok(Balance {
@@ -349,6 +352,10 @@ pub fn node_id() -> Result<PublicKey> {
 }
 
 pub fn get_balance() -> Result<Balance> {
+    get_wallet()?.get_balance()
+}
+
+pub fn sync() -> Result<()> {
     tracing::trace!("Wallet sync called");
     get_wallet()?.sync()
 }
