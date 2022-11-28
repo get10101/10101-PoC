@@ -251,6 +251,8 @@ impl Wallet {
     }
 
     pub fn send_to_address(&self, send_to: Address, amount: u64) -> Result<Txid> {
+        tracing::debug!(address = %send_to, sats = %amount, "Sending to address");
+
         let wallet = self.lightning.wallet.get_wallet()?;
 
         let estimated_fee_rate = self
@@ -261,12 +263,21 @@ impl Wallet {
 
         let (mut psbt, _) = {
             let mut builder = wallet.build_tx();
+
             builder
-                .add_recipient(send_to.script_pubkey(), amount)
-                .enable_rbf()
                 .fee_rate(FeeRate::from_sat_per_vb(
                     f32::from_u32(estimated_fee_rate).unwrap_or(1.0),
-                ));
+                ))
+                .enable_rbf();
+
+            let script_pubkey = send_to.script_pubkey();
+            let balance = wallet.get_balance()?;
+            if amount == balance.confirmed {
+                builder.drain_wallet().drain_to(script_pubkey);
+            } else {
+                builder.add_recipient(script_pubkey, amount);
+            }
+
             builder.finish()?
         };
 
