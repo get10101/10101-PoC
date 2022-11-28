@@ -223,14 +223,14 @@ pub async fn close_channel(
     Ok(())
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, sqlx::Type)]
 pub enum HTLCStatus {
     Pending,
     Succeeded,
     Failed,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MillisatAmount(pub Option<u64>);
 
 impl fmt::Display for MillisatAmount {
@@ -251,10 +251,11 @@ impl From<MillisatAmount> for Amount {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PaymentInfo {
-    preimage: Option<PaymentPreimage>,
-    secret: Option<PaymentSecret>,
+    pub hash: PaymentHash,
+    pub preimage: Option<PaymentPreimage>,
+    pub secret: Option<PaymentSecret>,
     pub status: HTLCStatus,
     pub amt_msat: MillisatAmount,
     pub created_timestamp: u64,
@@ -1018,6 +1019,7 @@ async fn handle_ldk_events(
                 }
                 Entry::Vacant(e) => {
                     e.insert(PaymentInfo {
+                        hash: *payment_hash,
                         preimage: payment_preimage,
                         secret: payment_secret,
                         status: HTLCStatus::Succeeded,
@@ -1177,6 +1179,7 @@ pub fn send_payment(invoice: &Invoice, payment_storage: PaymentInfoStorage) -> R
     payments.insert(
         payment_hash,
         PaymentInfo {
+            hash: payment_hash,
             preimage: None,
             secret: payment_secret,
             status,
@@ -1230,6 +1233,7 @@ pub fn create_invoice(
     payments.insert(
         payment_hash,
         PaymentInfo {
+            hash: payment_hash,
             preimage: None,
             secret: Some(*invoice.payment_secret()),
             status: HTLCStatus::Pending,

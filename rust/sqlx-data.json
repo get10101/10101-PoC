@@ -16,6 +16,11 @@
       ],
       "nullable": [
         false,
+        true,
+        true,
+        false,
+        true,
+        false,
         false
       ],
       "parameters": {
