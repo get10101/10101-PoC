@@ -88,6 +88,10 @@ pub fn get_balance() -> Result<Balance> {
     wallet::get_balance()
 }
 
+pub fn sync() -> Result<()> {
+    wallet::sync()
+}
+
 pub fn get_address() -> Result<Address> {
     Ok(Address::new(wallet::get_address()?.to_string()))
 }

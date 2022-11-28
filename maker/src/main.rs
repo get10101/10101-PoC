@@ -1,10 +1,12 @@
 use anyhow::Result;
+use bdk::bitcoin::Network;
 use maker::bitmex;
 use maker::cli::Opts;
 use maker::logger;
 use maker::routes;
 use maker::routes::SpreadPrice;
 use std::time::Duration;
+use std::time::Instant;
 use ten_ten_one::db;
 use ten_ten_one::wallet;
 use tokio::sync::watch;
@@ -44,11 +46,23 @@ async fn main() -> Result<()> {
         tracing::info!(address, "New address");
 
         loop {
-            match wallet::get_balance() {
-                Ok(balance) => tracing::info!(?balance, "Current balance"),
-                Err(e) => tracing::error!("Could not retrieve balance: {e:#}"),
+            let started = Instant::now();
+            let wallet_result = wallet::get_balance();
+            let duration = started.elapsed();
+            let sync_time_in_seconds = duration.as_secs();
+            match wallet_result {
+                Ok(balance) => tracing::info!(?balance, sync_time_in_seconds, "Current balance"),
+                Err(e) => {
+                    tracing::error!(sync_time_in_seconds, "Could not retrieve balance: {e:#}")
+                }
             }
-            tokio::time::sleep(Duration::from_secs(10)).await;
+            let sync_time = match network {
+                Network::Bitcoin => 5 * 60,
+                Network::Testnet => 2 * 60,
+                Network::Signet => 60,
+                Network::Regtest => 30,
+            };
+            tokio::time::sleep(Duration::from_secs(sync_time)).await;
         }
     });
 
