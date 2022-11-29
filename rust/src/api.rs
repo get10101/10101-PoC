@@ -107,6 +107,12 @@ pub async fn open_channel(taker_amount: u64) -> Result<()> {
     wallet::open_channel(peer_info, taker_amount).await
 }
 
+#[tokio::main(flavor = "current_thread")]
+pub async fn close_channel() -> Result<()> {
+    let peer_info = config::maker_peer_info();
+    wallet::close_channel(peer_info.pubkey, false).await
+}
+
 pub fn send_to_address(address: String, amount: u64) -> Result<String> {
     let address = address.parse()?;
 

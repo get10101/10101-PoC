@@ -134,7 +134,7 @@ jobs:
   # See: https://betterprogramming.pub/test-flutter-apps-on-android-with-github-actions-abdba2137b4
   flutter-android-test:
     needs: changes
-    if: ${{ (needs.changes.outputs.rust == 'true' || needs.changes.outputs.flutter == 'true') && github.ref == 'refs/heads/main'}}
+    if: ${{ (needs.changes.outputs.rust == 'true' || needs.changes.outputs.flutter == 'true') && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/staging'}}
     name: Flutter (Android) integration test
     strategy:
       matrix:
