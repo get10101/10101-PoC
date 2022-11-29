@@ -47,6 +47,11 @@ async fn main() -> Result<()> {
 
         loop {
             let started = Instant::now();
+
+            if let Err(e) = wallet::sync() {
+                tracing::error!("Wallet sync failed: {e:#}");
+            }
+
             let wallet_result = wallet::get_balance();
             let duration = started.elapsed();
             let sync_time_in_seconds = duration.as_secs();
