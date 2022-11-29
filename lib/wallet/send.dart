@@ -2,7 +2,7 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/ffi.io.dart';
-import 'package:ten_ten_one/utilities/async_button.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 
 class Send extends StatefulWidget {
   const Send({Key? key}) : super(key: key);
@@ -53,7 +53,7 @@ class _SendState extends State<Send> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [AsyncButton(onPressed: send, label: "Pay Invoice")],
+                          children: [SubmitButton(onPressed: send, label: "Pay Invoice")],
                         ),
                       ],
                     ),

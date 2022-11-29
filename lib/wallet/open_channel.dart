@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 
 import 'package:ten_ten_one/models/balance_model.dart';
-import 'package:ten_ten_one/utilities/async_button.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 
@@ -138,7 +138,7 @@ class _OpenChannelState extends State<OpenChannel> {
               padding: const EdgeInsets.only(right: 20.0),
               child: Container(
                 alignment: Alignment.bottomRight,
-                child: AsyncButton(
+                child: SubmitButton(
                   onPressed: openChannel,
                   label: 'Open Channel',
                   isButtonDisabled: !validForm,

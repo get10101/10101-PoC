@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ten_ten_one/ffi.io.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
-import 'package:ten_ten_one/utilities/async_button.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 
 class SendOnChain extends StatefulWidget {
   const SendOnChain({Key? key}) : super(key: key);
@@ -74,7 +74,7 @@ class _SendOnChainState extends State<SendOnChain> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [AsyncButton(onPressed: sendOnChain, label: "Send")],
+                          children: [SubmitButton(onPressed: sendOnChain, label: "Send")],
                         ),
                       ],
                     ),

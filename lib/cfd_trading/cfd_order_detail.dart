@@ -9,7 +9,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/order.dart';
-import 'package:ten_ten_one/utilities/async_button.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
 
@@ -173,7 +173,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                             ),
                             Visibility(
                               visible: confirm,
-                              child: AsyncButton(
+                              child: SubmitButton(
                                   onPressed: () async {
                                     await settleCfd(cfd, offer, cfdTradingChangeNotifier);
                                   },

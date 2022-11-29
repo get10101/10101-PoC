@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
-class AsyncButton extends StatefulWidget {
+class SubmitButton extends StatefulWidget {
   final Future<void> Function() onPressed;
   final String label;
   final bool isButtonDisabled;
 
-  const AsyncButton(
+  const SubmitButton(
       {required this.onPressed, required this.label, this.isButtonDisabled = false, Key? key})
       : super(key: key);
 
   @override
-  State<AsyncButton> createState() => _AsyncButtonState();
+  State<SubmitButton> createState() => _SubmitButtonState();
 }
 
-class _AsyncButtonState extends State<AsyncButton> {
+class _SubmitButtonState extends State<SubmitButton> {
   bool submitting = false;
 
   @override

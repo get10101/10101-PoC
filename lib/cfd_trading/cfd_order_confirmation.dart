@@ -9,7 +9,7 @@ import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
-import 'package:ten_ten_one/utilities/async_button.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
@@ -125,7 +125,7 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
                 padding: const EdgeInsets.only(right: 20.0),
                 child: Container(
                   alignment: Alignment.bottomRight,
-                  child: AsyncButton(
+                  child: SubmitButton(
                     onPressed: () async {
                       await openCfd(order, cfdTradingChangeNotifier);
                     },
