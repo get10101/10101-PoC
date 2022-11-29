@@ -1,6 +1,5 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
@@ -10,6 +9,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'package:ten_ten_one/models/order.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
 
@@ -50,8 +50,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
     formatter.minimumFractionDigits = 2;
     formatter.maximumFractionDigits = 2;
 
-    final cfdTradingService = context.read<CfdTradingChangeNotifier>();
-
+    final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
@@ -74,8 +73,6 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
         DateFormat('dd.MM.yy-kk:mm').format(DateTime.fromMillisecondsSinceEpoch(cfd.expiry * 1000));
     final quantity = cfd.quantity.toString();
     final contractSymbol = cfd.contractSymbol.name.toUpperCase();
-
-    final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
 
     var rows = [
       TtoRow(
@@ -176,32 +173,11 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                             ),
                             Visibility(
                               visible: confirm,
-                              child: ElevatedButton(
+                              child: SubmitButton(
                                   onPressed: () async {
-                                    try {
-                                      await api.settleCfd(cfd: cfd, offer: offer);
-                                      FLog.info(text: "Successfully settled cfd.");
-
-                                      // switch index to cfd overview tab
-                                      cfdTradingChangeNotifier.selectedIndex = 1;
-                                      // refreshing cfd list after cfd has been closed
-                                      // will also implicitely propagate the index change
-                                      await cfdTradingService.refreshCfdList();
-
-                                      // navigate back to the trading route where the index has already been propagated
-                                      context.go(CfdTrading.route);
-                                    } on FfiException catch (error) {
-                                      FLog.error(
-                                          text: 'Failed to settle CFD: ' + error.message,
-                                          exception: error);
-
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                        backgroundColor: Colors.red,
-                                        content: Text("Failed to settle cfd"),
-                                      ));
-                                    }
+                                    await settleCfd(cfd, offer, cfdTradingChangeNotifier);
                                   },
-                                  child: const Text('Confirm')),
+                                  label: 'Confirm'),
                             )
                           ],
                         ),
@@ -211,5 +187,30 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                 )
               ])),
         ));
+  }
+
+  Future<void> settleCfd(
+      Cfd cfd, Offer offer, CfdTradingChangeNotifier cfdTradingChangeNotifier) async {
+    FLog.info(text: "Settling CFD ${cfd.id} with offer" + offer.toString());
+    await api.settleCfd(cfd: cfd, offer: offer).then((value) async {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("CFD settled"),
+      ));
+
+      // switch index to cfd overview tab
+      cfdTradingChangeNotifier.selectedIndex = 1;
+
+      // refreshing cfd list after cfd has been settled
+      // will also implicitly propagate the index change
+      await cfdTradingChangeNotifier.refreshCfdList();
+
+      context.go(CfdTrading.route);
+    }).catchError((error) {
+      FLog.error(text: "Failed to settle CFD.", exception: error);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red,
+        content: Text("Failed to settle CFD ${cfd.id}. Error: " + error.toString()),
+      ));
+    });
   }
 }

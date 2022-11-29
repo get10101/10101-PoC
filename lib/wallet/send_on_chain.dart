@@ -1,11 +1,11 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ten_ten_one/ffi.io.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 
 class SendOnChain extends StatefulWidget {
   const SendOnChain({Key? key}) : super(key: key);
@@ -74,31 +74,28 @@ class _SendOnChainState extends State<SendOnChain> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            ElevatedButton(
-                                onPressed: () async {
-                                  FLog.info(
-                                      text: "Sending " + amount.toString() + " sats to " + address);
-                                  String? error;
-                                  try {
-                                    await api.sendToAddress(address: address, amount: amount);
-                                  } on FfiException catch (e) {
-                                    error = e.message;
-                                  }
-
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(error == null
-                                        ? "Sent ${amount.toString()} satoshi to $address on-chain"
-                                        : "Failed to send bitcoin on-chain: $error"),
-                                  ));
-                                  context.go('/');
-                                },
-                                child: const Text('Send'))
-                          ],
+                          children: [SubmitButton(onPressed: sendOnChain, label: "Send")],
                         ),
                       ],
                     ),
                   ),
                 ]))));
+  }
+
+  Future<void> sendOnChain() async {
+    FLog.info(text: "Sending $amount to $address");
+    await api.sendToAddress(address: address, amount: amount).then((value) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Sent $amount to $address"),
+      ));
+
+      context.go('/');
+    }).catchError((error) {
+      FLog.error(text: "Failed to send $amount to $address.", exception: error);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red,
+        content: Text("Failed to send $amount to $address. Error: " + error.toString()),
+      ));
+    });
   }
 }
