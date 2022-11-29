@@ -249,7 +249,7 @@ impl Order {
     pub fn calculate_expiry(&self) -> SyncReturn<i64> {
         SyncReturn(
             OffsetDateTime::now_utc()
-                .saturating_add(Duration::days(1))
+                .saturating_add(Duration::days(30))
                 .unix_timestamp(),
         )
     }
