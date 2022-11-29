@@ -3,6 +3,7 @@ mod bridge_generated;
 mod calc;
 mod cfd;
 pub mod config;
+mod connection;
 pub mod db;
 pub mod disk;
 mod hex_utils;

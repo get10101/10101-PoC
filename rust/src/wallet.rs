@@ -5,6 +5,7 @@ use crate::config::TCP_TIMEOUT;
 use crate::db;
 use crate::lightning;
 use crate::lightning::ChannelManager;
+use crate::lightning::Flow;
 use crate::lightning::HTLCStatus;
 use crate::lightning::LightningSystem;
 use crate::lightning::NodeInfo;
@@ -400,8 +401,8 @@ pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             tx_type: LightningTransactionType::Payment,
             flow: Flow::Outbound,
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
-            status: payment_info.status.clone().into(),
-            timestamp: payment_info.timestamp,
+            status: payment_info.status.clone(),
+            timestamp: payment_info.updated_timestamp,
         })
         .collect();
 
@@ -411,8 +412,8 @@ pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             tx_type: LightningTransactionType::Payment,
             flow: Flow::Inbound,
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
-            status: payment_info.status.clone().into(),
-            timestamp: payment_info.timestamp,
+            status: payment_info.status.clone(),
+            timestamp: payment_info.updated_timestamp,
         })
         .collect::<Vec<_>>();
 
@@ -499,19 +500,15 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     }
 
     // Open Channel
-    let (channel_manager, data_dir) = {
+    let channel_manager = {
         let lightning = &get_wallet()?.lightning;
-        (
-            lightning.channel_manager.clone(),
-            lightning.data_dir.clone(),
-        )
+        lightning.channel_manager.clone()
     };
 
     lightning::open_channel(
         channel_manager,
         peer_info,
         channel_capacity,
-        data_dir.as_path(),
         Some(maker_amount),
     )
     .await
@@ -567,28 +564,6 @@ pub struct LightningTransaction {
     pub tx_type: LightningTransactionType,
     pub flow: Flow,
     pub sats: u64,
-    pub status: TransactionStatus,
+    pub status: HTLCStatus,
     pub timestamp: u64,
-}
-
-pub enum Flow {
-    Inbound,
-    Outbound,
-}
-
-// TODO: Remove this? Seems to be exactly the same as HTLCStatus
-pub enum TransactionStatus {
-    Failed,
-    Succeeded,
-    Pending,
-}
-
-impl From<HTLCStatus> for TransactionStatus {
-    fn from(s: HTLCStatus) -> Self {
-        match s {
-            HTLCStatus::Succeeded => TransactionStatus::Succeeded,
-            HTLCStatus::Failed => TransactionStatus::Failed,
-            HTLCStatus::Pending => TransactionStatus::Pending,
-        }
-    }
 }

@@ -4,6 +4,7 @@ use crate::cfd::models::Cfd;
 use crate::cfd::models::Order;
 use crate::cfd::models::Position;
 use crate::config;
+use crate::connection;
 use crate::db;
 use crate::logger;
 use crate::offer;
@@ -73,9 +74,9 @@ pub fn init_wallet(path: String) -> Result<()> {
 pub async fn run_ldk() -> Result<()> {
     tracing::debug!("Starting ldk node");
     match wallet::run_ldk().await {
-        Ok(background_processor) => {
-            // await background processor here as otherwise the spawned thread gets dropped
-            let _ = background_processor.join();
+        Ok(_background_processor) => {
+            // keep connection with maker alive!
+            connection::keep_alive().await?;
         }
         Err(err) => {
             tracing::error!("Error running LDK: {err}");
@@ -98,46 +99,6 @@ pub fn get_address() -> Result<Address> {
 
 pub fn maker_peer_info() -> String {
     config::maker_peer_info().to_string()
-}
-
-#[tokio::main(flavor = "current_thread")]
-pub async fn connect() -> Result<()> {
-    let mut connected = false;
-    loop {
-        tracing::trace!("Checking if maker is alive");
-        let client = reqwest::Client::builder()
-            .timeout(crate::config::TCP_TIMEOUT)
-            .build()?;
-        let result = client
-            .get(config::maker_endpoint() + "/api/alive")
-            .send()
-            .await;
-
-        match result {
-            Ok(_) => {
-                if !connected {
-                    let result = wallet::connect().await;
-                    match result {
-                        Ok(()) => {
-                            tracing::info!("Successfully connected to maker");
-                            connected = true;
-                        }
-                        Err(err) => {
-                            tracing::warn!("Failed to connect to maker! {err:?}");
-                            connected = false;
-                        }
-                    }
-                }
-            }
-            Err(err) => {
-                tracing::warn!("Maker is offline! {err:?}");
-                connected = false;
-            }
-        };
-
-        // looping here indefinitely to keep the connection with the maker alive.
-        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-    }
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -290,7 +251,7 @@ impl Order {
     pub fn calculate_liquidation_price(&self) -> SyncReturn<f64> {
         let initial_price = Decimal::try_from(self.open_price).expect("Price to fit");
 
-        tracing::debug!("Initial price: {}", self.open_price);
+        tracing::trace!("Initial price: {}", self.open_price);
 
         let leverage = Decimal::from(self.leverage);
 
@@ -304,7 +265,7 @@ impl Order {
         };
 
         let liquidation_price = liquidation_price.to_f64().expect("price to fit into f64");
-        tracing::info!("Liquidation_price: {liquidation_price}");
+        tracing::trace!("Liquidation_price: {liquidation_price}");
 
         SyncReturn(liquidation_price)
     }
@@ -315,7 +276,7 @@ impl Order {
         let payout = self.calculate_payout_at_price(closing_price)?;
         let pnl = payout - margin;
 
-        tracing::debug!(%pnl, %payout, %margin,"Calculated taker's PnL");
+        tracing::trace!(%pnl, %payout, %margin,"Calculated taker's PnL");
 
         Ok(SyncReturn(pnl))
     }

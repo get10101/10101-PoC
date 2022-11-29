@@ -1,5 +1,65 @@
 {
   "db": "SQLite",
+  "29a218881d08533780e614d4fcbe5028b9ab89f3074ed540af3d7d1f25c32df2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "payment_hash",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "preimage",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "secret",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "flow: crate::lightning::Flow",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "status: crate::lightning::HTLCStatus",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "amount_msat",
+          "ordinal": 5,
+          "type_info": "Int64"
+        },
+        {
+          "name": "updated",
+          "ordinal": 6,
+          "type_info": "Int64"
+        },
+        {
+          "name": "created",
+          "ordinal": 7,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\n            select\n                payment_hash,\n                preimage,\n                secret,\n                flow as \"flow: crate::lightning::Flow\",\n                htlc_status as \"status: crate::lightning::HTLCStatus\",\n                amount_msat,\n                updated,\n                created\n            from\n                payments\n            "
+  },
   "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
     "describe": {
       "columns": [
@@ -23,6 +83,16 @@
       }
     },
     "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
+  },
+  "99af1eadda937c42ca9908fa6c106a19ebe1ffd66bdef7d9e69df9d1fcbd26bf": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 3
+      }
+    },
+    "query": "\n        UPDATE payments\n        SET\n            htlc_status = $1, updated = $2\n        WHERE\n            payments.payment_hash = $3\n        "
   },
   "a1ce0920b9ba534467e45c3b1a53e2aefec6809308c213b9eb143c3e87221475": {
     "describe": {

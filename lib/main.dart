@@ -205,15 +205,9 @@ class _TenTenOneState extends State<TenTenOneApp> {
           .catchError((error) => FLog.error(text: "ldk stopped with an error", exception: error));
 
       setState(() {
+        FLog.info(text: "TenTenOne is ready!");
         ready = true;
       });
-
-      // connect to the maker, this will not return unless there was an error.
-      api.connect().then((value) => FLog.error(text: "Lost connection to the maker")).catchError(
-          (error) =>
-              FLog.error(text: "Lost connection to the maker with an error", exception: error));
-
-      FLog.info(text: "TenTenOne is ready!");
     } on FfiException catch (error) {
       FLog.error(text: "Failed to initialise: Error: " + error.message, exception: error);
     } catch (error) {
@@ -271,13 +265,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
       }
       PaymentStatus status;
       switch (e.status) {
-        case TransactionStatus.Failed:
+        case HTLCStatus.Failed:
           status = PaymentStatus.failed;
           break;
-        case TransactionStatus.Succeeded:
+        case HTLCStatus.Succeeded:
           status = PaymentStatus.finalized;
           break;
-        case TransactionStatus.Pending:
+        case HTLCStatus.Pending:
           status = PaymentStatus.pending;
           break;
       }
