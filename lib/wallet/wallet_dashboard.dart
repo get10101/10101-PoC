@@ -93,13 +93,13 @@ class _WalletDashboardState extends State<WalletDashboard> {
 
     const balanceSelector = BalanceSelector.both;
 
-    return SafeArea(
-      child: Scaffold(
-        drawer: const Menu(),
-        appBar: PreferredSize(
-            child: const AppBarWithBalance(balanceSelector: balanceSelector),
-            preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
-        body: ListView(padding: const EdgeInsets.only(left: 20, right: 20), children: widgets),
+    return Scaffold(
+      drawer: const Menu(),
+      appBar: PreferredSize(
+          child: const AppBarWithBalance(balanceSelector: balanceSelector),
+          preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
+      body: SafeArea(
+        child: ListView(padding: const EdgeInsets.only(left: 20, right: 20), children: widgets),
       ),
     );
   }

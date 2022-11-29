@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
@@ -104,6 +105,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
           ),
           appBarTheme: const AppBarTheme(
             foregroundColor: Colors.white,
+            systemOverlayStyle: SystemUiOverlayStyle.dark,
           )),
       routerConfig: _router,
     );
