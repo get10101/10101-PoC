@@ -89,7 +89,7 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.itchysats" "\0"
+            VALUE "CompanyName", "finance.10101" "\0"
             VALUE "FileDescription", "A non-custodial Bitcoin and Lightning wallet for the masses." "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "10101" "\0"
