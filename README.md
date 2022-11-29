@@ -99,7 +99,7 @@ Note that the `iOS` simulator will _not_ pick up the environment variable, so ma
 #### Running a `regtest` setup
 
 For regtest you need to run a local electrs server on `localhost:50000`.
-We make use of (nigiri)[https://github.com/vulpemventures/nigiri] for this.
+We make use of [nigiri](https://github.com/vulpemventures/nigiri) for this.
 
 Run
 
