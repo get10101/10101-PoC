@@ -26,9 +26,9 @@ class Menu extends StatelessWidget {
                   width: 60,
                   child: SvgPicture.asset("assets/10101_logo.svg"),
                 ),
-                const Text("One-Stop ⚡️ Wallet", style: TextStyle(fontSize: 16)),
+                const Text("One App - All things Bitcoin", style: TextStyle(fontSize: 16)),
                 Text(
-                  "Trading, Bets & More",
+                  "⚡️ Trading, Stacking & More",
                   style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.primary),
                 )
               ],
