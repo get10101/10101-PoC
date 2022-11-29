@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'dart:math' as math;
 
 import 'package:ten_ten_one/models/payment.model.dart';
 import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
+import 'package:ten_ten_one/wallet/lightning_tx_detail.dart';
 
 @immutable
 class PaymentHistoryListItem extends StatelessWidget {
@@ -95,7 +97,10 @@ class PaymentHistoryListItem extends StatelessWidget {
       GestureDetector(
         onTap: () {
           GoRouter.of(context).go(
-            '/' + BitcoinTxDetail.subRouteName,
+            '/' +
+                (data.data is LightningTransaction
+                    ? LightningTxDetail.subRouteName
+                    : BitcoinTxDetail.subRouteName),
             extra: data.data,
           );
         },

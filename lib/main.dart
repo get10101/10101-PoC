@@ -21,6 +21,7 @@ import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
+import 'package:ten_ten_one/wallet/lightning_tx_detail.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -131,6 +132,12 @@ class _TenTenOneState extends State<TenTenOneApp> {
               path: BitcoinTxDetail.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
                 return BitcoinTxDetail(transaction: state.extra as BitcoinTxHistoryItem);
+              },
+            ),
+            GoRoute(
+              path: LightningTxDetail.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return LightningTxDetail(transaction: state.extra as LightningTransaction);
               },
             ),
             GoRoute(
