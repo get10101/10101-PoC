@@ -158,6 +158,10 @@ pub fn maker_peer_info() -> String {
     config::maker_peer_info().to_string()
 }
 
+pub fn network() -> SyncReturn<String> {
+    SyncReturn(config::network().to_string())
+}
+
 #[tokio::main(flavor = "current_thread")]
 pub async fn open_channel(taker_amount: u64) -> Result<()> {
     let peer_info = config::maker_peer_info();
