@@ -16,7 +16,7 @@ bdk-ldk = "0.1.0"
 bip39 = "1.0.1"
 bitcoin-bech32 = "0.12"
 chrono = "0.4.22" # TODO: Remove this dependency to use `time` crate instead
-flutter_rust_bridge = "1.49.1"
+flutter_rust_bridge = "1.51.0"
 futures = "0.3"
 hkdf = "0.12"
 lightning = { version = "0.0.112", features = ["max_level_trace"] }
