@@ -94,7 +94,10 @@ class _TenTenOneState extends State<TenTenOneApp> {
       theme: ThemeData(
           primarySwatch: mainColor,
           elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(foregroundColor: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(100, 50),
+                  textStyle: const TextStyle(fontSize: 16.0))),
           floatingActionButtonTheme: const FloatingActionButtonThemeData(
             foregroundColor: Colors.white,
           ),
