@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class TtoRow {
   final String label;
   final String value;
   final ValueType type;
+  final String? meta;
 
-  const TtoRow({required this.label, required this.value, required this.type});
+  const TtoRow({required this.label, required this.value, required this.type, this.meta});
 }
 
-enum ValueType { bitcoin, satoshi, usd, date, contracts, text }
+enum ValueType { bitcoin, satoshi, usd, date, contracts, text, link }
 
 class TtoTable extends StatelessWidget {
   final List<TtoRow> rows;
@@ -103,6 +105,24 @@ class TtoTable extends StatelessWidget {
           ],
         ));
         break;
+      case ValueType.link:
+        valueChild = Text.rich(TextSpan(
+          style: const TextStyle(fontSize: fontSize, wordSpacing: 10),
+          children: [
+            TextSpan(
+              text: row.value,
+              style: const TextStyle(color: Colors.black, fontSize: fontSize),
+            ),
+            const WidgetSpan(child: SizedBox(width: 5)), // space between text and icons
+            WidgetSpan(
+                child: GestureDetector(
+                    onTap: () {
+                      launch(row.meta!);
+                    },
+                    child: const Icon(Icons.open_in_new, color: Colors.blue)))
+          ],
+        ));
+        break;
     }
 
     return TableRow(
@@ -128,5 +148,11 @@ class TtoTable extends StatelessWidget {
             ]),
           ),
         ]);
+  }
+
+  Future<void> launch(String url) async {
+    if (!await launchUrl(Uri.parse(url))) {
+      throw 'Could not launch $url';
+    }
   }
 }
