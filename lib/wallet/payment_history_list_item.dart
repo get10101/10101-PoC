@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 import 'dart:math' as math;
 
 import 'package:ten_ten_one/models/payment.model.dart';
+import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
 
 @immutable
 class PaymentHistoryListItem extends StatelessWidget {
@@ -90,35 +92,45 @@ class PaymentHistoryListItem extends StatelessWidget {
             .format(DateTime.fromMicrosecondsSinceEpoch(data.timestamp.toInt() * 1000 * 1000));
     return Column(children: [
       const Divider(),
-      ListTile(
-          leading: statusIcon,
-          title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(data.type.display,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Row(children: [Icon(layerIcon), Text(layer)]),
-              ]),
-          dense: true,
-          minLeadingWidth: 0,
-          contentPadding: const EdgeInsets.only(left: 0.0, right: 0.0),
-          trailing: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    AmountItem(
-                        text: amountDisplay.value, unit: AmountUnit.satoshi, iconColor: Colors.grey)
-                  ],
-                ),
-                Text(date),
-              ])),
+      GestureDetector(
+        onTap: () {
+          GoRouter.of(context).go(
+            '/' + BitcoinTxDetail.subRouteName,
+            extra: data.data,
+          );
+        },
+        child: ListTile(
+            leading: statusIcon,
+            title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(data.type.display,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Row(children: [Icon(layerIcon), Text(layer)]),
+                ]),
+            dense: true,
+            minLeadingWidth: 0,
+            contentPadding: const EdgeInsets.only(left: 0.0, right: 0.0),
+            trailing: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      AmountItem(
+                          text: amountDisplay.value,
+                          unit: AmountUnit.satoshi,
+                          iconColor: Colors.grey)
+                    ],
+                  ),
+                  Text(date),
+                ])),
+      ),
     ]);
   }
 
