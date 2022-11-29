@@ -7,8 +7,6 @@ import 'package:ten_ten_one/wallet/wallet_dashboard.dart';
 import 'package:ten_ten_one/wallet/wallet_lightning.dart';
 
 class Wallet extends StatefulWidget {
-  static const route = '/trading';
-
   const Wallet({Key? key}) : super(key: key);
 
   @override
@@ -28,7 +26,7 @@ class _WalletState extends State<Wallet> {
 
     return Scaffold(
         drawer: const Menu(),
-        body: _pages.elementAt(walletChangeNotifier.selectedIndex),
+        body: SafeArea(child: _pages.elementAt(walletChangeNotifier.selectedIndex)),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
