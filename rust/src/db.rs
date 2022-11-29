@@ -161,37 +161,83 @@ pub async fn insert_payment(payment: &PaymentInfo) -> Result<()> {
     Ok(())
 }
 
-pub async fn update_payment(payment_hash: PaymentHash, status: HTLCStatus) -> Result<()> {
+// HACK: sometimes we add this information to an already existing payment
+pub struct PaymentNewInfo {
+    pub preimage: Option<PaymentPreimage>,
+    pub secret: Option<PaymentSecret>,
+}
+
+/// Updates the payment in the database and returns the payment data.
+pub async fn update_payment(
+    payment_hash: &PaymentHash,
+    status: HTLCStatus,
+    new_info: Option<PaymentNewInfo>,
+) -> Result<PaymentInfo> {
     let mut connection = acquire().await?;
     let updated = time::OffsetDateTime::now_utc().unix_timestamp();
     let hash = base64::encode(payment_hash.0);
 
-    let query_result = sqlx::query!(
-        r#"
+    let query_result = if let Some(new_info) = new_info {
+        let preimage = new_info.preimage.map(|x| base64::encode(x.0));
+        let secret = new_info.secret.map(|x| base64::encode(x.0));
+
+        sqlx::query!(
+            r#"
+        UPDATE payments
+        SET
+            htlc_status = $1, updated = $2, preimage = $3, secret = $4
+        WHERE
+            payments.payment_hash = $5
+        "#,
+            status,
+            updated,
+            preimage,
+            secret,
+            hash,
+        )
+        .execute(&mut connection)
+        .await?
+    } else {
+        sqlx::query!(
+            r#"
         UPDATE payments
         SET
             htlc_status = $1, updated = $2
         WHERE
             payments.payment_hash = $3
         "#,
-        status,
-        updated,
-        hash,
-    )
-    .execute(&mut connection)
-    .await?;
+            status,
+            updated,
+            hash,
+        )
+        .execute(&mut connection)
+        .await?
+    };
 
     ensure!(
         query_result.rows_affected() == 1,
         "Failed to update payment"
     );
 
+    let payment = load_payment(payment_hash).await?;
+
     tracing::info!(
         "Successfully updated payment: {}",
         hex_utils::hex_str(&payment_hash.0)
     );
 
-    Ok(())
+    Ok(payment)
+}
+
+pub async fn load_payment(hash: &PaymentHash) -> Result<PaymentInfo> {
+    // TODO: Use a dedicated query returning a single payment instead of returning a vector and
+    // filtering
+    load_payments()
+        .await?
+        .iter()
+        .find(|payment| payment.hash == *hash)
+        .context("Unable to find requested hash in DB")
+        .cloned()
 }
 
 pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
@@ -244,7 +290,6 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
 mod tests {
     use crate::lightning::Flow;
     use crate::lightning::MillisatAmount;
-    use bdk::wallet::time::get_timestamp;
     use std::env::temp_dir;
     use std::time::Duration;
     use tracing::subscriber::DefaultGuard;
@@ -253,16 +298,14 @@ mod tests {
     use super::*;
 
     fn dummy_payment() -> PaymentInfo {
-        PaymentInfo {
-            hash: PaymentHash([0u8; 32]),
-            preimage: None,
-            secret: None,
-            flow: Flow::Inbound,
-            status: crate::lightning::HTLCStatus::Pending,
-            amt_msat: MillisatAmount(Some(100000)),
-            created_timestamp: get_timestamp(),
-            updated_timestamp: get_timestamp(),
-        }
+        PaymentInfo::new(
+            PaymentHash([0u8; 32]),
+            None,
+            None,
+            Flow::Inbound,
+            crate::lightning::HTLCStatus::Pending,
+            MillisatAmount(Some(100000)),
+        )
     }
 
     pub fn init_tracing() -> DefaultGuard {
@@ -302,14 +345,9 @@ mod tests {
 
         tokio::time::sleep(Duration::from_secs(1)).await; // so updated time changes
 
-        update_payment(payment.hash, HTLCStatus::Succeeded)
+        let updated_payment = update_payment(&payment.hash, HTLCStatus::Succeeded, None)
             .await
             .unwrap();
-
-        let updated_payment = {
-            let payments = load_payments().await.unwrap();
-            payments.first().unwrap().clone()
-        };
 
         assert_eq!(
             updated_payment.status,

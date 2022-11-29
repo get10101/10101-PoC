@@ -181,7 +181,7 @@ pub async fn post_open_channel(
 
 #[rocket::post("/invoice/send/<invoice>")]
 pub async fn post_pay_invoice(invoice: String) -> Result<(), HttpApiProblem> {
-    send_lightning_payment(&invoice).map_err(|e| {
+    send_lightning_payment(&invoice).await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed to pay lightning invoice")
             .detail(format!("{e:#}"))
@@ -191,11 +191,13 @@ pub async fn post_pay_invoice(invoice: String) -> Result<(), HttpApiProblem> {
 #[rocket::get("/invoice/create")]
 pub async fn get_new_invoice() -> Result<String, HttpApiProblem> {
     // FIXME: Hard-code the parameters for testing
-    create_invoice(10000, 6000, "maker's invoice".to_string()).map_err(|e| {
-        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .title("Failed to create lightning invoice")
-            .detail(format!("{e:#}"))
-    })
+    create_invoice(10000, 6000, "maker's invoice".to_string())
+        .await
+        .map_err(|e| {
+            HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .title("Failed to create lightning invoice")
+                .detail(format!("{e:#}"))
+        })
 }
 
 #[derive(Serialize)]
