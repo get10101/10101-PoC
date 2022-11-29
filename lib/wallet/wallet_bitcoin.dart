@@ -1,8 +1,10 @@
+import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
@@ -50,7 +52,10 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
           child: const AppBarWithBalance(balanceSelector: balanceSelector),
           preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
       body: SafeArea(
-          child: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets)),
+          child: RefreshIndicator(
+              onRefresh: _pullRefresh,
+              child: ListView(
+                  padding: const EdgeInsets.only(left: 25, right: 25), children: widgets))),
       floatingActionButton: SpeedDial(
         icon: Icons.import_export,
         iconTheme: const IconThemeData(size: 35),
@@ -81,5 +86,15 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
         ],
       ),
     );
+  }
+
+  Future<void> _pullRefresh() async {
+    try {
+      await callSyncWithChain();
+      await callSyncPaymentHistory();
+      await callGetBalances();
+    } catch (error) {
+      FLog.error(text: "Failed to get balances:" + error.toString());
+    }
   }
 }

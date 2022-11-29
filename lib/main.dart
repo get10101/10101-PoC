@@ -227,90 +227,10 @@ class _TenTenOneState extends State<TenTenOneApp> {
     }
 
     // consecutive syncs
-    runPeriodically(_callGetBalances, seconds: 10);
-    runPeriodically(_callSyncWithChain, seconds: 60);
-    runPeriodically(_callSyncPaymentHistory, seconds: 10);
-    runPeriodically(_callGetOffers, seconds: 5);
-  }
-
-  Future<void> _callSyncWithChain() async {
-    try {
-      await api.sync();
-    } catch (error) {
-      FLog.error(text: "Failed to sync wallet:" + error.toString());
-    }
-  }
-
-  Future<void> _callGetBalances() async {
-    try {
-      final balance = await api.getBalance();
-      bitcoinBalance.update(Amount(balance.onChain.confirmed));
-      lightningBalance.update(Amount(balance.offChain));
-      FLog.trace(text: 'Successfully retrieved wallet balances');
-    } catch (error) {
-      FLog.error(text: "Failed to get balances:" + error.toString());
-    }
-  }
-
-  Future<void> _callGetOffers() async {
-    final offer = await api.getOffer();
-    cfdOffersChangeNotifier.update(offer);
-    FLog.trace(text: 'Successfully fetched offers');
-  }
-
-  Future<void> _callSyncPaymentHistory() async {
-    final bitcoinTxHistory = await api.getBitcoinTxHistory();
-    final lightningTxHistory = await api.getLightningTxHistory();
-
-    var lth = lightningTxHistory.map((e) {
-      var amount = Amount(e.sats);
-      PaymentType type;
-      switch (e.flow) {
-        case bridge_definitions.Flow.Inbound:
-          type = PaymentType.receive;
-          amount = Amount(e.sats);
-          break;
-        case bridge_definitions.Flow.Outbound:
-          type = PaymentType.send;
-          amount = Amount(-e.sats);
-          break;
-      }
-      PaymentStatus status;
-      switch (e.status) {
-        case HTLCStatus.Failed:
-          status = PaymentStatus.failed;
-          break;
-        case HTLCStatus.Succeeded:
-          status = PaymentStatus.finalized;
-          break;
-        case HTLCStatus.Pending:
-          status = PaymentStatus.pending;
-          break;
-      }
-      return PaymentHistoryItem(amount, type, status, e.timestamp);
-    }).toList();
-
-    var bph = bitcoinTxHistory.map((bitcoinTxHistoryItem) {
-      var amount = bitcoinTxHistoryItem.sent != 0
-          ? Amount((bitcoinTxHistoryItem.sent -
-                  bitcoinTxHistoryItem.received -
-                  bitcoinTxHistoryItem.fee) *
-              -1)
-          : Amount(bitcoinTxHistoryItem.received);
-
-      var type =
-          bitcoinTxHistoryItem.sent != 0 ? PaymentType.sendOnChain : PaymentType.receiveOnChain;
-
-      var status =
-          bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending;
-      return PaymentHistoryItem(amount, type, status, bitcoinTxHistoryItem.timestamp);
-    }).toList();
-
-    final combinedList = [...bph, ...lth];
-    combinedList.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    paymentHistory.update(combinedList);
-
-    FLog.trace(text: 'Successfully synced payment history');
+    runPeriodically(callGetBalances, seconds: 10);
+    runPeriodically(callSyncWithChain, seconds: 60);
+    runPeriodically(callSyncPaymentHistory, seconds: 10);
+    runPeriodically(callGetOffers, seconds: 5);
   }
 
   Future<void> setupRustLogging() async {
@@ -322,6 +242,84 @@ class _TenTenOneState extends State<TenTenOneApp> {
       }
     });
   }
+}
+
+Future<void> callSyncWithChain() async {
+  try {
+    await api.sync();
+  } catch (error) {
+    FLog.error(text: "Failed to sync wallet:" + error.toString());
+  }
+}
+
+Future<void> callGetBalances() async {
+  try {
+    final balance = await api.getBalance();
+    bitcoinBalance.update(Amount(balance.onChain.confirmed));
+    lightningBalance.update(Amount(balance.offChain));
+    FLog.trace(text: 'Successfully retrieved wallet balances');
+  } catch (error) {
+    FLog.error(text: "Failed to get balances:" + error.toString());
+  }
+}
+
+Future<void> callGetOffers() async {
+  final offer = await api.getOffer();
+  cfdOffersChangeNotifier.update(offer);
+  FLog.trace(text: 'Successfully fetched offers');
+}
+
+Future<void> callSyncPaymentHistory() async {
+  final bitcoinTxHistory = await api.getBitcoinTxHistory();
+  final lightningTxHistory = await api.getLightningTxHistory();
+
+  var lth = lightningTxHistory.map((e) {
+    var amount = Amount(e.sats);
+    PaymentType type;
+    switch (e.flow) {
+      case bridge_definitions.Flow.Inbound:
+        type = PaymentType.receive;
+        amount = Amount(e.sats);
+        break;
+      case bridge_definitions.Flow.Outbound:
+        type = PaymentType.send;
+        amount = Amount(-e.sats);
+        break;
+    }
+    PaymentStatus status;
+    switch (e.status) {
+      case HTLCStatus.Failed:
+        status = PaymentStatus.failed;
+        break;
+      case HTLCStatus.Succeeded:
+        status = PaymentStatus.finalized;
+        break;
+      case HTLCStatus.Pending:
+        status = PaymentStatus.pending;
+        break;
+    }
+    return PaymentHistoryItem(amount, type, status, e.timestamp);
+  }).toList();
+
+  var bph = bitcoinTxHistory.map((bitcoinTxHistoryItem) {
+    var amount = bitcoinTxHistoryItem.sent != 0
+        ? Amount(
+            (bitcoinTxHistoryItem.sent - bitcoinTxHistoryItem.received - bitcoinTxHistoryItem.fee) *
+                -1)
+        : Amount(bitcoinTxHistoryItem.received);
+
+    var type =
+        bitcoinTxHistoryItem.sent != 0 ? PaymentType.sendOnChain : PaymentType.receiveOnChain;
+
+    var status = bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending;
+    return PaymentHistoryItem(amount, type, status, bitcoinTxHistoryItem.timestamp);
+  }).toList();
+
+  final combinedList = [...bph, ...lth];
+  combinedList.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  paymentHistory.update(combinedList);
+
+  FLog.trace(text: 'Successfully synced payment history');
 }
 
 void runPeriodically(void Function() callback, {seconds = 20}) {

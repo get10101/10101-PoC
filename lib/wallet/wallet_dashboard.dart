@@ -1,7 +1,9 @@
+import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
@@ -94,14 +96,26 @@ class _WalletDashboardState extends State<WalletDashboard> {
     const balanceSelector = BalanceSelector.both;
 
     return Scaffold(
-      drawer: const Menu(),
-      appBar: PreferredSize(
-          child: const AppBarWithBalance(balanceSelector: balanceSelector),
-          preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
-      body: SafeArea(
-        child: ListView(padding: const EdgeInsets.only(left: 20, right: 20), children: widgets),
-      ),
-    );
+        drawer: const Menu(),
+        appBar: PreferredSize(
+            child: const AppBarWithBalance(balanceSelector: balanceSelector),
+            preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
+        body: SafeArea(
+            child: RefreshIndicator(
+                onRefresh: _pullRefresh,
+                child: ListView(
+                    padding: const EdgeInsets.only(left: 20, right: 20), children: widgets))));
+  }
+
+  Future<void> _pullRefresh() async {
+    try {
+      await callSyncWithChain();
+      await callSyncPaymentHistory();
+      await callGetBalances();
+      FLog.info(text: "Done");
+    } catch (error) {
+      FLog.error(text: "Failed to get balances:" + error.toString());
+    }
   }
 }
 
