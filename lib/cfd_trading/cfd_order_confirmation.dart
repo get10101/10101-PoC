@@ -130,7 +130,7 @@ class _CfdOrderConfirmationState extends State<CfdOrderConfirmation> {
                       await openCfd(order, cfdTradingChangeNotifier);
                     },
                     label: 'Confirm',
-                    isButtonDisabled: channelError == null,
+                    isButtonDisabled: channelError != null,
                   ),
                 )),
           ]),
