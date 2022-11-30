@@ -6,6 +6,7 @@ use crate::cfd::models::Position;
 use crate::config;
 use crate::connection;
 use crate::db;
+use crate::faucet;
 use crate::logger;
 use crate::offer;
 use crate::offer::Offer;
@@ -192,6 +193,11 @@ pub async fn open_cfd(order: Order) -> Result<()> {
 #[tokio::main(flavor = "current_thread")]
 pub async fn get_offer() -> Result<Option<Offer>> {
     offer::get_offer().await
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn call_faucet(address: String) -> Result<String> {
+    faucet::call_faucet(address).await
 }
 
 #[tokio::main(flavor = "current_thread")]

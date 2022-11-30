@@ -1,37 +1,36 @@
 import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
-import 'package:go_router/go_router.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:ten_ten_one/cfd_trading/validation_error.dart';
-
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
+import 'package:ten_ten_one/wallet/drain_faucet.dart';
+import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 
-class ReceiveOnChain extends StatefulWidget {
-  const ReceiveOnChain({Key? key}) : super(key: key);
+class FundWalletOnChain extends StatefulWidget {
+  const FundWalletOnChain({Key? key}) : super(key: key);
 
   static const route = '/' + subRouteName;
-  static const subRouteName = 'receive-on-chain';
+  static const subRouteName = 'fund-wallet-on-chain';
 
   @override
-  State<ReceiveOnChain> createState() => _ReceiveOnChainState();
+  State<FundWalletOnChain> createState() => _FundWalletOnChainState();
 }
 
-class _ReceiveOnChainState extends State<ReceiveOnChain> {
-  String address = "";
+class _FundWalletOnChainState extends State<FundWalletOnChain> {
+  Network network = Network.Testnet;
 
   @override
   void initState() {
-    _callGetAddress();
+    _callInit();
     super.initState();
   }
 
-  Future<void> _callGetAddress() async {
+  Future<void> _callInit() async {
     try {
-      final address = await api.getAddress();
+      final network = await api.network();
       setState(() {
-        this.address = address.address;
+        this.network = network;
       });
     } on FfiException catch (error) {
       FLog.error(text: "Failed to fetch address phrase: Error: " + error.message, exception: error);
@@ -42,69 +41,89 @@ class _ReceiveOnChainState extends State<ReceiveOnChain> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Receive Bitcoin'),
+        title: const Text('Fund Wallet'),
       ),
       body: SafeArea(
-          child: address.isEmpty
-              ? const CircularProgressIndicator()
-              : Container(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 250,
-                        width: 250,
-                        child: QrImage(
-                          data: address,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Row(
-                        children: [
-                          Expanded(
-                              child: Text(
-                            address,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 20),
-                          )),
-                          IconButton(
-                            icon: const Icon(Icons.copy),
-                            style: IconButton.styleFrom(
-                              focusColor:
-                                  Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.12),
-                              highlightColor:
-                                  Theme.of(context).colorScheme.onSurface.withOpacity(0.12),
-                            ),
-                            onPressed: () async {
-                              await Clipboard.setData(ClipboardData(text: address));
-
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                content: Text("Copied to Clipboard"),
-                              ));
-                            },
-                          )
-                        ],
-                      ),
-                      const Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20.0),
-                        child: AlertMessage(
-                            message: Message(
-                                title:
-                                    "Send Bitcoin to the given address. Once your transaction is confirmed the balance will change in the wallet",
-                                type: AlertType.info)),
-                      ),
-                      Container(
-                        alignment: Alignment.bottomRight,
-                        child: ElevatedButton(
-                            onPressed: () async {
-                              GoRouter.of(context).go('/');
-                            },
-                            child: const Text('Close')),
-                      )
-                    ],
+          child: Container(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            SizedBox(
+                child: Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: const RotatedBox(
+                quarterTurns: 1,
+                child: IconButton(
+                  icon: Icon(
+                    FontAwesomeIcons.arrowRightToBracket,
+                    color: Colors.white,
                   ),
-                )),
+                  onPressed: null,
+                ),
+              ),
+            )),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Text("Fund your wallet",
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Flexible(
+                  child: Text(
+                    "Get bitcoin from our faucet or deposit on-chain to get started.",
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView(
+                children: [
+                  const Divider(),
+                  InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const DrainFaucet()),
+                        );
+                      },
+                      child: const ListTile(
+                        title: Text("Drain faucet"),
+                        trailing: Icon(FontAwesomeIcons.chevronRight),
+                      )),
+                  const Divider(),
+                  InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ReceiveOnChain()),
+                        );
+                      },
+                      child: const ListTile(
+                        title: Text("Deposit bitcoin"),
+                        trailing: Icon(FontAwesomeIcons.chevronRight),
+                      )),
+                  const Divider(),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [ElevatedButton(onPressed: () {}, child: const Text('Do this later'))],
+            ),
+          ],
+        ),
+      )),
     );
   }
 }
