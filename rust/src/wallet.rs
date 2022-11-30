@@ -19,13 +19,14 @@ use anyhow::Context;
 use anyhow::Result;
 use bdk::bitcoin;
 use bdk::bitcoin::secp256k1::PublicKey;
+use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::Address;
 use bdk::bitcoin::Amount;
 use bdk::bitcoin::Script;
 use bdk::bitcoin::Txid;
 use bdk::blockchain::ElectrumBlockchain;
-use bdk::database::MemoryDatabase;
 use bdk::electrum_client::Client;
+use bdk::wallet::wallet_name_from_descriptor;
 use bdk::wallet::AddressIndex;
 use bdk::FeeRate;
 use bdk::KeychainKind;
@@ -89,11 +90,22 @@ impl Wallet {
         let client = Client::new(&electrum_str)?;
         let blockchain = ElectrumBlockchain::from(client);
 
+        let wallet_name = wallet_name_from_descriptor(
+            bdk::template::Bip84(ext_priv_key, KeychainKind::External),
+            Some(bdk::template::Bip84(ext_priv_key, KeychainKind::Internal)),
+            ext_priv_key.network,
+            &Secp256k1::new(),
+        )?;
+
+        // Create a database (using default sled type) to store wallet data
+        let db = bdk::sled::open(data_dir.clone())?;
+        let db = db.open_tree(wallet_name)?;
+
         let bdk_wallet = bdk::Wallet::new(
             bdk::template::Bip84(ext_priv_key, KeychainKind::External),
             Some(bdk::template::Bip84(ext_priv_key, KeychainKind::Internal)),
             ext_priv_key.network,
-            MemoryDatabase::new(),
+            db,
         )?;
 
         let lightning_wallet = bdk_ldk::LightningWallet::new(Box::new(blockchain), bdk_wallet);
