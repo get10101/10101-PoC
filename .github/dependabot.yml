@@ -1,25 +1,25 @@
 # Please see the documentation for all configuration options:
 # https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
-version: 2
-updates:
-  - package-ecosystem: "cargo"
-    directory: "/rust"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    ignore:
-      - dependency-name: 13rac1/block-fixup-merge-action
-    open-pull-requests-limit: 10
-
-    # Flutter package updates
-  - package-ecosystem: "pub"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+#version: 2
+#updates:
+#  - package-ecosystem: "cargo"
+#    directory: "/rust"
+#    schedule:
+#      interval: "daily"
+#    open-pull-requests-limit: 10
+#
+#  - package-ecosystem: "github-actions"
+#    directory: "/"
+#    schedule:
+#      interval: "daily"
+#    ignore:
+#      - dependency-name: 13rac1/block-fixup-merge-action
+#    open-pull-requests-limit: 10
+#
+#    # Flutter package updates
+#  - package-ecosystem: "pub"
+#    directory: "/"
+#    schedule:
+#      interval: "weekly"
+#    open-pull-requests-limit: 10
