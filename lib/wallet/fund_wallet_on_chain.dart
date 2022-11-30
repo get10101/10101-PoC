@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/wallet/drain_faucet.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 
@@ -91,7 +92,13 @@ class FundWalletOnChain extends StatelessWidget {
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: [ElevatedButton(onPressed: () {}, child: const Text('Do this later'))],
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      context.go("/");
+                    },
+                    child: const Text('Do this later'))
+              ],
             ),
           ],
         ),
