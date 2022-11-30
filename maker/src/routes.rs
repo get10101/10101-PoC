@@ -285,7 +285,7 @@ pub async fn get_channel_details() -> Result<Json<Vec<ChannelDetail>>, HttpApiPr
             counterparty: cd.counterparty.node_id.to_hex(),
             funding_txo: cd
                 .funding_txo
-                .map(|ft| format!("{}{}", ft.txid.to_hex(), ft.index)),
+                .map(|ft| format!("{}:{}", ft.txid.to_hex(), ft.index)),
             channel_type: cd.channel_type.clone().map(|ct| ct.to_string()),
             channel_value_satoshis: cd.channel_value_satoshis,
             unspendable_punishment_reserve: cd.unspendable_punishment_reserve,
