@@ -95,6 +95,7 @@ async fn main() -> Result<()> {
                 routes::get_spread,
                 routes::put_spread,
                 routes::alive,
+                routes::get_faucet,
             ],
         )
         .manage(quote_receiver)

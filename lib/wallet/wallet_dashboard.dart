@@ -9,7 +9,7 @@ import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
-import 'package:ten_ten_one/wallet/receive_on_chain.dart';
+import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
@@ -54,7 +54,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
 
     if (bitcoinBalance.total().asSats == 0) {
       widgets.add(ActionCard(CardDetails(
-          route: ReceiveOnChain.route,
+          route: FundWalletOnChain.route,
           title: "Deposit Bitcoin",
           subtitle:
               "Deposit Bitcoin into your wallet to enable opening a channel for trading on Lightning",

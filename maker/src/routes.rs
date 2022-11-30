@@ -3,6 +3,7 @@ use anyhow::Result;
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::bitcoin::Address;
+use bdk::bitcoin::Txid;
 use http_api_problem::HttpApiProblem;
 use http_api_problem::StatusCode;
 use rocket::serde::json::Json;
@@ -10,6 +11,7 @@ use rocket::serde::Deserialize;
 use rocket::serde::Serialize;
 use rocket::State;
 use rust_decimal::Decimal;
+use std::str::FromStr;
 use ten_ten_one::config::maker_peer_info;
 use ten_ten_one::lightning::NodeInfo;
 use ten_ten_one::lightning::PeerInfo;
@@ -34,6 +36,23 @@ pub struct Offer {
     ask: Decimal,
     #[serde(with = "rust_decimal::serde::float")]
     index: Decimal,
+}
+
+#[rocket::get("/faucet/<address>")]
+pub async fn get_faucet(address: String) -> Result<Json<Txid>, HttpApiProblem> {
+    let address = Address::from_str(address.as_str()).map_err(|e| {
+        HttpApiProblem::new(StatusCode::BAD_REQUEST)
+            .title("Invalid address")
+            .detail(format!("Provided address {address} was not valid: {e:#}"))
+    })?;
+
+    let txid = send_to_address(address, 10_000).map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to fund address")
+            .detail(format!("{e:#}"))
+    })?;
+
+    Ok(Json(txid))
 }
 
 #[rocket::get("/offer")]

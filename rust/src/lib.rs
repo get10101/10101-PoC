@@ -6,6 +6,7 @@ pub mod config;
 mod connection;
 pub mod db;
 pub mod disk;
+mod faucet;
 mod hex_utils;
 pub mod lightning;
 pub mod logger;

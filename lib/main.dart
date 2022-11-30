@@ -19,6 +19,7 @@ import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
+import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -159,6 +160,12 @@ class _TenTenOneState extends State<TenTenOneApp> {
               path: OpenChannel.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
                 return const OpenChannel();
+              },
+            ),
+            GoRoute(
+              path: FundWalletOnChain.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const FundWalletOnChain();
               },
             ),
           ]),
