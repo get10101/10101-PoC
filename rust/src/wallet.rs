@@ -100,7 +100,7 @@ impl Wallet {
         )?;
 
         // Create a database (using default sled type) to store wallet data
-        let db = bdk::sled::open(data_dir.clone())?;
+        let db = bdk::sled::open(data_dir.join("wallet"))?;
         let db = db.open_tree(wallet_name)?;
 
         let bdk_wallet = bdk::Wallet::new(
