@@ -128,6 +128,23 @@ pub fn get_balance() -> Result<Balance> {
     wallet::get_balance()
 }
 
+pub enum Network {
+    Bitcoin,
+    Testnet,
+    Signet,
+    Regtest,
+}
+
+pub fn network() -> Result<Network> {
+    let network = wallet::network()?;
+    Ok(match network {
+        bdk::bitcoin::Network::Bitcoin => Network::Bitcoin,
+        bdk::bitcoin::Network::Testnet => Network::Testnet,
+        bdk::bitcoin::Network::Signet => Network::Signet,
+        bdk::bitcoin::Network::Regtest => Network::Regtest,
+    })
+}
+
 pub fn sync() -> Result<()> {
     wallet::sync()
 }

@@ -20,10 +20,10 @@ use anyhow::Result;
 use bdk::bitcoin;
 use bdk::bitcoin::secp256k1::PublicKey;
 use bdk::bitcoin::secp256k1::Secp256k1;
-use bdk::bitcoin::Address;
 use bdk::bitcoin::Amount;
 use bdk::bitcoin::Script;
 use bdk::bitcoin::Txid;
+use bdk::bitcoin::{Address, Network};
 use bdk::blockchain::ElectrumBlockchain;
 use bdk::electrum_client::Client;
 use bdk::wallet::wallet_name_from_descriptor;
@@ -54,6 +54,7 @@ static WALLET: Storage<Mutex<Wallet>> = Storage::new();
 pub struct Wallet {
     seed: Bip39Seed,
     pub lightning: LightningSystem,
+    network: Network,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -115,7 +116,11 @@ impl Wallet {
 
         let lightning = lightning::setup(lightning_wallet, network, &data_dir, lightning_seed)?;
 
-        Ok(Wallet { lightning, seed })
+        Ok(Wallet {
+            lightning,
+            seed,
+            network,
+        })
     }
 
     pub fn sync(&self) -> Result<()> {
@@ -124,6 +129,10 @@ impl Wallet {
             .sync(self.lightning.confirmables())
             .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
         Ok(())
+    }
+
+    pub fn network(&self) -> Network {
+        self.network
     }
 
     pub fn get_balance(&self) -> Result<Balance> {
@@ -358,6 +367,10 @@ pub fn get_balance() -> Result<Balance> {
 pub fn sync() -> Result<()> {
     tracing::trace!("Wallet sync called");
     get_wallet()?.sync()
+}
+
+pub fn network() -> Result<bitcoin::Network> {
+    Ok(get_wallet()?.network())
 }
 
 pub fn get_address() -> Result<bitcoin::Address> {
