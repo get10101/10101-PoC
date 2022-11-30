@@ -9,21 +9,19 @@ const MAINNET_ELECTRUM: &str = "ssl://blockstream.info:700";
 const TESTNET_ELECTRUM: &str = "ssl://blockstream.info:993";
 const REGTEST_ELECTRUM: &str = "tcp://localhost:50000";
 
-static REGTEST_MAKER_IP: &str = "127.0.0.1";
-static REGTEST_MAKER_PORT_HTTP: u64 = 8000;
+const REGTEST_MAKER_IP: &str = "127.0.0.1";
+const REGTEST_MAKER_PORT_HTTP: u64 = 8000;
 // Maker PK is derived from our checked in regtest maker seed
-static REGTEST_MAKER_PK: &str =
-    "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
+const REGTEST_MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c1315d44bd8e108c08bc1";
 
-static MAKER_PORT_LIGHTNING: u64 = 9045;
+const MAKER_PORT_LIGHTNING: u64 = 9045;
 
-static TESTNET_MAKER_IP: &str = "35.189.57.114"; // testnet.itchysats.network
-static TESTNET_MAKER_PORT_HTTP: u64 = 8888;
+const TESTNET_MAKER_IP: &str = "35.189.57.114"; // testnet.itchysats.network
+const TESTNET_MAKER_PORT_HTTP: u64 = 8888;
 // Maker PK logged in tentenone-maker testnet container
-static TESTNET_MAKER_PK: &str =
-    "0244946473b7926c427be70925e8e99cafc3ea76dffe708e6cba8896576cf0b14d";
+const TESTNET_MAKER_PK: &str = "0244946473b7926c427be70925e8e99cafc3ea76dffe708e6cba8896576cf0b14d";
 
-pub static TCP_TIMEOUT: Duration = Duration::from_secs(10);
+pub const TCP_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Network the app is running
 ///
