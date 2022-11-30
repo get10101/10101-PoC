@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:f_logs/f_logs.dart';
+import 'package:feedback/feedback.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
@@ -13,6 +18,7 @@ import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 
 import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
@@ -92,6 +98,31 @@ class _WalletDashboardState extends State<WalletDashboard> {
     );
 
     widgets.add(paymentHistoryList);
+    if (Platform.isAndroid || Platform.isIOS) {
+      widgets.add(const SizedBox(height: 10));
+      widgets.add(OutlinedButton(
+        style: OutlinedButton.styleFrom(
+            minimumSize: const Size(20, 50),
+            side: BorderSide(width: 1.0, color: Theme.of(context).primaryColor)),
+        child: const Text('Provide feedback'),
+        onPressed: () {
+          BetterFeedback.of(context).show((feedback) async {
+            final screenshotFilePath = await writeImageToStorage(feedback.screenshot);
+            final logs = await FLog.exportLogs();
+
+            final Email email = Email(
+              body: feedback.text,
+              subject: '10101 Feedback',
+              recipients: ['richard@coblox.tech'],
+              attachmentPaths: [screenshotFilePath, logs.path],
+              isHTML: false,
+            );
+            await FlutterEmailSender.send(email);
+          });
+        },
+      ));
+      widgets.add(const SizedBox(height: 10));
+    }
 
     const balanceSelector = BalanceSelector.both;
 
@@ -105,6 +136,14 @@ class _WalletDashboardState extends State<WalletDashboard> {
                 onRefresh: _pullRefresh,
                 child: ListView(
                     padding: const EdgeInsets.only(left: 20, right: 20), children: widgets))));
+  }
+
+  Future<String> writeImageToStorage(Uint8List feedbackScreenshot) async {
+    final Directory output = await getTemporaryDirectory();
+    final String screenshotFilePath = '${output.path}/feedback.png';
+    final File screenshotFile = File(screenshotFilePath);
+    await screenshotFile.writeAsBytes(feedbackScreenshot);
+    return screenshotFilePath;
   }
 
   Future<void> _pullRefresh() async {

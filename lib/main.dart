@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:f_logs/f_logs.dart';
+import 'package:feedback/feedback.dart';
 import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -93,24 +94,26 @@ class _TenTenOneState extends State<TenTenOneApp> {
     if (ready) {
       FlutterNativeSplash.remove();
     }
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'TenTenOne',
-      theme: ThemeData(
-          primarySwatch: mainColor,
-          elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(100, 50),
-                  textStyle: const TextStyle(fontSize: 16.0))),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            foregroundColor: Colors.white,
-          ),
-          appBarTheme: const AppBarTheme(
-            foregroundColor: Colors.white,
-            systemOverlayStyle: SystemUiOverlayStyle.dark,
-          )),
-      routerConfig: _router,
+    return BetterFeedback(
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'TenTenOne',
+        theme: ThemeData(
+            primarySwatch: mainColor,
+            elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(100, 50),
+                    textStyle: const TextStyle(fontSize: 16.0))),
+            floatingActionButtonTheme: const FloatingActionButtonThemeData(
+              foregroundColor: Colors.white,
+            ),
+            appBarTheme: const AppBarTheme(
+              foregroundColor: Colors.white,
+              systemOverlayStyle: SystemUiOverlayStyle.dark,
+            )),
+        routerConfig: _router,
+      ),
     );
   }
 
