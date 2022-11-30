@@ -150,7 +150,7 @@ pub async fn open_channel(
     channel_manager: Arc<ChannelManager>,
     peer_info: PeerInfo,
     channel_amount_sat: u64,
-    initial_send_amount_sats: Option<u64>,
+    initial_send_amount_sats: u64,
 ) -> Result<()> {
     let config = UserConfig {
         channel_handshake_limits: ChannelHandshakeLimits {
@@ -167,20 +167,15 @@ pub async fn open_channel(
         ..Default::default()
     };
 
-    let _temp_channel_id = match initial_send_amount_sats {
-        None => channel_manager
-            .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, Some(config))
-            .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?,
-        Some(amount) => channel_manager
-            .create_channel(
-                peer_info.pubkey,
-                channel_amount_sat,
-                amount * 1000,
-                0,
-                Some(config),
-            )
-            .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?,
-    };
+    let _temp_channel_id = channel_manager
+        .create_channel(
+            peer_info.pubkey,
+            channel_amount_sat,
+            initial_send_amount_sats * 1000,
+            0,
+            Some(config),
+        )
+        .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?;
 
     tracing::info!("Started channel creation with {peer_info}");
     Ok(())

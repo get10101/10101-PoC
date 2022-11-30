@@ -486,13 +486,7 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
         lightning.channel_manager.clone()
     };
 
-    lightning::open_channel(
-        channel_manager,
-        peer_info,
-        channel_capacity,
-        Some(maker_amount),
-    )
-    .await
+    lightning::open_channel(channel_manager, peer_info, channel_capacity, maker_amount).await
 }
 
 pub async fn connect() -> Result<()> {
