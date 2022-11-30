@@ -16,10 +16,21 @@ const REGTEST_MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c13
 
 const MAKER_PORT_LIGHTNING: u64 = 9045;
 
-const TESTNET_MAKER_IP: &str = "35.189.57.114"; // testnet.itchysats.network
-const TESTNET_MAKER_PORT_HTTP: u64 = 8888;
-// Maker PK logged in tentenone-maker testnet container
-const TESTNET_MAKER_PK: &str = "0244946473b7926c427be70925e8e99cafc3ea76dffe708e6cba8896576cf0b14d";
+/// IP corresponding to the domain `testnet.itchysats.network`.
+///
+/// _All_ 10101 testnet makers can be found behind this IP.
+const TESTNET_MAKER_IP: &str = "35.189.57.114";
+
+/// The port for the 10101 testnet maker running a stable release.
+///
+/// Alpha users should use this port.
+const TESTNET_STABLE_MAKER_PORT_HTTP: u64 = 8888;
+
+/// Public key of the 10101 maker running a stable release.
+///
+/// Alpha users should use this PK.
+const TESTNET_STABLE_MAKER_PK: &str =
+    "0244946473b7926c427be70925e8e99cafc3ea76dffe708e6cba8896576cf0b14d";
 
 pub const TCP_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -42,7 +53,9 @@ pub fn electrum_url() -> String {
 
 pub fn maker_pk() -> PublicKey {
     match network() {
-        Network::Testnet => TESTNET_MAKER_PK.parse().expect("Hard-coded PK to be valid"),
+        Network::Testnet => TESTNET_STABLE_MAKER_PK
+            .parse()
+            .expect("Hard-coded PK to be valid"),
         Network::Regtest => REGTEST_MAKER_PK.parse().expect("Hard-coded PK to be valid"),
         Network::Signet => todo!(),
         Network::Bitcoin => todo!(),
@@ -61,7 +74,7 @@ fn maker_ip() -> String {
 fn maker_port_http() -> u64 {
     match network() {
         Network::Bitcoin => todo!(),
-        Network::Testnet => TESTNET_MAKER_PORT_HTTP,
+        Network::Testnet => TESTNET_STABLE_MAKER_PORT_HTTP,
         Network::Signet => todo!(),
         Network::Regtest => REGTEST_MAKER_PORT_HTTP,
     }
