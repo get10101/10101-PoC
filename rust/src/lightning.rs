@@ -183,8 +183,7 @@ pub async fn open_channel(
             .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?,
     };
 
-    tracing::debug!("Created channel with {peer_info}");
-    tracing::info!("Channel has been successfully created");
+    tracing::info!("Started channel creation with {peer_info}");
     Ok(())
 }
 

@@ -32,7 +32,6 @@ use bdk::SignOptions;
 use bdk_ldk::ScriptStatus;
 use lightning_background_processor::BackgroundProcessor;
 use lightning_invoice::Invoice;
-use reqwest::StatusCode;
 use rust_decimal::prelude::FromPrimitive;
 use serde::Deserialize;
 use serde::Serialize;
@@ -467,11 +466,9 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 
     let response = client.post(maker_api).json(&body).send().await?;
 
-    if response.status() == StatusCode::INTERNAL_SERVER_ERROR
-        || response.status() == StatusCode::BAD_REQUEST
-    {
+    if let Err(e) = response.error_for_status_ref() {
         let text = response.text().await?;
-        bail!("open channel request failed with response: {text}")
+        bail!("maker was unable to open a channel due to {e}, {text}")
     }
 
     let response: OpenChannelResponse = response.json().await?;
