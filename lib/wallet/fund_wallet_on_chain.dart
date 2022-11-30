@@ -1,41 +1,13 @@
-import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
-import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 import 'package:ten_ten_one/wallet/drain_faucet.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 
-class FundWalletOnChain extends StatefulWidget {
+class FundWalletOnChain extends StatelessWidget {
   const FundWalletOnChain({Key? key}) : super(key: key);
 
   static const route = '/' + subRouteName;
   static const subRouteName = 'fund-wallet-on-chain';
-
-  @override
-  State<FundWalletOnChain> createState() => _FundWalletOnChainState();
-}
-
-class _FundWalletOnChainState extends State<FundWalletOnChain> {
-  Network network = Network.Testnet;
-
-  @override
-  void initState() {
-    _callInit();
-    super.initState();
-  }
-
-  Future<void> _callInit() async {
-    try {
-      final network = await api.network();
-      setState(() {
-        this.network = network;
-      });
-    } on FfiException catch (error) {
-      FLog.error(text: "Failed to fetch address phrase: Error: " + error.message, exception: error);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

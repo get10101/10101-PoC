@@ -17,9 +17,11 @@ import 'package:ten_ten_one/models/payment.model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
+import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
+import 'package:ten_ten_one/wallet/lightning_tx_detail.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -124,6 +126,18 @@ class _TenTenOneState extends State<TenTenOneApp> {
               path: Seed.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
                 return const Seed();
+              },
+            ),
+            GoRoute(
+              path: BitcoinTxDetail.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return BitcoinTxDetail(transaction: state.extra as BitcoinTxHistoryItem);
+              },
+            ),
+            GoRoute(
+              path: LightningTxDetail.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return LightningTxDetail(transaction: state.extra as LightningTransaction);
               },
             ),
             GoRoute(
@@ -306,7 +320,7 @@ Future<void> callSyncPaymentHistory() async {
         status = PaymentStatus.pending;
         break;
     }
-    return PaymentHistoryItem(amount, type, status, e.timestamp);
+    return PaymentHistoryItem(amount, type, status, e.timestamp, e);
   }).toList();
 
   var bph = bitcoinTxHistory.map((bitcoinTxHistoryItem) {
@@ -320,7 +334,8 @@ Future<void> callSyncPaymentHistory() async {
         bitcoinTxHistoryItem.sent != 0 ? PaymentType.sendOnChain : PaymentType.receiveOnChain;
 
     var status = bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending;
-    return PaymentHistoryItem(amount, type, status, bitcoinTxHistoryItem.timestamp);
+    return PaymentHistoryItem(
+        amount, type, status, bitcoinTxHistoryItem.timestamp, bitcoinTxHistoryItem);
   }).toList();
 
   final combinedList = [...bph, ...lth];

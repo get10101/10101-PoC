@@ -129,23 +129,6 @@ pub fn get_balance() -> Result<Balance> {
     wallet::get_balance()
 }
 
-pub enum Network {
-    Bitcoin,
-    Testnet,
-    Signet,
-    Regtest,
-}
-
-pub fn network() -> Result<Network> {
-    let network = wallet::network()?;
-    Ok(match network {
-        bdk::bitcoin::Network::Bitcoin => Network::Bitcoin,
-        bdk::bitcoin::Network::Testnet => Network::Testnet,
-        bdk::bitcoin::Network::Signet => Network::Signet,
-        bdk::bitcoin::Network::Regtest => Network::Regtest,
-    })
-}
-
 pub fn sync() -> Result<()> {
     wallet::sync()
 }
@@ -156,6 +139,10 @@ pub fn get_address() -> Result<Address> {
 
 pub fn maker_peer_info() -> String {
     config::maker_peer_info().to_string()
+}
+
+pub fn network() -> SyncReturn<String> {
+    SyncReturn(config::network().to_string())
 }
 
 #[tokio::main(flavor = "current_thread")]
