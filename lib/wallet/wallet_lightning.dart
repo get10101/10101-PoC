@@ -1,3 +1,4 @@
+import 'package:f_logs/model/flog/flog.dart';
 import 'package:flutter/material.dart' hide Divider;
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
@@ -5,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
+import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
@@ -70,7 +72,10 @@ class _WalletLightningState extends State<WalletLightning> {
           child: const AppBarWithBalance(balanceSelector: balanceSelector),
           preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
       body: SafeArea(
-          child: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets)),
+          child: RefreshIndicator(
+        onRefresh: _pullRefresh,
+        child: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
+      )),
       floatingActionButton: SpeedDial(
         icon: Icons.import_export,
         iconTheme: const IconThemeData(size: 35),
@@ -107,6 +112,16 @@ class _WalletLightningState extends State<WalletLightning> {
         ],
       ),
     );
+  }
+
+  Future<void> _pullRefresh() async {
+    try {
+      await callSyncWithChain();
+      await callSyncPaymentHistory();
+      await callGetBalances();
+    } catch (error) {
+      FLog.error(text: "Failed to get balances:" + error.toString());
+    }
   }
 }
 
