@@ -1,4 +1,5 @@
-platform :osx, '10.11'
+# we need >= 10.13 - AppleVision needed by mobile_scanner
+platform :osx, '10.13'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

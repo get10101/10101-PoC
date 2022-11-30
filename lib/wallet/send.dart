@@ -2,11 +2,13 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/ffi.io.dart';
 import 'package:ten_ten_one/utilities/submit_button.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
+import 'package:ten_ten_one/wallet/qr_scan.dart';
 
 class Send extends StatefulWidget {
   const Send({Key? key}) : super(key: key);
@@ -32,30 +34,23 @@ class _SendState extends State<Send> {
     final formatter = NumberFormat();
     formatter.minimumFractionDigits = 0;
     formatter.maximumFractionDigits = 0;
+    final qrScanChangeNotifier = context.watch<QrScanChangeNotifier>();
+
+    encodedInvoice = qrScanChangeNotifier.code;
+    tryDecodeInvoice();
+
     final widgets = [
       const Text("Encoded Invoice", style: TextStyle(color: Colors.grey, fontSize: 18)),
       Focus(
         onFocusChange: (hasFocus) async {
           if (encodedInvoice.isEmpty || hasFocus) {
             invoice = null;
-            return;
-          }
-
-          try {
-            invoice = await api.decodeInvoice(invoice: encodedInvoice);
-            setState(() {
-              invoice = invoice;
-            });
-          } catch (error) {
-            FLog.error(text: "Failed to decode invoice $encodedInvoice.", exception: error);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              backgroundColor: Colors.red,
-              content: Text("Failed to decode invoice. Error: " + error.toString()),
-            ));
+          } else {
+            tryDecodeInvoice();
           }
         },
         child: TextFormField(
-          initialValue: "",
+          initialValue: qrScanChangeNotifier.code,
           keyboardType: TextInputType.text,
           onChanged: (text) {
             setState(() {
@@ -122,6 +117,11 @@ class _SendState extends State<Send> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
+                            TextButton.icon(
+                                onPressed: () => {GoRouter.of(context).go(QrScan.route)},
+                                icon: const Icon(Icons.qr_code_scanner),
+                                label: const Text("QR Scan")),
+                            const SizedBox(width: 5),
                             SubmitButton(
                                 onPressed: send,
                                 label: "Pay Invoice",
@@ -149,5 +149,22 @@ class _SendState extends State<Send> {
         content: Text("Failed to pay invoice $encodedInvoice. Error: " + error.toString()),
       ));
     });
+  }
+
+  Future<void> tryDecodeInvoice() async {
+    if (encodedInvoice.isNotEmpty) {
+      try {
+        invoice = await api.decodeInvoice(invoice: encodedInvoice);
+        setState(() {
+          invoice = invoice;
+        });
+      } catch (error) {
+        FLog.error(text: "Failed to decode invoice $encodedInvoice.", exception: error);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Failed to decode invoice. Error: " + error.toString()),
+        ));
+      }
+    }
   }
 }
