@@ -153,7 +153,7 @@ class _OpenChannelState extends State<OpenChannel> {
     FLog.info(text: "Opening Channel with capacity " + takerChannelAmount.toString());
 
     // We don't await here because we display the status on the "open channel" card on the Dashboard
-    context.read<ChannelChangeNotifier>().open(takerChannelAmount).then((value) {
+    await context.read<ChannelChangeNotifier>().open(takerChannelAmount).then((value) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Waiting for channel to get established"),
       ));
