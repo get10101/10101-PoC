@@ -2,6 +2,9 @@
 PROJECTNAME=$(shell basename "$(PWD)")
 # Default bitcoin network to run the project with `make`
 BITCOIN_NETWORK=regtest
+# Default 10101 testnet maker instance to run the project with `make`
+# It's only relevant if the dev uses `BITCOIN_NETWORK=testnet`
+MAKER_INSTANCE=main
 
 # Menu (visible if you type `make` or `make help`)
 .PHONY: help
@@ -89,7 +92,7 @@ gen: FORCE
 
 ## run: Run the app (need to pick the target, if no mobile emulator is running)
 run:
-	NETWORK=${BITCOIN_NETWORK} flutter run
+	NETWORK=${BITCOIN_NETWORK} TESTNET_MAKER_INSTANCE=${MAKER_INSTANCE} flutter run
 
 clippy: FORCE
 	cargo clippy --all-targets -- -D warnings
