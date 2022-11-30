@@ -35,7 +35,7 @@ class _OpenChannelState extends State<OpenChannel> {
   void initState() {
     super.initState();
     final bitcoinBalance = context.read<BitcoinBalance>();
-    takerChannelAmount = bitcoinBalance.amount.asSats.clamp(0, OpenChannel.maxChannelAmount);
+    takerChannelAmount = bitcoinBalance.confirmed.asSats.clamp(0, OpenChannel.maxChannelAmount);
     controller.text = NumberFormat().format(takerChannelAmount);
     controller.addListener(() {
       setState(() {
