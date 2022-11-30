@@ -196,7 +196,7 @@ packages:
       name: decimal
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.3.0"
+    version: "2.3.1"
   f_logs:
     dependency: "direct main"
     description:
