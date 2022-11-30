@@ -17,18 +17,8 @@ import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
 
-class WalletLightning extends StatefulWidget {
+class WalletLightning extends StatelessWidget {
   const WalletLightning({Key? key}) : super(key: key);
-
-  @override
-  State<WalletLightning> createState() => _WalletLightningState();
-}
-
-class _WalletLightningState extends State<WalletLightning> {
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
