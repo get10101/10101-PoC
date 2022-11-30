@@ -335,7 +335,7 @@ Future<void> callSyncPaymentHistory() async {
 
     var status = bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending;
     return PaymentHistoryItem(
-          amount, type, status, bitcoinTxHistoryItem.timestamp, bitcoinTxHistoryItem);
+        amount, type, status, bitcoinTxHistoryItem.timestamp, bitcoinTxHistoryItem);
   }).toList();
 
   final combinedList = [...bph, ...lth];
