@@ -26,11 +26,22 @@ const TESTNET_MAKER_IP: &str = "35.189.57.114";
 /// Alpha users should use this port.
 const TESTNET_STABLE_MAKER_PORT_HTTP: u64 = 8888;
 
+/// The port for the 10101 testnet maker tracking `main`.
+///
+/// Devs should use this port.
+const TESTNET_MAIN_MAKER_PORT_HTTP: u64 = 8889;
+
 /// Public key of the 10101 maker running a stable release.
 ///
 /// Alpha users should use this PK.
 const TESTNET_STABLE_MAKER_PK: &str =
     "0244946473b7926c427be70925e8e99cafc3ea76dffe708e6cba8896576cf0b14d";
+
+/// Public key of the 10101 maker tracking `main`.
+///
+/// Devs should use this PK.
+const TESTNET_MAIN_MAKER_PK: &str =
+    "0236627f78579c6df0e4fc5eabb3447481744270678f23012ae910c2d5d53a4e9e";
 
 pub const TCP_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -39,6 +50,23 @@ pub const TCP_TIMEOUT: Duration = Duration::from_secs(10);
 /// Defaults to testnet if nothing is specified
 pub fn network() -> Network {
     read_network_from_env().unwrap_or(Network::Testnet)
+}
+
+/// The instance of the testnet 10101 maker the taker app should
+/// connect to.
+///
+/// Defaults to [`TestnetMakerInstance::Stable`] if the environment
+/// variable is omitted.
+fn testnet_maker_instance() -> TestnetMakerInstance {
+    read_testnet_maker_instance_from_env().unwrap_or_else(|_| {
+        let stable = TestnetMakerInstance::Stable;
+
+        tracing::info!(
+            "TESTNET_MAKER_INSTANCE environment variable not set, defaulting to {stable:?}"
+        );
+
+        stable
+    })
 }
 
 pub fn electrum_url() -> String {
@@ -53,9 +81,14 @@ pub fn electrum_url() -> String {
 
 pub fn maker_pk() -> PublicKey {
     match network() {
-        Network::Testnet => TESTNET_STABLE_MAKER_PK
-            .parse()
-            .expect("Hard-coded PK to be valid"),
+        Network::Testnet => {
+            let pk = match testnet_maker_instance() {
+                TestnetMakerInstance::Main => TESTNET_MAIN_MAKER_PK,
+                TestnetMakerInstance::Stable => TESTNET_STABLE_MAKER_PK,
+            };
+
+            pk.parse().expect("Hard-coded PK to be valid")
+        }
         Network::Regtest => REGTEST_MAKER_PK.parse().expect("Hard-coded PK to be valid"),
         Network::Signet => todo!(),
         Network::Bitcoin => todo!(),
@@ -74,7 +107,10 @@ fn maker_ip() -> String {
 fn maker_port_http() -> u64 {
     match network() {
         Network::Bitcoin => todo!(),
-        Network::Testnet => TESTNET_STABLE_MAKER_PORT_HTTP,
+        Network::Testnet => match testnet_maker_instance() {
+            TestnetMakerInstance::Main => TESTNET_MAIN_MAKER_PORT_HTTP,
+            TestnetMakerInstance::Stable => TESTNET_STABLE_MAKER_PORT_HTTP,
+        },
         Network::Signet => todo!(),
         Network::Regtest => REGTEST_MAKER_PORT_HTTP,
     }
@@ -115,4 +151,31 @@ fn from_network_str(s: &str) -> Result<Network> {
         "signet" => Ok(Network::Signet),
         _ => bail!("Unsupported network"),
     }
+}
+
+/// Parse from the environment the instance of the 10101 testnet maker
+/// that the taker app should connect to.
+fn read_testnet_maker_instance_from_env() -> Result<TestnetMakerInstance> {
+    let instance = match std::env::var_os("TESTNET_MAKER_INSTANCE") {
+        Some(s) => s.into_string(),
+        None => bail!("ENV variable not set"),
+    }
+    .expect("to be valid unicode");
+
+    let instance = match instance.to_lowercase().as_str() {
+        "main" => TestnetMakerInstance::Main,
+        "stable" => TestnetMakerInstance::Stable,
+        _ => bail!("Unsupported network: {instance}"),
+    };
+
+    Ok(instance)
+}
+
+/// Each variant identifies an instance of the 10101 testnet maker.
+#[derive(Debug)]
+enum TestnetMakerInstance {
+    /// Used by developers for testing.
+    Main,
+    /// Used by alpha users.
+    Stable,
 }
