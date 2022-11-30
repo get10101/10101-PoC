@@ -16,9 +16,14 @@ use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
 use flutter_rust_bridge::SyncReturn;
+use lightning_invoice::Invoice;
+use lightning_invoice::InvoiceDescription;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
+use std::ops::Add;
 use std::path::Path;
+use std::str::FromStr;
+use std::time::SystemTime;
 use time::Duration;
 pub use time::OffsetDateTime;
 
@@ -68,6 +73,40 @@ pub async fn test_db_connection() -> Result<()> {
 
 pub fn init_wallet(path: String) -> Result<()> {
     wallet::init_wallet(Path::new(path.as_str()))
+}
+
+pub struct LightningInvoice {
+    pub description: String,
+    pub amount_sats: f64,
+    pub timestamp: u64,
+    pub payee: String,
+    pub expiry: u64,
+}
+
+pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
+    let invoice = &Invoice::from_str(&invoice).context("Could not parse invoice string")?;
+    let description = match invoice.description() {
+        InvoiceDescription::Direct(direct) => direct.to_string(),
+        InvoiceDescription::Hash(_) => "".to_string(),
+    };
+    // can't use as_millis as the frb does not support u128
+    let timestamp = invoice
+        .timestamp()
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .as_secs();
+
+    let expiry = SystemTime::now()
+        .add(Duration::seconds(invoice.expiry_time().as_secs() as i64))
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .as_secs();
+
+    Ok(LightningInvoice {
+        description,
+        timestamp,
+        expiry,
+        amount_sats: (invoice.amount_milli_satoshis().expect("amount") as f64 / 1000.0),
+        payee: invoice.payee_pub_key().expect("payee pubkey").to_string(),
+    })
 }
 
 #[tokio::main(flavor = "current_thread")]
