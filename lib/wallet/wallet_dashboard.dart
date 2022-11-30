@@ -19,6 +19,7 @@ import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
@@ -98,7 +99,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
     );
 
     widgets.add(paymentHistoryList);
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (Platform.isAndroid || Platform.isIOS || true) {
       widgets.add(const SizedBox(height: 10));
       widgets.add(OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -110,8 +111,26 @@ class _WalletDashboardState extends State<WalletDashboard> {
             final screenshotFilePath = await writeImageToStorage(feedback.screenshot);
             final logs = await FLog.exportLogs();
 
+            final deviceInfoPlugin = DeviceInfoPlugin();
+            String info = "";
+            if (Platform.isAndroid) {
+              final deviceInfo = await deviceInfoPlugin.androidInfo;
+              info = deviceInfo.model.toString() +
+                  ", Android " +
+                  deviceInfo.version.sdkInt.toString() +
+                  ", Release: " +
+                  deviceInfo.version.release;
+            } else {
+              final deviceInfo = await deviceInfoPlugin.iosInfo;
+              info = deviceInfo.name! +
+                  ", " +
+                  deviceInfo.systemName! +
+                  " " +
+                  deviceInfo.systemVersion!;
+            }
+
             final Email email = Email(
-              body: feedback.text,
+              body: feedback.text + '\n\n----------\n' + info,
               subject: '10101 Feedback',
               recipients: ['richard@coblox.tech'],
               attachmentPaths: [screenshotFilePath, logs.path],
