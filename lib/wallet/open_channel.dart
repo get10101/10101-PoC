@@ -17,9 +17,8 @@ class OpenChannel extends StatefulWidget {
   static const route = '/' + subRouteName;
   static const subRouteName = 'open-channel';
 
-  // Max allowed amount is (16777215 / 3) - otherwise maker will not accept
-  // the request.
-  static const maxChannelAmount = 5592405;
+  // Max allowed amount is 500_000 sats. This is to protect the maker from running low on liquidity.
+  static const maxChannelAmount = 500000;
 
   @override
   State<OpenChannel> createState() => _OpenChannelState();
@@ -87,9 +86,9 @@ class _OpenChannelState extends State<OpenChannel> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                            "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity.",
-                            style: TextStyle(color: Colors.grey)),
+                        Text(
+                            "Define the amount of bitcoin you want to lock into the Lightning channel. 10101 will double it for great inbound liquidity. Max channel size is currently $takerChannelAmount sats.",
+                            style: const TextStyle(color: Colors.grey)),
                         TextFormField(
                           controller: controller,
                           readOnly: submitting,
