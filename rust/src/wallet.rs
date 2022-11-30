@@ -3,6 +3,7 @@ use crate::config::maker_endpoint;
 use crate::config::maker_peer_info;
 use crate::config::TCP_TIMEOUT;
 use crate::db;
+use crate::db::load_payments;
 use crate::lightning;
 use crate::lightning::ChannelManager;
 use crate::lightning::Flow;
@@ -292,30 +293,6 @@ impl Wallet {
         Ok(tx.txid())
     }
 
-    pub fn send_lightning_payment(&self, invoice: &Invoice) -> Result<()> {
-        lightning::send_payment(invoice, self.lightning.outbound_payments.clone())?;
-        Ok(())
-    }
-
-    pub fn create_invoice(
-        &self,
-        amount_sats: u64,
-        expiry_secs: u32,
-        description: String,
-    ) -> Result<String> {
-        let amount_msat = amount_sats * 1000;
-        lightning::create_invoice(
-            amount_msat,
-            self.lightning.inbound_payments.clone(),
-            self.lightning.channel_manager.clone(),
-            self.lightning.keys_manager.clone(),
-            self.lightning.network,
-            description,
-            expiry_secs,
-            self.lightning.logger.clone(),
-        )
-    }
-
     /// Fee recommendation in sats per vbyte.
     pub fn get_fee_recommendation(&self) -> Result<u32> {
         let fee_rate = self
@@ -385,39 +362,19 @@ pub fn get_channel_manager() -> Result<Arc<ChannelManager>> {
     Ok(get_wallet()?.get_channel_manager())
 }
 
-pub fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
-    let (outbound, inbound) = {
-        let lightning = &get_wallet()?.lightning;
-        let x = (
-            lightning.outbound_payments.lock().unwrap().clone(),
-            lightning.inbound_payments.lock().unwrap().clone(),
-        );
-        x
-    };
-    let mut outbound = outbound
+pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
+    let payments = load_payments()
+        .await?
         .iter()
-        .map(|(_, payment_info)| LightningTransaction {
+        .map(|payment_info| LightningTransaction {
             tx_type: LightningTransactionType::Payment,
-            flow: Flow::Outbound,
+            flow: payment_info.flow.clone(),
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
             status: payment_info.status.clone(),
             timestamp: payment_info.updated_timestamp,
         })
         .collect();
-
-    let mut inbound = inbound
-        .iter()
-        .map(|(_, payment_info)| LightningTransaction {
-            tx_type: LightningTransactionType::Payment,
-            flow: Flow::Inbound,
-            sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
-            status: payment_info.status.clone(),
-            timestamp: payment_info.updated_timestamp,
-        })
-        .collect::<Vec<_>>();
-
-    inbound.append(&mut outbound);
-    Ok(inbound)
+    Ok(payments)
 }
 
 pub fn get_seed_phrase() -> Result<Vec<String>> {
@@ -425,9 +382,10 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
     Ok(seed_phrase)
 }
 
-pub fn send_lightning_payment(invoice: &str) -> Result<()> {
+pub async fn send_lightning_payment(invoice: &str) -> Result<()> {
     let invoice = Invoice::from_str(invoice).context("Could not parse Invoice string")?;
-    get_wallet()?.send_lightning_payment(&invoice)
+    lightning::send_payment(&invoice).await?;
+    Ok(())
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -544,8 +502,32 @@ pub fn get_node_info() -> Result<NodeInfo> {
     Ok(get_wallet()?.lightning.node_info())
 }
 
-pub fn create_invoice(amount_msat: u64, expiry_secs: u32, description: String) -> Result<String> {
-    get_wallet()?.create_invoice(amount_msat, expiry_secs, description)
+pub async fn create_invoice(
+    amount_sats: u64,
+    expiry_secs: u32,
+    description: String,
+) -> Result<String> {
+    let (channel_manager, keys_manager, network, logger) = {
+        let wallet = get_wallet()?;
+        (
+            wallet.lightning.channel_manager.clone(),
+            wallet.lightning.keys_manager.clone(),
+            wallet.lightning.network,
+            wallet.lightning.logger.clone(),
+        )
+    };
+
+    let amount_msat = amount_sats * 1000;
+    lightning::create_invoice(
+        amount_msat,
+        channel_manager,
+        keys_manager,
+        network,
+        description,
+        expiry_secs,
+        logger,
+    )
+    .await
 }
 
 pub fn get_fee_recommendation() -> Result<u32> {

@@ -26,7 +26,7 @@ class _SendOnChainState extends State<SendOnChain> {
     super.initState();
 
     final bitcoinBalance = context.read<BitcoinBalance>();
-    amount = bitcoinBalance.amount.asSats;
+    amount = bitcoinBalance.confirmed.asSats;
   }
 
   @override

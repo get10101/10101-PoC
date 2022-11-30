@@ -179,9 +179,26 @@ pub async fn post_open_channel(
     Ok(Json(OpenChannelResponse { funding_txid }))
 }
 
+#[rocket::post("/send/<address>/<amount>")]
+pub async fn post_send_to_address(address: String, amount: u64) -> Result<String, HttpApiProblem> {
+    let address = address.parse().map_err(|_| {
+        HttpApiProblem::new(StatusCode::BAD_REQUEST)
+            .title("Failed to send bitcoin to address")
+            .detail("Invalid address")
+    })?;
+
+    let txid = send_to_address(address, amount).map_err(|e| {
+        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .title("Failed to send bitcoin to address")
+            .detail(format!("{e:#}"))
+    })?;
+
+    Ok(txid.to_string())
+}
+
 #[rocket::post("/invoice/send/<invoice>")]
 pub async fn post_pay_invoice(invoice: String) -> Result<(), HttpApiProblem> {
-    send_lightning_payment(&invoice).map_err(|e| {
+    send_lightning_payment(&invoice).await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed to pay lightning invoice")
             .detail(format!("{e:#}"))
@@ -191,11 +208,13 @@ pub async fn post_pay_invoice(invoice: String) -> Result<(), HttpApiProblem> {
 #[rocket::get("/invoice/create")]
 pub async fn get_new_invoice() -> Result<String, HttpApiProblem> {
     // FIXME: Hard-code the parameters for testing
-    create_invoice(10000, 6000, "maker's invoice".to_string()).map_err(|e| {
-        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .title("Failed to create lightning invoice")
-            .detail(format!("{e:#}"))
-    })
+    create_invoice(10000, 6000, "maker's invoice".to_string())
+        .await
+        .map_err(|e| {
+            HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .title("Failed to create lightning invoice")
+                .detail(format!("{e:#}"))
+        })
 }
 
 #[derive(Serialize)]

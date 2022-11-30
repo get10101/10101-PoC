@@ -15,14 +15,29 @@ class Balance extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<LightningBalance, BitcoinBalance>(
       builder: (context, lightningBalance, bitcoinBalance, child) {
-        var bitcoinBalanceDisplay = bitcoinBalance.amount.display(currency: Currency.sat);
+        var bitcoinBalanceTotalDisplay = bitcoinBalance.total().display(currency: Currency.sat);
+        var bitcoinBalanceConfirmedDisplay =
+            bitcoinBalance.confirmed.display(currency: Currency.sat);
+        var bitcoinBalancePendingDisplay = bitcoinBalance.pending().display(currency: Currency.sat);
+
         var lightningBalanceDisplay = lightningBalance.amount.display(currency: Currency.sat);
 
-        var bitcoinBalanceWidget = BalanceRow(
-            value: bitcoinBalanceDisplay.value,
-            unit: bitcoinBalanceDisplay.unit,
-            icon: Icons.link,
-            smaller: balanceSelector == BalanceSelector.both);
+        var bitcoinBalanceWidget = Tooltip(
+            richMessage: TextSpan(
+              text: 'Confirmed: ${bitcoinBalanceConfirmedDisplay.value} sats',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              children: [
+                TextSpan(
+                  text: '\nPending:      ${bitcoinBalancePendingDisplay.value} sats',
+                  style: const TextStyle(fontWeight: FontWeight.normal),
+                )
+              ],
+            ),
+            child: BalanceRow(
+                value: bitcoinBalanceTotalDisplay.value,
+                unit: bitcoinBalanceTotalDisplay.unit,
+                icon: Icons.link,
+                smaller: balanceSelector == BalanceSelector.both));
         var lightningBalanceWidget = BalanceRow(
             value: lightningBalanceDisplay.value,
             unit: lightningBalanceDisplay.unit,

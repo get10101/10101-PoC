@@ -215,8 +215,9 @@ pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
     Ok(tx_history)
 }
 
-pub fn get_lightning_tx_history() -> Result<Vec<LightningTransaction>> {
-    wallet::get_lightning_history()
+#[tokio::main(flavor = "current_thread")]
+pub async fn get_lightning_tx_history() -> Result<Vec<LightningTransaction>> {
+    wallet::get_lightning_history().await
 }
 
 /// Initialise logging infrastructure for Rust
@@ -230,16 +231,18 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
     wallet::get_seed_phrase()
 }
 
-pub fn send_lightning_payment(invoice: String) -> Result<()> {
-    wallet::send_lightning_payment(&invoice)
+#[tokio::main(flavor = "current_thread")]
+pub async fn send_lightning_payment(invoice: String) -> Result<()> {
+    wallet::send_lightning_payment(&invoice).await
 }
 
-pub fn create_lightning_invoice(
+#[tokio::main(flavor = "current_thread")]
+pub async fn create_lightning_invoice(
     amount_sats: u64,
     expiry_secs: u32,
     description: String,
 ) -> Result<String> {
-    wallet::create_invoice(amount_sats, expiry_secs, description)
+    wallet::create_invoice(amount_sats, expiry_secs, description).await
 }
 
 // Note, this implementation has to be on the api level as otherwise it wouldn't be generated

@@ -11,10 +11,23 @@ class LightningBalance extends ChangeNotifier {
 }
 
 class BitcoinBalance extends ChangeNotifier {
-  Amount amount = Amount.zero;
+  Amount confirmed = Amount.zero;
+  Amount pendingInternal = Amount.zero;
+  Amount pendingExternal = Amount.zero;
 
-  void update(Amount amount) {
-    this.amount = amount;
+  Amount pending() {
+    return Amount(pendingExternal.asSats + pendingInternal.asSats);
+  }
+
+  Amount total() {
+    return Amount(confirmed.asSats + pending().asSats);
+  }
+
+  void update(Amount confirmed, Amount pendingInternal, Amount pendingExternal) {
+    this.confirmed = confirmed;
+    this.pendingInternal = pendingInternal;
+    this.pendingExternal = pendingExternal;
+
     super.notifyListeners();
   }
 }

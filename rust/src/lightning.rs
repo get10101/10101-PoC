@@ -1,3 +1,7 @@
+use crate::db::insert_payment;
+use crate::db::load_payment;
+use crate::db::update_payment;
+use crate::db::PaymentNewInfo;
 use crate::disk;
 use crate::disk::FilesystemLogger;
 use crate::hex_utils;
@@ -68,8 +72,6 @@ use rand::Rng;
 use rand::RngCore;
 use serde::Serialize;
 use state::Storage;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
@@ -110,8 +112,6 @@ pub struct LightningSystem {
     pub keys_manager: Arc<KeysManager>,
     pub persister: Arc<FilesystemPersister>,
     pub gossip_sync: Arc<LdkGossipSync>,
-    pub inbound_payments: PaymentInfoStorage,
-    pub outbound_payments: PaymentInfoStorage,
     pub data_dir: PathBuf,
     pub network: Network,
 }
@@ -261,7 +261,27 @@ pub struct PaymentInfo {
     pub updated_timestamp: u64,
 }
 
-pub type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
+impl PaymentInfo {
+    pub fn new(
+        hash: PaymentHash,
+        preimage: Option<PaymentPreimage>,
+        secret: Option<PaymentSecret>,
+        flow: Flow,
+        status: HTLCStatus,
+        amt_msat: MillisatAmount,
+    ) -> Self {
+        Self {
+            hash,
+            preimage,
+            secret,
+            flow,
+            status,
+            amt_msat,
+            created_timestamp: get_timestamp(),
+            updated_timestamp: get_timestamp(),
+        }
+    }
+}
 
 pub(crate) type BdkLdkWallet = bdk_ldk::LightningWallet<ElectrumBlockchain, MemoryDatabase>;
 
@@ -512,9 +532,6 @@ pub fn setup(
         IgnoringMessageHandler {},
     ));
 
-    let inbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-    let outbound_payments: PaymentInfoStorage = Arc::new(Mutex::new(HashMap::new()));
-
     let system = LightningSystem {
         wallet: lightning_wallet,
         chain_monitor,
@@ -526,8 +543,6 @@ pub fn setup(
         persister,
         gossip_sync,
         data_dir: Path::new(&ldk_data_dir).to_path_buf(),
-        inbound_payments,
-        outbound_payments,
         network,
     };
 
@@ -544,8 +559,6 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         wallet: system.wallet.clone(),
         network_graph: system.network_graph.clone(),
         keys_manager: system.keys_manager.clone(),
-        inbound_payments: system.inbound_payments.clone(),
-        outbound_payments: system.outbound_payments.clone(),
         network: system.network,
     };
 
@@ -675,12 +688,11 @@ async fn handle_ldk_events(
     wallet: Arc<BdkLdkWallet>,
     network_graph: &NetGraph,
     keys_manager: Arc<KeysManager>,
-    inbound_payments: PaymentInfoStorage,
-    outbound_payments: PaymentInfoStorage,
     network: Network,
     event: &Event,
 ) {
     tracing::debug!("Received {:?}", event);
+
     match event {
         Event::FundingGenerationReady {
             temporary_channel_id,
@@ -751,20 +763,18 @@ async fn handle_ldk_events(
             payment_hash,
             ..
         } => {
-            let mut payments = outbound_payments.lock().unwrap();
-            for (hash, payment) in payments.iter_mut() {
-                if *hash == *payment_hash {
-                    payment.preimage = Some(*payment_preimage);
-                    payment.status = HTLCStatus::Succeeded;
-                    tracing::info!(
-                        "EVENT: successfully sent payment of {} millisatoshis from \
-                                                                 payment hash {:?} with preimage {:?}",
-                        payment.amt_msat,
-                        hex_utils::hex_str(&payment_hash.0),
-                        hex_utils::hex_str(&payment_preimage.0)
-                    );
-                }
-            }
+            let new_info = Some(PaymentNewInfo {
+                preimage: Some(*payment_preimage),
+                secret: None,
+            });
+
+            match update_payment(payment_hash, HTLCStatus::Succeeded, new_info).await {
+                Ok(_) => tracing::info!(
+                    "EVENT: successfully sent payment  from payment hash {:?}",
+                    hex_utils::hex_str(&payment_hash.0),
+                ),
+                Err(e) => tracing::error!(?e),
+            };
         }
         Event::PaymentPathFailed {
             payment_hash,
@@ -795,10 +805,8 @@ async fn handle_ldk_events(
             };
             tracing::error!(payment_fail_msg);
 
-            let mut payments = outbound_payments.lock().unwrap();
-            if payments.contains_key(payment_hash) {
-                let payment = payments.get_mut(payment_hash).unwrap();
-                payment.status = HTLCStatus::Failed;
+            if let Err(e) = update_payment(payment_hash, HTLCStatus::Failed, None).await {
+                tracing::error!(?e);
             }
         }
         Event::PaymentForwarded {
@@ -924,17 +932,8 @@ async fn handle_ldk_events(
         } => {
             tracing::info!(?payment_id, ?payment_hash, "EVENT: Payment path failed",);
 
-            let mut payments = outbound_payments.lock().unwrap();
-            match payments.entry(*payment_hash) {
-                Entry::Occupied(mut e) => {
-                    let payment = e.get_mut();
-                    payment.status = HTLCStatus::Failed;
-                    payment.updated_timestamp = get_timestamp();
-                    // TODO: should we claim our funds here if the outbound payment failed?
-                }
-                Entry::Vacant(e) => {
-                    tracing::error!(?e, "Found vacant entry");
-                }
+            if let Err(e) = update_payment(payment_hash, HTLCStatus::Failed, None).await {
+                tracing::error!(?e, "Unknown payment");
             }
         }
         Event::PaymentPathSuccessful {
@@ -954,18 +953,9 @@ async fn handle_ldk_events(
             );
 
             if let Some(payment_hash) = payment_hash {
-                let mut payments = inbound_payments.lock().unwrap();
-                match payments.entry(*payment_hash) {
-                    Entry::Occupied(mut e) => {
-                        let payment = e.get_mut();
-                        payment.status = HTLCStatus::Succeeded;
-                        payment.updated_timestamp = get_timestamp();
-
-                        channel_manager.claim_funds(payment.preimage.unwrap());
-                    }
-                    Entry::Vacant(e) => {
-                        tracing::error!(?e, "Found vacant entry");
-                    }
+                match update_payment(payment_hash, HTLCStatus::Succeeded, None).await {
+                    Ok(payment) => channel_manager.claim_funds(payment.preimage.unwrap()),
+                    Err(e) => tracing::error!(?e, "Could not update payment"),
                 }
             } else {
                 tracing::error!(?payment_id, "no payment hash in successful payment path");
@@ -985,30 +975,36 @@ async fn handle_ldk_events(
                 PaymentPurpose::InvoicePayment {
                     payment_preimage,
                     payment_secret,
-                    ..
                 } => (*payment_preimage, Some(*payment_secret)),
                 PaymentPurpose::SpontaneousPayment(preimage) => (Some(*preimage), None),
             };
-            let mut payments = inbound_payments.lock().unwrap();
-            match payments.entry(*payment_hash) {
-                Entry::Occupied(mut e) => {
-                    let payment = e.get_mut();
-                    payment.status = HTLCStatus::Succeeded;
-                    payment.preimage = payment_preimage;
-                    payment.secret = payment_secret;
-                    payment.updated_timestamp = get_timestamp();
-                }
-                Entry::Vacant(e) => {
-                    e.insert(PaymentInfo {
-                        hash: *payment_hash,
+
+            if let Ok(payment) = load_payment(payment_hash).await {
+                if let Err(e) = update_payment(
+                    &payment.hash,
+                    HTLCStatus::Succeeded,
+                    Some(PaymentNewInfo {
                         preimage: payment_preimage,
                         secret: payment_secret,
-                        flow: Flow::Inbound,
-                        status: HTLCStatus::Succeeded,
-                        amt_msat: MillisatAmount(Some(*amount_msat)),
-                        created_timestamp: get_timestamp(),
-                        updated_timestamp: get_timestamp(),
-                    });
+                    }),
+                )
+                .await
+                {
+                    tracing::error!(?e);
+                }
+            } else {
+                let payment = PaymentInfo::new(
+                    *payment_hash,
+                    payment_preimage,
+                    payment_secret,
+                    Flow::Inbound,
+                    HTLCStatus::Succeeded,
+                    MillisatAmount(Some(*amount_msat)),
+                );
+                if let Err(e) = insert_payment(&payment).await {
+                    {
+                        tracing::error!(?e);
+                    }
                 }
             }
         }
@@ -1096,8 +1092,6 @@ pub struct BdkLdkEventHandler {
     wallet: Arc<BdkLdkWallet>,
     network_graph: Arc<NetGraph>,
     keys_manager: Arc<KeysManager>,
-    inbound_payments: PaymentInfoStorage,
-    outbound_payments: PaymentInfoStorage,
     network: Network,
 }
 
@@ -1108,15 +1102,13 @@ impl EventHandler for BdkLdkEventHandler {
             self.wallet.clone(),
             &self.network_graph,
             self.keys_manager.clone(),
-            self.inbound_payments.clone(),
-            self.outbound_payments.clone(),
             self.network,
             event,
         ));
     }
 }
 
-pub fn send_payment(invoice: &Invoice, outbound_payments: PaymentInfoStorage) -> Result<()> {
+pub async fn send_payment(invoice: &Invoice) -> Result<()> {
     let status = {
         let invoice_payer = INVOICE_PAYER
             .try_get()
@@ -1152,32 +1144,21 @@ pub fn send_payment(invoice: &Invoice, outbound_payments: PaymentInfoStorage) ->
             }
         }
     };
-    let payment_hash = PaymentHash((*invoice.payment_hash()).into_inner());
-    let payment_secret = Some(*invoice.payment_secret());
-
-    let mut payments = outbound_payments
-        .lock()
-        .map_err(|e| anyhow!("cannot get lock to outgoing payments: {e:#}"))?;
-    payments.insert(
-        payment_hash,
-        PaymentInfo {
-            hash: payment_hash,
-            preimage: None,
-            secret: payment_secret,
-            flow: Flow::Outbound,
-            status,
-            amt_msat: MillisatAmount(invoice.amount_milli_satoshis()),
-            updated_timestamp: get_timestamp(),
-            created_timestamp: get_timestamp(),
-        },
+    let payment = PaymentInfo::new(
+        PaymentHash((*invoice.payment_hash()).into_inner()),
+        None,
+        Some(*invoice.payment_secret()),
+        Flow::Outbound,
+        status,
+        MillisatAmount(invoice.amount_milli_satoshis()),
     );
+    insert_payment(&payment).await?;
     Ok(())
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn create_invoice(
+pub async fn create_invoice(
     amt_msat: u64,
-    inbound_payments: PaymentInfoStorage,
     channel_manager: Arc<ChannelManager>,
     keys_manager: Arc<KeysManager>,
     network: Network,
@@ -1185,9 +1166,6 @@ pub fn create_invoice(
     expiry_secs: u32,
     logger: Arc<disk::FilesystemLogger>,
 ) -> Result<String> {
-    let mut payments = inbound_payments
-        .lock()
-        .map_err(|e| anyhow!("could not acquire lock: {e:#}"))?;
     let currency = match network {
         Network::Bitcoin => Currency::Bitcoin,
         Network::Testnet => Currency::BitcoinTestnet,
@@ -1212,19 +1190,14 @@ pub fn create_invoice(
         }
     };
 
-    let payment_hash = PaymentHash((*invoice.payment_hash()).into_inner());
-    payments.insert(
-        payment_hash,
-        PaymentInfo {
-            hash: payment_hash,
-            preimage: None,
-            secret: Some(*invoice.payment_secret()),
-            status: HTLCStatus::Pending,
-            flow: Flow::Inbound,
-            amt_msat: MillisatAmount(Some(amt_msat)),
-            updated_timestamp: get_timestamp(),
-            created_timestamp: get_timestamp(),
-        },
+    let payment = PaymentInfo::new(
+        PaymentHash((*invoice.payment_hash()).into_inner()),
+        None,
+        Some(*invoice.payment_secret()),
+        Flow::Inbound,
+        HTLCStatus::Pending,
+        MillisatAmount(Some(amt_msat)),
     );
+    insert_payment(&payment).await?;
     Ok(invoice.to_string())
 }

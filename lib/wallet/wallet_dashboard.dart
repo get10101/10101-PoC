@@ -52,7 +52,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
           icon: const Icon(Icons.warning))));
     }
 
-    if (bitcoinBalance.amount.asSats == 0) {
+    if (bitcoinBalance.total().asSats == 0) {
       widgets.add(ActionCard(CardDetails(
           route: ReceiveOnChain.route,
           title: "Deposit Bitcoin",
@@ -61,7 +61,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
           icon: const Icon(Icons.link))));
     }
 
-    if (bitcoinBalance.amount.asSats != 0 && lightningBalance.amount.asSats == 0) {
+    if (bitcoinBalance.total().asSats != 0 && lightningBalance.amount.asSats == 0) {
       widgets.add(ActionCard(CardDetails(
         route: OpenChannel.route,
         title: "Open Channel",

@@ -84,6 +84,16 @@
     },
     "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
   },
+  "448e8280c76e9d2f5884e0dfa1d058e13ebfccf8687e1ade912cfbf59d70887e": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 5
+      }
+    },
+    "query": "\n        UPDATE payments\n        SET\n            htlc_status = $1, updated = $2, preimage = $3, secret = $4\n        WHERE\n            payments.payment_hash = $5\n        "
+  },
   "99af1eadda937c42ca9908fa6c106a19ebe1ffd66bdef7d9e69df9d1fcbd26bf": {
     "describe": {
       "columns": [],
