@@ -16,7 +16,7 @@ import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
 class CfdOffer extends StatefulWidget {
-  static const leverages = [1, 2];
+  static const leverages = [1, 2, 3, 4, 5, 10];
 
   const CfdOffer({Key? key}) : super(key: key);
 
