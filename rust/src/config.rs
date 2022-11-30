@@ -58,15 +58,7 @@ pub fn network() -> Network {
 /// Defaults to [`TestnetMakerInstance::Stable`] if the environment
 /// variable is omitted.
 fn testnet_maker_instance() -> TestnetMakerInstance {
-    read_testnet_maker_instance_from_env().unwrap_or_else(|_| {
-        let stable = TestnetMakerInstance::Stable;
-
-        tracing::info!(
-            "TESTNET_MAKER_INSTANCE environment variable not set, defaulting to {stable:?}"
-        );
-
-        stable
-    })
+    read_testnet_maker_instance_from_env().unwrap_or(TestnetMakerInstance::Stable)
 }
 
 pub fn electrum_url() -> String {
