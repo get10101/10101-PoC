@@ -7,6 +7,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/main.dart';
+import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
@@ -35,6 +36,7 @@ class _WalletLightningState extends State<WalletLightning> {
   @override
   Widget build(BuildContext context) {
     final history = context.watch<PaymentHistory>();
+    final balance = context.watch<LightningBalance>();
 
     List<Widget> widgets = [];
 
@@ -66,6 +68,36 @@ class _WalletLightningState extends State<WalletLightning> {
                   type: AlertType.info)));
     }
 
+    List<SpeedDialChild> dials = [
+      SpeedDialChild(
+        child: const Icon(Icons.download_sharp),
+        label: 'Receive',
+        labelStyle: const TextStyle(fontSize: 18.0),
+        onTap: () => GoRouter.of(context).go(Receive.route),
+      ),
+      SpeedDialChild(
+        child: const Icon(Icons.upload_sharp),
+        label: 'Send',
+        labelStyle: const TextStyle(fontSize: 18.0),
+        onTap: () => GoRouter.of(context).go(Send.route),
+      )
+    ];
+
+    // close channel should only be possible if a channel is opened. the lightning balance is not
+    // directly indicating that a channel is open, but on the other hand no lightning balance can
+    // exist without a channel. Hence this is good enough for now, eventually the channel should be
+    // reflected in our data model.
+    if (balance.amount.asSats > 0) {
+      dials.insert(
+          0,
+          SpeedDialChild(
+            child: const Icon(Icons.link),
+            label: 'Close channel',
+            labelStyle: const TextStyle(fontSize: 18.0),
+            onTap: () => GoRouter.of(context).go(CloseChannel.route),
+          ));
+    }
+
     return Scaffold(
       drawer: const Menu(),
       appBar: PreferredSize(
@@ -90,26 +122,7 @@ class _WalletLightningState extends State<WalletLightning> {
         overlayOpacity: 0.5,
         elevation: 8.0,
         shape: const CircleBorder(),
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.link),
-            label: 'Close channel',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(CloseChannel.route),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.download_sharp),
-            label: 'Receive',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(Receive.route),
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.upload_sharp),
-            label: 'Send',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(Send.route),
-          ),
-        ],
+        children: dials,
       ),
     );
   }
