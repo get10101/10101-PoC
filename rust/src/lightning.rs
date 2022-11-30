@@ -159,7 +159,7 @@ pub async fn open_channel(
             ..Default::default()
         },
         channel_handshake_config: ChannelHandshakeConfig {
-            announced_channel: false,
+            announced_channel: true,
             // We want to support 0-conf channels.
             minimum_depth: 0,
             ..Default::default()
