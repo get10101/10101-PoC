@@ -14,7 +14,6 @@ use bdk::bitcoin::Amount;
 use bdk::bitcoin::BlockHash;
 use bdk::bitcoin::Network;
 use bdk::blockchain::ElectrumBlockchain;
-use bdk::database::MemoryDatabase;
 use bdk::wallet::time::get_timestamp;
 use bitcoin_bech32::WitnessProgram;
 use lightning::chain;
@@ -264,7 +263,7 @@ pub struct PaymentInfo {
 
 pub type PaymentInfoStorage = Arc<Mutex<HashMap<PaymentHash, PaymentInfo>>>;
 
-pub(crate) type BdkLdkWallet = bdk_ldk::LightningWallet<ElectrumBlockchain, MemoryDatabase>;
+pub(crate) type BdkLdkWallet = bdk_ldk::LightningWallet<ElectrumBlockchain, bdk::sled::Tree>;
 
 type LdkGossipSync =
     P2PGossipSync<Arc<NetGraph>, Arc<dyn chain::Access + Send + Sync>, Arc<FilesystemLogger>>;
