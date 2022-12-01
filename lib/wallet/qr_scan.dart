@@ -12,6 +12,12 @@ class QrScanChangeNotifier extends ChangeNotifier {
     this.code = code;
     super.notifyListeners();
   }
+
+  String consume() {
+    final consumed = code;
+    code = "";
+    return consumed;
+  }
 }
 
 class QrScan extends StatefulWidget {

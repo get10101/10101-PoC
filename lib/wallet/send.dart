@@ -36,13 +36,15 @@ class _SendState extends State<Send> {
     formatter.maximumFractionDigits = 0;
     final qrScanChangeNotifier = context.watch<QrScanChangeNotifier>();
 
-    encodedInvoice = qrScanChangeNotifier.code;
-    tryDecodeInvoice();
+    if (qrScanChangeNotifier.code.isNotEmpty) {
+      encodedInvoice = qrScanChangeNotifier.consume();
+      tryDecodeInvoice();
+    }
 
     final widgets = [
       const Text("Encoded Invoice", style: TextStyle(color: Colors.grey, fontSize: 18)),
       Focus(
-        onFocusChange: (hasFocus) async {
+        onFocusChange: (hasFocus) {
           if (encodedInvoice.isEmpty || hasFocus) {
             invoice = null;
           } else {
@@ -50,7 +52,7 @@ class _SendState extends State<Send> {
           }
         },
         child: TextFormField(
-          initialValue: qrScanChangeNotifier.code,
+          initialValue: encodedInvoice,
           keyboardType: TextInputType.text,
           onChanged: (text) {
             setState(() {
