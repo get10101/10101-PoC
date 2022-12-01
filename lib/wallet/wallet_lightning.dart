@@ -70,21 +70,6 @@ class WalletLightning extends StatelessWidget {
       )
     ];
 
-    // close channel should only be possible if a channel is opened. the lightning balance is not
-    // directly indicating that a channel is open, but on the other hand no lightning balance can
-    // exist without a channel. Hence this is good enough for now, eventually the channel should be
-    // reflected in our data model.
-    if (balance.amount.asSats > 0) {
-      dials.insert(
-          0,
-          SpeedDialChild(
-            child: const Icon(Icons.link),
-            label: 'Close channel',
-            labelStyle: const TextStyle(fontSize: 18.0),
-            onTap: () => GoRouter.of(context).go(CloseChannel.route),
-          ));
-    }
-
     return Scaffold(
       drawer: const Menu(),
       appBar: PreferredSize(
