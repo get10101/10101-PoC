@@ -1,5 +1,5 @@
-use crate::config;
 use crate::wallet;
+use crate::wallet::is_first_channel_usable;
 use anyhow::Result;
 
 /// blocks the current thread, if you want this to be run asynchronously you need to spawn a thread
@@ -7,36 +7,15 @@ use anyhow::Result;
 pub async fn keep_alive() -> Result<()> {
     let mut connected = false;
     loop {
-        let alive = check_alive().await?;
+        let is_connection_lost_maybe = !is_first_channel_usable()?;
 
-        if !connected || !alive {
+        if !connected || is_connection_lost_maybe {
             connected = connect().await?;
         }
 
         // looping here indefinitely to keep the connection with the maker alive.
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
-}
-
-async fn check_alive() -> Result<bool> {
-    tracing::trace!("Checking if maker is alive");
-    let client = reqwest::Client::builder()
-        .timeout(config::TCP_TIMEOUT)
-        .build()?;
-    let result = client
-        .get(config::maker_endpoint() + "/api/alive")
-        .send()
-        .await;
-
-    let alive = match result {
-        Ok(_) => true,
-        Err(err) => {
-            tracing::warn!("Maker is offline! {err:?}");
-            false
-        }
-    };
-
-    Ok(alive)
 }
 
 async fn connect() -> Result<bool> {
