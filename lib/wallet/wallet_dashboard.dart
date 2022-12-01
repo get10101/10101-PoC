@@ -141,25 +141,22 @@ class ServiceNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 100.0,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          GestureDetector(
-            onTap: () => {GoRouter.of(context).go(Service.trade.route)},
-            child: const ServiceCard(Service.trade),
-          ),
-          GestureDetector(
-            onTap: () => {GoRouter.of(context).go(Service.dca.route)},
-            child: const ServiceCard(Service.dca),
-          ),
-          GestureDetector(
-            onTap: () => {GoRouter.of(context).go(Service.savings.route)},
-            child: const ServiceCard(Service.savings),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () => {GoRouter.of(context).go(Service.trade.route)},
+          child: const ServiceCard(Service.trade),
+        ),
+        GestureDetector(
+          onTap: () => {GoRouter.of(context).go(Service.dca.route)},
+          child: const ServiceCard(Service.dca),
+        ),
+        GestureDetector(
+          onTap: () => {GoRouter.of(context).go(Service.savings.route)},
+          child: const ServiceCard(Service.savings),
+        ),
+      ],
     );
   }
 }
