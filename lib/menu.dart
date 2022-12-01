@@ -38,6 +38,7 @@ class Menu extends StatelessWidget {
         title: Text(ServiceGroup.wallet.label),
         leading: Icon(ServiceGroup.wallet.icon),
         onTap: () {
+          Navigator.pop(context);
           GoRouter.of(context).go("/");
         },
       ),
@@ -45,6 +46,7 @@ class Menu extends StatelessWidget {
         title: Text(Service.trade.label),
         leading: Icon(Service.trade.icon),
         onTap: () {
+          Navigator.pop(context);
           GoRouter.of(context).go(Service.trade.route);
         },
       ),
@@ -57,6 +59,7 @@ class Menu extends StatelessWidget {
               title: Text(Service.dca.label),
               leading: Icon(Service.dca.icon),
               onTap: () {
+                Navigator.pop(context);
                 GoRouter.of(context).go(Service.dca.route);
               },
             ),
@@ -64,6 +67,7 @@ class Menu extends StatelessWidget {
               title: Text(Service.savings.label),
               leading: Icon(Service.savings.icon),
               onTap: () {
+                Navigator.pop(context);
                 GoRouter.of(context).go(Service.savings.route);
               },
             ),
