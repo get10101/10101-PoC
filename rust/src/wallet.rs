@@ -504,6 +504,24 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     lightning::open_channel(channel_manager, peer_info, channel_capacity, maker_amount).await
 }
 
+/// If the first channel is not usable, it might be because we've lost
+/// the connection with the 10101 maker, according to the
+/// `rust-lightning` logs.
+pub fn is_first_channel_usable() -> Result<bool> {
+    let channel_manager = {
+        let lightning = &get_wallet()?.lightning;
+
+        lightning.channel_manager.clone()
+    };
+
+    let is_usable = match channel_manager.list_channels().first() {
+        Some(channel_details) => channel_details.is_usable,
+        None => return Ok(false),
+    };
+
+    Ok(is_usable)
+}
+
 pub async fn connect() -> Result<()> {
     let peer_manager = {
         let lightning = &get_wallet()?.lightning;
