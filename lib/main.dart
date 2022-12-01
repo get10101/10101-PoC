@@ -23,6 +23,7 @@ import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
 import 'package:ten_ten_one/wallet/lightning_tx_detail.dart';
+import 'package:ten_ten_one/wallet/qr_scan.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
@@ -65,6 +66,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => seedBackup),
     ChangeNotifierProvider(create: (context) => paymentHistory),
     ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier().init()),
+    ChangeNotifierProvider(create: (context) => QrScanChangeNotifier()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
     ChangeNotifierProvider(create: (context) => ChannelChangeNotifier()),
@@ -171,6 +173,12 @@ class _TenTenOneState extends State<TenTenOneApp> {
               path: SendOnChain.subRouteName,
               builder: (BuildContext context, GoRouterState state) {
                 return const SendOnChain();
+              },
+            ),
+            GoRoute(
+              path: QrScan.subRouteName,
+              builder: (BuildContext context, GoRouterState state) {
+                return const QrScan();
               },
             ),
             GoRoute(
