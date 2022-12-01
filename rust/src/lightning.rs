@@ -152,20 +152,7 @@ pub async fn open_channel(
     channel_amount_sat: u64,
     initial_send_amount_sats: u64,
 ) -> Result<()> {
-    let config = UserConfig {
-        channel_handshake_limits: ChannelHandshakeLimits {
-            // lnd's max to_self_delay is 2016, so we want to be compatible.
-            their_to_self_delay: 2016,
-            ..Default::default()
-        },
-        channel_handshake_config: ChannelHandshakeConfig {
-            announced_channel: true,
-            // We want to support 0-conf channels.
-            minimum_depth: 0,
-            ..Default::default()
-        },
-        ..Default::default()
-    };
+    let user_config = default_user_config();
 
     let _temp_channel_id = channel_manager
         .create_channel(
@@ -173,7 +160,7 @@ pub async fn open_channel(
             channel_amount_sat,
             initial_send_amount_sats * 1000,
             0,
-            Some(config),
+            Some(user_config),
         )
         .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?;
 
@@ -387,15 +374,8 @@ pub fn setup(
     //     .expect("Failed to fetch best block header and best block");
 
     // Step 9: Initialize the ChannelManager
-    let mut user_config = UserConfig::default();
-    user_config
-        .channel_handshake_limits
-        .force_announced_channel_preference = false;
-    // By setting this to 0 we indicate we accept 0-conf channels.
-    user_config.channel_handshake_config.minimum_depth = 0;
-    // By setting `manually_accept_inbound_channels` to `true` we need to manually confirm every
-    // inbound channel request.
-    user_config.manually_accept_inbound_channels = true;
+
+    let user_config = default_user_config();
 
     let (_channel_manager_blockhash, channel_manager) = {
         if let Ok(mut f) = std::fs::File::open(format!("{ldk_data_dir}/manager")) {
@@ -541,6 +521,24 @@ pub fn setup(
     };
 
     Ok(system)
+}
+
+fn default_user_config() -> UserConfig {
+    UserConfig {
+        channel_handshake_limits: ChannelHandshakeLimits {
+            trust_own_funding_0conf: false,
+            ..Default::default()
+        },
+        channel_handshake_config: ChannelHandshakeConfig {
+            announced_channel: true,
+            minimum_depth: 1,
+            ..Default::default()
+        },
+        // By setting `manually_accept_inbound_channels` to `true` we need to manually confirm every
+        // inbound channel request.
+        manually_accept_inbound_channels: false,
+        ..Default::default()
+    }
 }
 
 pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
