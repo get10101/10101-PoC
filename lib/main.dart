@@ -102,6 +102,13 @@ class _TenTenOneState extends State<TenTenOneApp> {
         title: 'TenTenOne',
         theme: ThemeData(
             primarySwatch: mainColor,
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(100, 50),
+                  side: BorderSide(width: 1.0, color: Theme.of(context).colorScheme.primary),
+                  backgroundColor: Colors.white,
+                  textStyle: const TextStyle(fontSize: 16)),
+            ),
             elevatedButtonTheme: ElevatedButtonThemeData(
                 style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
