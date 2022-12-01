@@ -41,7 +41,7 @@ pub async fn open(order: &Order) -> Result<()> {
     let maker_pk = channel_details.counterparty.node_id;
     let short_channel_id = channel_details
         .short_channel_id
-        .context("Could not retrieve short channel id")?;
+        .context("Cannot create custom output if funding transaction has not yet been confirmed")?;
 
     // hardcoded because we are not dealing with force-close scenarios yet
     let dummy_script = "0020e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
