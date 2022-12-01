@@ -544,7 +544,7 @@ pub async fn connect() -> Result<()> {
         lightning.peer_manager.clone()
     };
     let peer_info = maker_peer_info();
-    tracing::debug!("Connection with {peer_info}");
+    tracing::debug!("Connecting with {peer_info}");
     lightning::connect_peer_if_necessary(&peer_info, peer_manager).await?;
 
     Ok(())
