@@ -16,6 +16,8 @@ const REGTEST_MAKER_PK: &str = "02cb6517193c466de0688b8b0386dbfb39d96c3844525c13
 
 const MAKER_PORT_LIGHTNING: u64 = 9045;
 
+const TESTNET_MAIN_MAKER_PORT_LIGHTNING: u64 = 9046;
+
 /// IP corresponding to the domain `testnet.itchysats.network`.
 ///
 /// _All_ 10101 testnet makers can be found behind this IP.
@@ -116,6 +118,16 @@ pub fn maker_endpoint() -> String {
 
 pub fn maker_peer_info() -> PeerInfo {
     let ip = maker_ip();
+
+    if testnet_maker_instance() == TestnetMakerInstance::Main {
+        return PeerInfo {
+            pubkey: maker_pk(),
+            peer_addr: format!("{ip}:{TESTNET_MAIN_MAKER_PORT_LIGHTNING}")
+                .parse()
+                .expect("Hard-coded IP and port to be valid"),
+        };
+    }
+
     PeerInfo {
         pubkey: maker_pk(),
         peer_addr: format!("{ip}:{MAKER_PORT_LIGHTNING}")
@@ -164,7 +176,7 @@ fn read_testnet_maker_instance_from_env() -> Result<TestnetMakerInstance> {
 }
 
 /// Each variant identifies an instance of the 10101 testnet maker.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum TestnetMakerInstance {
     /// Used by developers for testing.
     Main,
