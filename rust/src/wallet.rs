@@ -521,13 +521,11 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 /// If the first channel is not usable, it might be because we've lost
 /// the connection with the 10101 maker, according to the
 /// `rust-lightning` logs.
-pub fn is_first_channel_usable() -> Result<bool> {
-    let is_usable = match get_first_channel_details() {
+pub fn is_first_channel_usable() -> bool {
+    match get_first_channel_details() {
         Some(channel_details) => channel_details.is_usable,
         None => false,
-    };
-
-    Ok(is_usable)
+    }
 }
 
 pub fn get_first_channel_details() -> Option<ChannelDetails> {
