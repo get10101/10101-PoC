@@ -60,30 +60,6 @@
     },
     "query": "\n            select\n                payment_hash,\n                preimage,\n                secret,\n                flow as \"flow: crate::lightning::Flow\",\n                htlc_status as \"status: crate::lightning::HTLCStatus\",\n                amount_msat,\n                updated,\n                created\n            from\n                payments\n            "
   },
-  "2c6382b1b49584102d15338359bf36748a2d71fb36ab04cdf326cf25db610952": {
-    "describe": {
-      "columns": [
-        {
-          "name": "txid",
-          "ordinal": 0,
-          "type_info": "Text"
-        },
-        {
-          "name": "maker_amount",
-          "ordinal": 1,
-          "type_info": "Int64"
-        }
-      ],
-      "nullable": [
-        false,
-        false
-      ],
-      "parameters": {
-        "Right": 0
-      }
-    },
-    "query": "\n            select\n                txid,\n                maker_amount\n            from\n                ignore_txid\n            order by id\n            "
-  },
   "448e8280c76e9d2f5884e0dfa1d058e13ebfccf8687e1ade912cfbf59d70887e": {
     "describe": {
       "columns": [],
@@ -210,6 +186,36 @@
     },
     "query": "\n        INSERT INTO cfd (custom_output_id, contract_symbol, position, leverage, created, updated, state_id, quantity, expiry, open_price, liquidation_price, margin)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n        "
   },
+  "df7d70a9819d2b5675c0327a9aa9938df8ef61bf222cd47341f3c22abbd5a296": {
+    "describe": {
+      "columns": [
+        {
+          "name": "txid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "maker_amount",
+          "ordinal": 1,
+          "type_info": "Int64"
+        },
+        {
+          "name": "open_channel_txid",
+          "ordinal": 2,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\n            select\n                txid,\n                maker_amount,\n                open_channel_txid\n            from\n                ignore_txid\n            order by id\n            "
+  },
   "e88a210f767e0ed152c38688789f5e7c208e2320feb16494f134ca08a66497bf": {
     "describe": {
       "columns": [],
@@ -219,5 +225,15 @@
       }
     },
     "query": "\n        UPDATE cfd\n        SET\n            state_id = $1, updated = $2, close_price = $3\n        WHERE\n            cfd.custom_output_id = $4\n        "
+  },
+  "f59962286bbc900173eb055dd7088725d691a6b7db2e9aafec7e435ed4cee479": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 2
+      }
+    },
+    "query": "\n        UPDATE ignore_txid\n        SET\n            open_channel_txid = $1\n        WHERE\n            ignore_txid.txid = $2\n        "
   }
 }

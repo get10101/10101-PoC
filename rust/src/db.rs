@@ -70,14 +70,15 @@ fn get_db() -> Result<MutexGuard<'static, SqlitePool>> {
         .map_err(|_| anyhow!("cannot acquire DB lock"))
 }
 
-pub async fn load_ignore_txids() -> Result<Vec<(Txid, u64)>> {
+pub async fn load_ignore_txids() -> Result<Vec<(Txid, u64, Option<Txid>)>> {
     let mut conn = acquire().await?;
 
     let mut rows = sqlx::query!(
         r#"
             select
                 txid,
-                maker_amount
+                maker_amount,
+                open_channel_txid
             from
                 ignore_txid
             order by id
@@ -89,8 +90,12 @@ pub async fn load_ignore_txids() -> Result<Vec<(Txid, u64)>> {
 
     while let Some(row) = rows.try_next().await? {
         let txid = Txid::from_hex(row.txid.as_str())?;
+        let open_channel_txid = row
+            .open_channel_txid
+            .map(|open_channel_txid| Txid::from_hex(open_channel_txid.as_str()))
+            .transpose()?;
         let maker_amount = row.maker_amount as u64;
-        ignore_txids.push((txid, maker_amount));
+        ignore_txids.push((txid, maker_amount, open_channel_txid));
     }
 
     Ok(ignore_txids)
@@ -115,6 +120,34 @@ pub async fn insert_ignore_txid(txid: Txid, maker_amount: i64) -> Result<()> {
     }
 
     tracing::info!("Successfully stored txid to be ignored");
+
+    Ok(())
+}
+
+pub async fn update_ignore_txid(txid: Txid, open_channel_txid: Txid) -> Result<()> {
+    let mut conn = acquire().await?;
+
+    let txid = txid.to_hex();
+    let open_channel_txid = open_channel_txid.to_hex();
+
+    let query_result = sqlx::query!(
+        r#"
+        UPDATE ignore_txid
+        SET
+            open_channel_txid = $1
+        WHERE
+            ignore_txid.txid = $2
+        "#,
+        open_channel_txid,
+        txid,
+    )
+    .execute(&mut conn)
+    .await?;
+
+    ensure!(
+        query_result.rows_affected() == 1,
+        "Failed to update payment"
+    );
 
     Ok(())
 }
