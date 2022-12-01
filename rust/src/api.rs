@@ -53,6 +53,7 @@ impl Address {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn init_db(app_dir: String) -> Result<()> {
+    anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
     let network = config::network();
     db::init_db(
         &Path::new(app_dir.as_str())
@@ -73,6 +74,7 @@ pub async fn test_db_connection() -> Result<()> {
 }
 
 pub fn init_wallet(path: String) -> Result<()> {
+    anyhow::ensure!(!path.is_empty(), "path must not be empty");
     wallet::init_wallet(Path::new(path.as_str()))
 }
 
@@ -85,6 +87,7 @@ pub struct LightningInvoice {
 }
 
 pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
+    anyhow::ensure!(!invoice.is_empty(), "received empty invoice");
     let invoice = &Invoice::from_str(&invoice).context("Could not parse invoice string")?;
     let description = match invoice.description() {
         InvoiceDescription::Direct(direct) => direct.to_string(),
@@ -158,6 +161,7 @@ pub async fn close_channel() -> Result<()> {
 }
 
 pub fn send_to_address(address: String, amount: u64) -> Result<String> {
+    anyhow::ensure!(!address.is_empty(), "cannot send to an empty address");
     let address = address.parse()?;
 
     let txid = wallet::send_to_address(address, amount)?;
@@ -184,6 +188,10 @@ pub async fn get_offer() -> Result<Option<Offer>> {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn call_faucet(address: String) -> Result<String> {
+    anyhow::ensure!(
+        !address.is_empty(),
+        "Cannot call faucet because of empty address"
+    );
     faucet::call_faucet(address).await
 }
 
@@ -243,6 +251,7 @@ pub fn get_seed_phrase() -> Result<Vec<String>> {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn send_lightning_payment(invoice: String) -> Result<()> {
+    anyhow::ensure!(!invoice.is_empty(), "Cannot pay empty invoice");
     wallet::send_lightning_payment(&invoice).await
 }
 
