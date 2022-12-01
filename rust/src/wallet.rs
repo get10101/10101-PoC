@@ -219,6 +219,7 @@ impl Wallet {
             .filter(|tx_detail| !ignore_txids.contains(&tx_detail.txid))
             .collect::<Vec<_>>();
 
+        let mut failed_channel_open_txids = Vec::new();
         for (maker_funding_txid, maker_funding_amount, open_channel_txid) in ignore_maker_funding {
             let open_channel_txid = match open_channel_txid {
                 Some(open_channel_txid) => open_channel_txid,
@@ -264,10 +265,22 @@ impl Wallet {
 
             tx_history.iter_mut().for_each(|tx_detail| {
                 if tx_detail.txid == open_channel_txid {
-                    tx_detail.sent -= maker_funding_amount as u64;
+                    // Saturating sub so we avoid overflow errors if we have ignore entries for
+                    // failed channel open in the db
+                    tx_detail.sent = tx_detail.sent.saturating_sub(maker_funding_amount as u64);
+
+                    if tx_detail.sent == 0 {
+                        failed_channel_open_txids.push(tx_detail.txid);
+                    }
                 }
             });
         }
+
+        // Ignore failed channel open entries in case we notice one
+        let tx_history = tx_history
+            .into_iter()
+            .filter(|tx_detail| !failed_channel_open_txids.contains(&tx_detail.txid))
+            .collect::<Vec<_>>();
 
         tracing::trace!(?tx_history, "Transaction history");
         Ok(tx_history)
