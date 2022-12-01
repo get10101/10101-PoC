@@ -4,6 +4,7 @@ use crate::config::maker_peer_info;
 use crate::config::TCP_TIMEOUT;
 use crate::db;
 use crate::db::load_payments;
+use crate::db::update_ignore_txid;
 use crate::lightning;
 use crate::lightning::ChannelManager;
 use crate::lightning::Flow;
@@ -205,55 +206,67 @@ impl Wallet {
             .get_wallet()?
             .list_transactions(false)?;
 
-        let (ignore_txids, latest_channel_open) = match db::load_ignore_txids().await {
-            Ok(ignore_txid_with_amount) => {
-                let latest_open_channel = ignore_txid_with_amount.last().cloned();
-                let ignore_txids = ignore_txid_with_amount
-                    .into_iter()
-                    .map(|(txid, _)| txid)
-                    .collect::<Vec<Txid>>();
-                (ignore_txids, latest_open_channel)
-            }
-            Err(e) => {
-                tracing::warn!("Failed to load ignore txids, proceeding with showing tx history including ignored txids: {e:#}");
+        let ignore_maker_funding = db::load_ignore_txids().await?;
+        let ignore_txids = ignore_maker_funding
+            .clone()
+            .into_iter()
+            .map(|(txid, _, _)| txid)
+            .collect::<Vec<Txid>>();
 
-                (vec![], None)
-            }
-        };
-
+        // Ignore the maker's funding tx
         let mut tx_history = tx_history
             .into_iter()
             .filter(|tx_detail| !ignore_txids.contains(&tx_detail.txid))
             .collect::<Vec<_>>();
 
-        // Subtract maker's funding amount from channel open - this only works for the current
-        // channel!
-        if let Some((_, maker_funding_amount)) = latest_channel_open {
-            let channel_manager = {
-                let lightning = &get_wallet()?.lightning;
-                lightning.channel_manager.clone()
-            };
+        for (maker_funding_txid, maker_funding_amount, open_channel_txid) in ignore_maker_funding {
+            let open_channel_txid = match open_channel_txid {
+                Some(open_channel_txid) => open_channel_txid,
+                None => {
+                    // Try to extract it from channel
+                    let channel_manager = {
+                        let lightning = &get_wallet()?.lightning;
+                        lightning.channel_manager.clone()
+                    };
 
-            // Subtract the maker amount from the open channel tx
-            let channels = channel_manager.list_channels();
-            match channels.first() {
-                Some(channel_details) => {
-                    match channel_details.funding_txo {
+                    // Try to extract the funding_txid from the first channel
+                    let channels = channel_manager.list_channels();
+                    let current_channel_details = match channels.first() {
+                        Some(channel_details) => channel_details,
                         None => {
-                            tracing::warn!("Failed to retrieve channel funding tx, the funding_txo is not available for the channel.");
+                            tracing::warn!("No channel available, but no open-channel txid set for maker funding txid {maker_funding_txid}. The history will likely reflect the maker's funding amount.");
+                            continue;
                         }
+                    };
+
+                    match current_channel_details.funding_txo {
                         Some(output) => {
-                            let open_channel_txid = output.txid;
-                            tx_history.iter_mut().for_each(|tx_detail| {
-                                if tx_detail.txid == open_channel_txid {
-                                    tx_detail.sent -= maker_funding_amount as u64;
-                                }
-                            });
+                            // Save the funding_txid in the db so we have it persisted for the next
+                            // time
+                            if let Err(e) =
+                                update_ignore_txid(maker_funding_txid, output.txid).await
+                            {
+                                tracing::warn!("Failed to update the open_channel_txid in the database. This might cause weird issues when displaying the payment history after channel close: {e:#}");
+                            }
+
+                            output.txid
+                        }
+                        None => {
+                            // This can happen if the transaction was not picked up by the lightning
+                            // wallet yet, but we already saved the expected information to ignored
+                            // into the database
+                            tracing::debug!("Failed to retrieve channel funding tx, the funding_txo is not available for the channel yet.");
+                            continue;
                         }
                     }
-                },
-                None => tracing::warn!("Failed to save amount to subtract from opening channel, the bitcoin tx history will include the taker amount"),
-            }
+                }
+            };
+
+            tx_history.iter_mut().for_each(|tx_detail| {
+                if tx_detail.txid == open_channel_txid {
+                    tx_detail.sent -= maker_funding_amount as u64;
+                }
+            });
         }
 
         tracing::trace!(?tx_history, "Transaction history");
