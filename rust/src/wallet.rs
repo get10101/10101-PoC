@@ -172,6 +172,19 @@ impl Wallet {
             .sum()
     }
 
+    fn is_channel_in_creation(&self) -> bool {
+        !self.lightning.channel_manager.list_channels().is_empty()
+    }
+
+    fn is_channel_usable(&self) -> bool {
+        self.lightning
+            .channel_manager
+            .list_channels()
+            .iter()
+            .map(|details| details.is_usable)
+            .sum()
+    }
+
     fn get_channel_manager(&self) -> Arc<ChannelManager> {
         self.lightning.channel_manager.clone()
     }
@@ -399,6 +412,13 @@ pub async fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
 
 pub fn get_channel_manager() -> Result<Arc<ChannelManager>> {
     Ok(get_wallet()?.get_channel_manager())
+}
+
+pub fn is_channel_in_creation() -> Result<bool> {
+    Ok(get_wallet()?.is_channel_in_creation())
+}
+pub fn is_channel_usable() -> Result<bool> {
+    Ok(get_wallet()?.is_channel_usable())
 }
 
 pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
