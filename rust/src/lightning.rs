@@ -733,15 +733,13 @@ async fn handle_ldk_events(
             };
 
             // Give the funding transaction back to LDK for opening the channel.
-            if channel_manager
-                .funding_transaction_generated(
-                    temporary_channel_id,
-                    counterparty_node_id,
-                    funding_tx,
-                )
-                .is_err()
-            {
-                tracing::error!("Channel went away before we could fund it. The peer disconnected or refused the channel.");
+
+            if let Err(err) = channel_manager.funding_transaction_generated(
+                temporary_channel_id,
+                counterparty_node_id,
+                funding_tx,
+            ) {
+                tracing::error!("Channel went away before we could fund it. The peer disconnected or refused the channel. {err:?}");
             }
         }
         Event::PaymentReceived {
