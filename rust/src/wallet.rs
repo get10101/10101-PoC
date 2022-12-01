@@ -128,7 +128,7 @@ impl Wallet {
         self.lightning
             .wallet
             .sync(self.lightning.confirmables())
-            .map_err(|_| anyhow!("Could lot sync bdk-ldk wallet"))?;
+            .map_err(|_| anyhow!("Could not sync bdk-ldk wallet"))?;
         Ok(())
     }
 
@@ -480,19 +480,15 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
         tokio::time::sleep(Duration::from_secs(sleep_secs)).await;
     }
 
+    get_wallet()?.sync().expect("To be able to sync");
+
     // Open Channel
     let channel_manager = {
         let lightning = &get_wallet()?.lightning;
         lightning.channel_manager.clone()
     };
 
-    lightning::open_channel(
-        channel_manager,
-        peer_info,
-        channel_capacity,
-        Some(maker_amount),
-    )
-    .await
+    lightning::open_channel(channel_manager, peer_info, channel_capacity, maker_amount).await
 }
 
 pub async fn connect() -> Result<()> {

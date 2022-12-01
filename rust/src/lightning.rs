@@ -150,7 +150,7 @@ pub async fn open_channel(
     channel_manager: Arc<ChannelManager>,
     peer_info: PeerInfo,
     channel_amount_sat: u64,
-    initial_send_amount_sats: Option<u64>,
+    initial_send_amount_sats: u64,
 ) -> Result<()> {
     let config = UserConfig {
         channel_handshake_limits: ChannelHandshakeLimits {
@@ -167,20 +167,15 @@ pub async fn open_channel(
         ..Default::default()
     };
 
-    let _temp_channel_id = match initial_send_amount_sats {
-        None => channel_manager
-            .create_channel(peer_info.pubkey, channel_amount_sat, 0, 0, Some(config))
-            .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?,
-        Some(amount) => channel_manager
-            .create_channel(
-                peer_info.pubkey,
-                channel_amount_sat,
-                amount * 1000,
-                0,
-                Some(config),
-            )
-            .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?,
-    };
+    let _temp_channel_id = channel_manager
+        .create_channel(
+            peer_info.pubkey,
+            channel_amount_sat,
+            initial_send_amount_sats * 1000,
+            0,
+            Some(config),
+        )
+        .map_err(|e| anyhow!("Could not create channel with {peer_info} due to {e:?}"))?;
 
     tracing::info!("Started channel creation with {peer_info}");
     Ok(())
@@ -718,24 +713,33 @@ async fn handle_ldk_events(
 
             // Have wallet put the inputs into the transaction such that the output
             // is satisfied and then sign the funding transaction
-            let funding_tx = wallet
-                .construct_funding_transaction(
-                    output_script,
-                    *channel_value_satoshis,
-                    target_blocks,
-                )
-                .unwrap();
+            let funding_tx_result = wallet.construct_funding_transaction(
+                output_script,
+                *channel_value_satoshis,
+                target_blocks,
+            );
+
+            let funding_tx = match funding_tx_result {
+                Ok(funding_tx) => funding_tx,
+                Err(e) => {
+                    tracing::error!(
+                        "Cannot open channel due to not being able to create funding tx {e:?}"
+                    );
+                    channel_manager
+                        .close_channel(temporary_channel_id, counterparty_node_id)
+                        .expect("To be able to close a channel we cannot open");
+                    return;
+                }
+            };
 
             // Give the funding transaction back to LDK for opening the channel.
-            if channel_manager
-                .funding_transaction_generated(
-                    temporary_channel_id,
-                    counterparty_node_id,
-                    funding_tx,
-                )
-                .is_err()
-            {
-                tracing::error!("Channel went away before we could fund it. The peer disconnected or refused the channel.");
+
+            if let Err(err) = channel_manager.funding_transaction_generated(
+                temporary_channel_id,
+                counterparty_node_id,
+                funding_tx,
+            ) {
+                tracing::error!("Channel went away before we could fund it. The peer disconnected or refused the channel. {err:?}");
             }
         }
         Event::PaymentReceived {

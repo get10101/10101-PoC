@@ -188,7 +188,7 @@ pub async fn post_close_channel(
 pub async fn post_open_channel(
     request: Json<OpenChannelRequest>,
 ) -> Result<Json<OpenChannelResponse>, HttpApiProblem> {
-    let funding_txid = send_to_address(request.address_to_fund.clone(), request.fund_amount)
+    let funding_txid = send_to_address(request.address_to_fund.clone(), request.fund_amount + 500)
         .map_err(|e| {
             HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .title("Failed to open channel with maker")
