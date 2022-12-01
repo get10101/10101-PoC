@@ -83,10 +83,10 @@ class BalanceRow extends StatelessWidget {
     final balanceFontSize = smaller ? 26.0 : 32.0;
     final iconSize = smaller ? 24.0 : 28.0;
 
-    return Center(
-        child: Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       textBaseline: TextBaseline.alphabetic,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 32),
         AmountItem(
@@ -97,6 +97,6 @@ class BalanceRow extends StatelessWidget {
           fontSize: balanceFontSize,
         )
       ],
-    ));
+    );
   }
 }
