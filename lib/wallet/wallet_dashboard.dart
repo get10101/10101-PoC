@@ -1,21 +1,25 @@
+import 'dart:io';
+
 import 'package:f_logs/f_logs.dart';
+import 'package:feedback/feedback.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:ten_ten_one/main.dart';
+import 'package:ten_ten_one/menu.dart';
 import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
+import 'package:ten_ten_one/utilities/feedback.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 
-import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'action_card.dart';
 import 'open_channel.dart';
 
@@ -92,6 +96,19 @@ class _WalletDashboardState extends State<WalletDashboard> {
     );
 
     widgets.add(paymentHistoryList);
+    if (Platform.isAndroid || Platform.isIOS) {
+      widgets.add(const SizedBox(height: 10));
+      widgets.add(OutlinedButton(
+        style: OutlinedButton.styleFrom(
+            minimumSize: const Size(20, 50),
+            side: BorderSide(width: 1.0, color: Theme.of(context).primaryColor)),
+        child: const Text('Provide feedback'),
+        onPressed: () {
+          BetterFeedback.of(context).show(submitFeedback);
+        },
+      ));
+      widgets.add(const SizedBox(height: 10));
+    }
 
     const balanceSelector = BalanceSelector.both;
 
