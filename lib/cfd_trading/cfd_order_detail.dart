@@ -152,10 +152,6 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                                   confirm = false;
                                 });
                               },
-                              style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                      width: 1.0, color: Theme.of(context).colorScheme.primary),
-                                  backgroundColor: Colors.white),
                               child: const Text('Cancel'))),
                       Expanded(
                         child: Row(
