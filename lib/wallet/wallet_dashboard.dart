@@ -40,7 +40,6 @@ class _WalletDashboardState extends State<WalletDashboard> {
   Widget build(BuildContext context) {
     final seedBackupModel = context.watch<SeedBackupModel>();
     final bitcoinBalance = context.watch<BitcoinBalance>();
-    final lightningBalance = context.watch<LightningBalance>();
     final paymentHistory = context.watch<PaymentHistory>();
     final channel = context.watch<ChannelChangeNotifier>();
 
@@ -65,7 +64,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
           icon: const Icon(Icons.link))));
     }
 
-    if (bitcoinBalance.total().asSats != 0 && lightningBalance.amount.asSats == 0) {
+    if (bitcoinBalance.total().asSats > 0 && !(channel.isAvailable() || channel.isInitialising())) {
       widgets.add(ActionCard(CardDetails(
         route: OpenChannel.route,
         title: "Open Channel",

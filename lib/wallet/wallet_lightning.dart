@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/main.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/receive.dart';
@@ -23,7 +23,7 @@ class WalletLightning extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final history = context.watch<PaymentHistory>();
-    final balance = context.watch<LightningBalance>();
+    final channel = context.watch<ChannelChangeNotifier>();
 
     List<Widget> widgets = [];
 
@@ -70,11 +70,7 @@ class WalletLightning extends StatelessWidget {
       )
     ];
 
-    // close channel should only be possible if a channel is opened. the lightning balance is not
-    // directly indicating that a channel is open, but on the other hand no lightning balance can
-    // exist without a channel. Hence this is good enough for now, eventually the channel should be
-    // reflected in our data model.
-    if (balance.amount.asSats > 0) {
+    if (channel.isAvailable()) {
       dials.insert(
           0,
           SpeedDialChild(

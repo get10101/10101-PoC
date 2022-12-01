@@ -14,6 +14,7 @@ use crate::lightning::NodeInfo;
 use crate::lightning::PeerInfo;
 use crate::seed::Bip39Seed;
 use ::lightning::chain::chaininterface::ConfirmationTarget;
+use ::lightning::ln::channelmanager::ChannelDetails;
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Context;
@@ -521,18 +522,21 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 /// the connection with the 10101 maker, according to the
 /// `rust-lightning` logs.
 pub fn is_first_channel_usable() -> Result<bool> {
-    let channel_manager = {
-        let lightning = &get_wallet()?.lightning;
-
-        lightning.channel_manager.clone()
-    };
-
-    let is_usable = match channel_manager.list_channels().first() {
+    let is_usable = match get_first_channel_details() {
         Some(channel_details) => channel_details.is_usable,
-        None => return Ok(false),
+        None => false,
     };
 
     Ok(is_usable)
+}
+
+pub fn get_first_channel_details() -> Option<ChannelDetails> {
+    let channel_manager = match &get_wallet() {
+        Ok(wallet) => Some(wallet.lightning.channel_manager.clone()),
+        Err(_) => None,
+    }?;
+
+    channel_manager.list_channels().first().cloned()
 }
 
 pub async fn connect() -> Result<()> {

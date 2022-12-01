@@ -78,6 +78,25 @@ pub fn init_wallet(path: String) -> Result<()> {
     wallet::init_wallet(Path::new(path.as_str()))
 }
 
+pub enum ChannelState {
+    Unavailable,
+    Establishing,
+    Available,
+}
+
+pub fn get_channel_state() -> ChannelState {
+    match wallet::get_first_channel_details() {
+        Some(channel_details) => {
+            if channel_details.is_usable {
+                ChannelState::Available
+            } else {
+                ChannelState::Establishing
+            }
+        }
+        None => ChannelState::Unavailable,
+    }
+}
+
 pub struct LightningInvoice {
     pub description: String,
     pub amount_sats: f64,
