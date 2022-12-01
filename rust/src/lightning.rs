@@ -713,13 +713,24 @@ async fn handle_ldk_events(
 
             // Have wallet put the inputs into the transaction such that the output
             // is satisfied and then sign the funding transaction
-            let funding_tx = wallet
-                .construct_funding_transaction(
-                    output_script,
-                    *channel_value_satoshis,
-                    target_blocks,
-                )
-                .unwrap();
+            let funding_tx_result = wallet.construct_funding_transaction(
+                output_script,
+                *channel_value_satoshis,
+                target_blocks,
+            );
+
+            let funding_tx = match funding_tx_result {
+                Ok(funding_tx) => funding_tx,
+                Err(e) => {
+                    tracing::error!(
+                        "Cannot open channel due to not being able to create funding tx {e:?}"
+                    );
+                    channel_manager
+                        .close_channel(temporary_channel_id, counterparty_node_id)
+                        .expect("To be able to close a channel we cannot open");
+                    return;
+                }
+            };
 
             // Give the funding transaction back to LDK for opening the channel.
             if channel_manager
