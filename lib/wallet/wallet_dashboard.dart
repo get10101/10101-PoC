@@ -64,7 +64,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
           icon: const Icon(Icons.link))));
     }
 
-    if (bitcoinBalance.total().asSats > 0 && !(channel.isAvailable() || channel.isInitialising())) {
+    if ((bitcoinBalance.total().asSats > 0 && !channel.isAvailable()) || channel.isInitialising()) {
       widgets.add(ActionCard(CardDetails(
         route: OpenChannel.route,
         title: "Open Channel",
