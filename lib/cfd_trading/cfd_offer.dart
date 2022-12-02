@@ -54,7 +54,9 @@ class _CfdOfferState extends State<CfdOffer> {
 
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
 
-    final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
+    final receivedOffer = cfdOffersChangeNotifier.offer;
+    final noOffer = receivedOffer == null;
+    final offer = receivedOffer ?? Offer(bid: 0, ask: 0, index: 0);
 
     final fmtBid = "\$" + formatter.format(offer.bid);
     final fmtAsk = "\$" + formatter.format(offer.ask);
@@ -71,17 +73,26 @@ class _CfdOfferState extends State<CfdOffer> {
     final channel = context.watch<ChannelChangeNotifier>();
     final int takerAmount = Amount.fromBtc(order.marginTaker()).asSats;
 
+    var showActionButton = true;
     Message? channelError;
     if (!channel.isAvailable()) {
       channelError = Message(
           title: 'No channel with 10101 maker',
           details: 'You need an open channel with the 10101 maker before you can open a CFD.',
           type: AlertType.warning);
+      showActionButton = false;
+    } else if (noOffer) {
+      channelError = Message(
+          title: 'No offer available',
+          details: 'You cannot open a position without an offer.',
+          type: AlertType.warning);
+      showActionButton = false;
     } else if (takerAmount > balance) {
       channelError = Message(
           title: 'Insufficient funds',
           details: 'The required margin is higher than the available balance.',
           type: AlertType.warning);
+      showActionButton = false;
     }
 
     List<Widget> warnings = [];
@@ -230,16 +241,19 @@ class _CfdOfferState extends State<CfdOffer> {
         child: Padding(
             padding: const EdgeInsets.only(left: 25, right: 25), child: Column(children: widgets)),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            GoRouter.of(context).go(
-              CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName,
-              extra: CfdOrderConfirmationArgs(order, channelError),
-            );
-          }
-        },
-        child: const Icon(Icons.shopping_cart_checkout),
+      floatingActionButton: Visibility(
+        visible: showActionButton,
+        child: FloatingActionButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              GoRouter.of(context).go(
+                CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName,
+                extra: CfdOrderConfirmationArgs(order, channelError),
+              );
+            }
+          },
+          child: const Icon(Icons.shopping_cart_checkout),
+        ),
       ),
     );
   }
