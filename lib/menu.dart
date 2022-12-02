@@ -83,11 +83,14 @@ class Menu extends StatelessWidget {
             ),
           ]),
       ListTile(
-        title: const Text("Settings"),
-        leading: const Icon(Icons.settings),
-        // TODO: Add `selected` when added route (PR is open)
+        title: Text(Service.settings.label),
+        leading: Icon(Service.settings.icon),
+        selected: GoRouter.of(context).location == Service.settings.route,
         selectedTileColor: selectedTile,
-        onTap: () {},
+        onTap: () {
+          Navigator.pop(context);
+          GoRouter.of(context).go(Service.settings.route);
+        },
       ),
     ];
 

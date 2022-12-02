@@ -21,28 +21,32 @@ extension ServiceGroupExtension on ServiceGroup {
   IconData get icon => icons[this]!;
 }
 
-enum Service { trade, dca, savings }
+enum Service { trade, dca, savings, settings }
 
 extension ServiceExtension on Service {
   static const labels = {
     Service.trade: "Trading",
     Service.dca: "Dollar Cost Average",
-    Service.savings: "Saving"
+    Service.savings: "Saving",
+    Service.settings: "Settings",
   };
   static const shortLabels = {
     Service.trade: "Trade",
     Service.dca: "DCA",
-    Service.savings: "Savings"
+    Service.savings: "Savings",
+    Service.settings: "Settings"
   };
   static const icons = {
     Service.trade: Icons.insights,
     Service.dca: FontAwesomeIcons.moneyBill1,
-    Service.savings: Icons.savings
+    Service.savings: Icons.savings,
+    Service.settings: Icons.settings,
   };
   static const routes = {
     Service.trade: "/trading",
     Service.dca: "/dca",
-    Service.savings: "/savings"
+    Service.savings: "/savings",
+    Service.settings: "/settings",
   };
 
   String get label => labels[this]!;

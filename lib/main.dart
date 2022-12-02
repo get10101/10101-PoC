@@ -236,6 +236,22 @@ class _TenTenOneState extends State<TenTenOneApp> {
                   "When is the best time to buy Bitcoin? Now! DCA is a constant investment strategy to buy smaller amounts of Bitcoin over a period of time, no matter what price. DCA is coming soon!");
         },
       ),
+      GoRoute(
+        path: Service.savings.route,
+        builder: (BuildContext context, GoRouterState state) {
+          return const ServicePlaceholder(
+              service: Service.savings, description: "We bring stacking to Bitcoin!");
+        },
+      ),
+      // TODO: Change Settings from Service to normal page when implemented
+      GoRoute(
+        path: Service.settings.route,
+        builder: (BuildContext context, GoRouterState state) {
+          return const ServicePlaceholder(
+              service: Service.settings,
+              description: "Here is the spot to tweak the settings of 10101 app. Stay tuned!");
+        },
+      ),
     ],
   );
 
