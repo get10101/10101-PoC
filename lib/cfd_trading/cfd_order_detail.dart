@@ -14,6 +14,7 @@ import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
+import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 
 class CfdOrderDetail extends StatefulWidget {
   static const subRouteName = 'cfd-order-detail';
@@ -52,10 +53,13 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
 
     final cfdTradingChangeNotifier = context.read<CfdTradingChangeNotifier>();
     final cfdOffersChangeNotifier = context.watch<CfdOfferChangeNotifier>();
+    final channel = context.watch<ChannelChangeNotifier>();
     final offer = cfdOffersChangeNotifier.offer ?? Offer(bid: 0, ask: 0, index: 0);
 
     Cfd cfd = widget.cfd!;
     Order order = cfd.getOrder();
+
+    var disableActionButton = false;
 
     final openPrice = formatter.format(cfd.openPrice);
     final liquidationPrice = formatter.format(cfd.liquidationPrice);
@@ -95,6 +99,17 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
       rows.insert(6,
           TtoRow(label: 'Closing Price', value: formatter.format(closePrice), type: ValueType.usd));
     }
+    var alertMessage = Message(
+        title:
+            'Clicking \'Settle\' will close this position at \$$closingPriceAsString. Would you like to proceed?',
+        type: AlertType.info);
+
+    if (!channel.isAvailable()) {
+      Message(
+          title: 'Your channel is currently not available. Maybe you lost connection.',
+          type: AlertType.warning);
+      disableActionButton = true;
+    }
 
     return Scaffold(
         appBar: AppBar(title: const Text('Order Details')),
@@ -133,11 +148,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                     visible: CfdState.Open == cfd.state,
                     child: Container(
                         padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
-                        child: AlertMessage(
-                            message: Message(
-                                title:
-                                    'Clicking \'Settle\' will close this position at \$$closingPriceAsString. Would you like to proceed?',
-                                type: AlertType.info))),
+                        child: AlertMessage(message: alertMessage)),
                   ),
                 ),
                 Container(
@@ -170,6 +181,7 @@ class _CfdOrderDetailState extends State<CfdOrderDetail> {
                             Visibility(
                               visible: confirm,
                               child: SubmitButton(
+                                  isButtonDisabled: disableActionButton,
                                   onPressed: () async {
                                     await settleCfd(cfd, offer, cfdTradingChangeNotifier);
                                   },
