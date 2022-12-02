@@ -55,6 +55,9 @@ class _CloseChannelState extends State<CloseChannel> {
                               "Closing the channel will send ${closeAmount.value} sats to your 10101 on-chain wallet.\n\n"),
                       const TextSpan(
                           text:
+                              "It will take at least 2 blocks after the publication of the channel close transaction for your coins to be confirmed by your on-chain wallet.\n\n"),
+                      const TextSpan(
+                          text:
                               "Once the channel is closed, you will have to open a new one if you want to continue using your wallet for Lightning payments and trading.")
                     ])),
               ),
@@ -90,7 +93,7 @@ class _CloseChannelState extends State<CloseChannel> {
   }
 
   Future<void> closeChannel() async {
-    FLog.info(text: "Closing channel with outbound liquidity of " + closeAmount.toString());
+    FLog.info(text: "Closing channel with outbound liquidity of " + closeAmount.value.toString());
 
     try {
       await api.closeChannel();

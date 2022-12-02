@@ -63,7 +63,7 @@ pub struct Wallet {
 #[derive(Debug, Clone, Serialize)]
 pub struct Balance {
     pub on_chain: OnChain,
-    pub off_chain: u64,
+    pub off_chain: OffChain,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -74,6 +74,12 @@ pub struct OnChain {
     pub untrusted_pending: u64,
     /// Confirmed and immediately spendable balance
     pub confirmed: u64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OffChain {
+    pub available: u64,
+    pub pending_close: u64,
 }
 
 impl Wallet {
@@ -140,7 +146,7 @@ impl Wallet {
 
     pub fn get_balance(&self) -> Result<Balance> {
         let bdk_balance = self.get_bdk_balance()?;
-        let ldk_balance = self.get_ldk_balance();
+        let off_chain = self.get_ldk_balance()?;
         Ok(Balance {
             // subtract the ldk balance from the bdk balance as this balance is locked in the
             // off chain wallet.
@@ -149,7 +155,7 @@ impl Wallet {
                 untrusted_pending: bdk_balance.untrusted_pending,
                 confirmed: bdk_balance.confirmed,
             },
-            off_chain: ldk_balance,
+            off_chain,
         })
     }
 
@@ -163,14 +169,63 @@ impl Wallet {
         Ok(balance)
     }
 
-    /// LDK balance is the total sum of money in all open channels
-    fn get_ldk_balance(&self) -> u64 {
-        self.lightning
+    /// The LDK [`OffChain`] balance keeps track of:
+    ///
+    /// - The total sum of money in all open channels.
+    /// - The total sum of money in close transactions that do not yet pay to our on-chain wallet.
+    fn get_ldk_balance(&self) -> Result<OffChain> {
+        let open_channels = self.lightning.channel_manager.list_channels();
+
+        let claimable_channel_balances = {
+            let ignored_channels = open_channels.iter().collect::<Vec<_>>();
+            let ignored_channels = &ignored_channels.as_slice();
+            self.lightning
+                .chain_monitor
+                .get_claimable_balances(ignored_channels)
+        };
+
+        let pending_close = claimable_channel_balances.iter().fold(0, |acc, balance| {
+            tracing::trace!("Pending on-chain balance from channel closure: {balance:?}");
+
+            use ::lightning::chain::channelmonitor::Balance::*;
+            match balance {
+                ClaimableOnChannelClose {
+                    claimable_amount_satoshis,
+                }
+                | ClaimableAwaitingConfirmations {
+                    claimable_amount_satoshis,
+                    ..
+                }
+                | ContentiousClaimable {
+                    claimable_amount_satoshis,
+                    ..
+                }
+                | MaybeTimeoutClaimableHTLC {
+                    claimable_amount_satoshis,
+                    ..
+                }
+                | MaybePreimageClaimableHTLC {
+                    claimable_amount_satoshis,
+                    ..
+                }
+                | CounterpartyRevokedOutputClaimable {
+                    claimable_amount_satoshis,
+                } => acc + claimable_amount_satoshis,
+            }
+        });
+
+        let available = self
+            .lightning
             .channel_manager
             .list_channels()
             .iter()
             .map(|details| details.balance_msat / 1000)
-            .sum()
+            .sum();
+
+        Ok(OffChain {
+            available,
+            pending_close,
+        })
     }
 
     fn get_channel_manager(&self) -> Arc<ChannelManager> {
