@@ -58,7 +58,7 @@ void main() {
   };
 
   final config = FLog.getDefaultConfigurations();
-  config.activeLogLevel = foundation.kReleaseMode ? LogLevel.INFO : LogLevel.DEBUG;
+  config.activeLogLevel = LogLevel.DEBUG;
 
   FLog.applyConfigurations(config);
 
