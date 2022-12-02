@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2022-12-02
 
+### Fixed
+
+- Update on-chain balance immediately after channel closure.
+- Set log level to debug so the attached logs on the feedback emails are more helpful.
+
 ## [0.3.0] - 2022-12-02
 
 ### Fixes
