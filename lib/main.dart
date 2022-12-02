@@ -319,8 +319,8 @@ Future<void> callGetBalances() async {
   try {
     final balance = await api.getBalance();
     bitcoinBalance.update(Amount(balance.onChain.confirmed), Amount(balance.onChain.trustedPending),
-        Amount(balance.onChain.untrustedPending));
-    lightningBalance.update(Amount(balance.offChain));
+        Amount(balance.onChain.untrustedPending), Amount(balance.offChain.pendingClose));
+    lightningBalance.update(Amount(balance.offChain.available));
     FLog.trace(text: 'Successfully retrieved wallet balances');
   } catch (error) {
     FLog.error(text: "Failed to get balances:" + error.toString());

@@ -219,7 +219,7 @@ dependencies = [
 [[package]]
 name = "bdk-ldk"
 version = "0.1.0"
-source = "git+https://github.com/itchysats/bdk-ldk?rev=c66ad845391a67a80554962bab55a237775150df#c66ad845391a67a80554962bab55a237775150df"
+source = "git+https://github.com/itchysats/bdk-ldk?rev=a096f232dec8c5a50f77b54a67da46d7c9b1311a#a096f232dec8c5a50f77b54a67da46d7c9b1311a"
 dependencies = [
  "anyhow",
  "bdk",
