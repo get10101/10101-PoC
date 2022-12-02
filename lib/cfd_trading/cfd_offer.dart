@@ -75,10 +75,22 @@ class _CfdOfferState extends State<CfdOffer> {
 
     var showActionButton = true;
     Message? channelError;
-    if (!channel.isAvailable()) {
+    if (!channel.isInitialising() && !channel.isAvailable()) {
       channelError = Message(
           title: 'No channel with 10101 maker',
           details: 'You need an open channel with the 10101 maker before you can open a CFD.',
+          type: AlertType.warning);
+      showActionButton = false;
+    } else if (channel.isInitialising()) {
+      channelError = Message(
+          title: 'Channel not confirmed',
+          details: 'Please wait until your channel has 1 confirmation.',
+          type: AlertType.warning);
+      showActionButton = false;
+    } else if (!channel.isAvailable()) {
+      channelError = Message(
+          title: 'Channel not available',
+          details: 'It looks like the channel is not available, maybe you lost connection.',
           type: AlertType.warning);
       showActionButton = false;
     } else if (noOffer) {
