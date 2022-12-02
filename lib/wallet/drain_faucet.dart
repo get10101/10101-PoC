@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
+import 'package:ten_ten_one/utilities/submit_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -86,7 +87,7 @@ class _DrainFaucetState extends State<DrainFaucet> {
                       const Spacer(),
                       Container(
                         alignment: Alignment.bottomRight,
-                        child: ElevatedButton(
+                        child: SubmitButton(
                             onPressed: () async {
                               try {
                                 final txid = await api.callFaucet(address: address);
@@ -94,14 +95,18 @@ class _DrainFaucetState extends State<DrainFaucet> {
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                                   content: Text("Success. Your funds will arrive shortly."),
                                 ));
+                                GoRouter.of(context).go('/');
                               } on FfiException catch (error) {
                                 FLog.error(
                                     text: "Failed to call faucet: Error: " + error.message,
                                     exception: error);
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  backgroundColor: Colors.red,
+                                  content: Text("Failed to call faucet: Error: " + error.message),
+                                ));
                               }
-                              GoRouter.of(context).go('/');
                             },
-                            child: const Text('Fund me')),
+                            label: 'Fund me'),
                       )
                     ],
                   ),

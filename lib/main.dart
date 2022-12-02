@@ -69,7 +69,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => QrScanChangeNotifier()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
-    ChangeNotifierProvider(create: (context) => ChannelChangeNotifier()),
+    ChangeNotifierProvider(create: (context) => ChannelChangeNotifier().init()),
   ], child: const TenTenOneApp()));
 }
 

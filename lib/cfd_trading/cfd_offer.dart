@@ -14,6 +14,7 @@ import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
+import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 
 class CfdOffer extends StatefulWidget {
   static const leverages = [1, 2, 3, 4, 5, 10];
@@ -66,11 +67,12 @@ class _CfdOfferState extends State<CfdOffer> {
         .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
     final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
 
-    final balance = context.read<LightningBalance>().amount.asSats;
+    final balance = context.watch<LightningBalance>().amount.asSats;
+    final channel = context.watch<ChannelChangeNotifier>();
     final int takerAmount = Amount.fromBtc(order.marginTaker()).asSats;
 
     Message? channelError;
-    if (balance == 0) {
+    if (!channel.isAvailable()) {
       channelError = Message(
           title: 'No channel with 10101 maker',
           details: 'You need an open channel with the 10101 maker before you can open a CFD.',
