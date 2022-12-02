@@ -70,6 +70,17 @@ class WalletLightning extends StatelessWidget {
       )
     ];
 
+    var showActionButton = true;
+    Message? channelError;
+    if (!channel.isInitialising() && !channel.isAvailable()) {
+      channelError = Message(
+          title: 'No channel',
+          details:
+              'You do not have a lightning channel open at the moment. You can open one from the Dashboard screen.',
+          type: AlertType.warning);
+      showActionButton = false;
+    }
+
     if (channel.isAvailable()) {
       dials.insert(
           0,
@@ -81,6 +92,17 @@ class WalletLightning extends StatelessWidget {
           ));
     }
 
+    List<Widget> warnings = [];
+    if (channelError != null) {
+      warnings.addAll([
+        Expanded(child: Container()),
+        AlertMessage(message: channelError),
+        const SizedBox(height: 80)
+      ]);
+    }
+
+    widgets.addAll(warnings);
+
     return Scaffold(
       drawer: const Menu(),
       appBar: PreferredSize(
@@ -91,21 +113,24 @@ class WalletLightning extends StatelessWidget {
         onRefresh: _pullRefresh,
         child: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
       )),
-      floatingActionButton: SpeedDial(
-        icon: Icons.import_export,
-        iconTheme: const IconThemeData(size: 35),
-        activeIcon: Icons.close,
-        activeBackgroundColor: Colors.grey,
-        activeForegroundColor: Colors.white,
-        buttonSize: const Size(56.0, 56.0),
-        visible: !hasOpenCfds,
-        closeManually: false,
-        curve: Curves.bounceIn,
-        overlayColor: Colors.black,
-        overlayOpacity: 0.5,
-        elevation: 8.0,
-        shape: const CircleBorder(),
-        children: dials,
+      floatingActionButton: Visibility(
+        visible: showActionButton,
+        child: SpeedDial(
+          icon: Icons.import_export,
+          iconTheme: const IconThemeData(size: 35),
+          activeIcon: Icons.close,
+          activeBackgroundColor: Colors.grey,
+          activeForegroundColor: Colors.white,
+          buttonSize: const Size(56.0, 56.0),
+          visible: !hasOpenCfds,
+          closeManually: false,
+          curve: Curves.bounceIn,
+          overlayColor: Colors.black,
+          overlayOpacity: 0.5,
+          elevation: 8.0,
+          shape: const CircleBorder(),
+          children: dials,
+        ),
       ),
     );
   }
