@@ -4,17 +4,12 @@ use crate::config::maker_pk;
 use crate::db;
 use crate::wallet;
 use anyhow::anyhow;
-use anyhow::bail;
 use anyhow::Context;
 use anyhow::Result;
 
 pub async fn open(order: &Order) -> Result<()> {
     let liquidation_price: f64 = order.calculate_liquidation_price().0;
     let expiry = order.calculate_expiry().0;
-
-    if order.leverage > 2 {
-        bail!("Only leverage x1 and x2 are supported at the moment");
-    }
 
     let margin_taker_as_btc = order.margin_taker().0;
     // Convert to msats
