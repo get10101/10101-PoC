@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/models/service_model.dart';
+import 'package:ten_ten_one/onboarding_tour.dart';
 import 'package:ten_ten_one/utilities/feedback.dart';
 
 final selectedTile = Colors.blue.withAlpha(20);
@@ -88,6 +89,14 @@ class Menu extends StatelessWidget {
         // TODO: Add `selected` when added route (PR is open)
         selectedTileColor: selectedTile,
         onTap: () {},
+      ),
+      ListTile(
+        title: const Text("Onboarding"),
+        leading: const Icon(Icons.question_answer),
+        onTap: () {
+          Navigator.pop(context);
+          GoRouter.of(context).go(OnboardingTour.route);
+        },
       ),
     ];
 
