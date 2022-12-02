@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
@@ -16,6 +17,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/models/payment.model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
+import 'package:ten_ten_one/onboarding_tour.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
 import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
@@ -82,10 +84,16 @@ class TenTenOneApp extends StatefulWidget {
 
 class _TenTenOneState extends State<TenTenOneApp> {
   bool ready = false;
+  bool showOnboarding = false;
 
   @override
   void initState() {
     super.initState();
+
+    TenTenOneSharedPreferences.instance.isFirstStartup().then((value) => setState(() {
+          showOnboarding = value;
+        }));
+
     init();
   }
 
@@ -127,117 +135,133 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 
   final GoRouter _router = GoRouter(
-    routes: <GoRoute>[
-      GoRoute(
-          path: '/',
+      routes: <GoRoute>[
+        GoRoute(
+            path: '/',
+            builder: (BuildContext context, GoRouterState state) {
+              return const Wallet();
+            },
+            routes: [
+              GoRoute(
+                path: Seed.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const Seed();
+                },
+              ),
+              GoRoute(
+                path: BitcoinTxDetail.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return BitcoinTxDetail(transaction: state.extra as BitcoinTxHistoryItem);
+                },
+              ),
+              GoRoute(
+                path: LightningTxDetail.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return LightningTxDetail(transaction: state.extra as LightningTransaction);
+                },
+              ),
+              GoRoute(
+                path: Send.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const Send();
+                },
+              ),
+              GoRoute(
+                path: Receive.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const Receive();
+                },
+              ),
+              GoRoute(
+                path: CloseChannel.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const CloseChannel();
+                },
+              ),
+              GoRoute(
+                path: ReceiveOnChain.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const ReceiveOnChain();
+                },
+              ),
+              GoRoute(
+                path: SendOnChain.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const SendOnChain();
+                },
+              ),
+              GoRoute(
+                path: QrScan.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const QrScan();
+                },
+              ),
+              GoRoute(
+                path: OpenChannel.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const OpenChannel();
+                },
+              ),
+              GoRoute(
+                path: FundWalletOnChain.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const FundWalletOnChain();
+                },
+              ),
+            ]),
+        GoRoute(
+            path: CfdTrading.route,
+            builder: (BuildContext context, GoRouterState state) {
+              return const CfdTrading();
+            },
+            routes: [
+              GoRoute(
+                path: CfdOrderConfirmation.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return CfdOrderConfirmation(args: state.extra as CfdOrderConfirmationArgs);
+                },
+              ),
+              GoRoute(
+                path: CfdOrderDetail.subRouteName,
+                builder: (BuildContext context, GoRouterState state) {
+                  return CfdOrderDetail(cfd: state.extra as Cfd);
+                },
+              ),
+            ]),
+        GoRoute(
+          path: Service.savings.route,
           builder: (BuildContext context, GoRouterState state) {
-            return const Wallet();
+            return const ServicePlaceholder(
+                service: Service.savings, description: "We bring stacking to Bitcoin!");
           },
-          routes: [
-            GoRoute(
-              path: Seed.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const Seed();
-              },
-            ),
-            GoRoute(
-              path: BitcoinTxDetail.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return BitcoinTxDetail(transaction: state.extra as BitcoinTxHistoryItem);
-              },
-            ),
-            GoRoute(
-              path: LightningTxDetail.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return LightningTxDetail(transaction: state.extra as LightningTransaction);
-              },
-            ),
-            GoRoute(
-              path: Send.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const Send();
-              },
-            ),
-            GoRoute(
-              path: Receive.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const Receive();
-              },
-            ),
-            GoRoute(
-              path: CloseChannel.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const CloseChannel();
-              },
-            ),
-            GoRoute(
-              path: ReceiveOnChain.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const ReceiveOnChain();
-              },
-            ),
-            GoRoute(
-              path: SendOnChain.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const SendOnChain();
-              },
-            ),
-            GoRoute(
-              path: QrScan.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const QrScan();
-              },
-            ),
-            GoRoute(
-              path: OpenChannel.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const OpenChannel();
-              },
-            ),
-            GoRoute(
-              path: FundWalletOnChain.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return const FundWalletOnChain();
-              },
-            ),
-          ]),
-      GoRoute(
-          path: CfdTrading.route,
+        ),
+        GoRoute(
+          path: Service.dca.route,
           builder: (BuildContext context, GoRouterState state) {
-            return const CfdTrading();
+            return const ServicePlaceholder(
+                service: Service.dca,
+                description:
+                    "When is the best time to buy Bitcoin? Now! DCA is a constant investment strategy to buy smaller amounts of Bitcoin over a period of time, no matter what price. DCA is coming soon!");
           },
-          routes: [
-            GoRoute(
-              path: CfdOrderConfirmation.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return CfdOrderConfirmation(args: state.extra as CfdOrderConfirmationArgs);
-              },
-            ),
-            GoRoute(
-              path: CfdOrderDetail.subRouteName,
-              builder: (BuildContext context, GoRouterState state) {
-                return CfdOrderDetail(cfd: state.extra as Cfd);
-              },
-            ),
-          ]),
-      GoRoute(
-        path: Service.savings.route,
-        builder: (BuildContext context, GoRouterState state) {
-          return const ServicePlaceholder(
-              service: Service.savings, description: "We bring stacking to Bitcoin!");
-        },
-      ),
-      GoRoute(
-        path: Service.dca.route,
-        builder: (BuildContext context, GoRouterState state) {
-          return const ServicePlaceholder(
-              service: Service.dca,
-              description:
-                  "When is the best time to buy Bitcoin? Now! DCA is a constant investment strategy to buy smaller amounts of Bitcoin over a period of time, no matter what price. DCA is coming soon!");
-        },
-      ),
-    ],
-  );
+        ),
+        GoRoute(
+            path: OnboardingTour.route,
+            builder: (BuildContext context, GoRouterState state) {
+              return const OnboardingTour();
+            }),
+      ],
+      redirect: (BuildContext context, GoRouterState state) async {
+        // TODO: It's not optimal that we read this from shared prefs every time, should probably be set through a provider
+        final isFirstStartup = await TenTenOneSharedPreferences.instance.isFirstStartup();
+
+        if (isFirstStartup) {
+          FLog.info(text: "First startup, starting onboarding tour...");
+          TenTenOneSharedPreferences.instance.setFirstStartup(false);
+          return OnboardingTour.route;
+        }
+
+        return null;
+      });
 
   Future<void> init() async {
     try {
@@ -377,4 +401,23 @@ void runPeriodically(void Function() callback, {seconds = 20}) {
   Timer.periodic(Duration(seconds: seconds), (timer) {
     _callback();
   });
+}
+
+class TenTenOneSharedPreferences {
+  TenTenOneSharedPreferences._privateConstructor();
+
+  static final TenTenOneSharedPreferences instance =
+      TenTenOneSharedPreferences._privateConstructor();
+
+  static const firstStartup = "firstStartup";
+
+  setFirstStartup(bool value) async {
+    SharedPreferences myPrefs = await SharedPreferences.getInstance();
+    myPrefs.setBool(firstStartup, value);
+  }
+
+  Future<bool> isFirstStartup() async {
+    SharedPreferences myPrefs = await SharedPreferences.getInstance();
+    return myPrefs.getBool(firstStartup) == null ? true : false;
+  }
 }
