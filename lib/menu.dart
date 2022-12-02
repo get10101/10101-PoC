@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/utilities/feedback.dart';
 
+final selectedTile = Colors.blue.withAlpha(20);
+
 class Menu extends StatelessWidget {
   const Menu({Key? key}) : super(key: key);
 
@@ -36,6 +38,8 @@ class Menu extends StatelessWidget {
       ),
       ListTile(
         title: Text(ServiceGroup.wallet.label),
+        selected: GoRouter.of(context).location == "/",
+        selectedTileColor: selectedTile,
         leading: Icon(ServiceGroup.wallet.icon),
         onTap: () {
           Navigator.pop(context);
@@ -44,6 +48,8 @@ class Menu extends StatelessWidget {
       ),
       ListTile(
         title: Text(Service.trade.label),
+        selected: GoRouter.of(context).location == Service.trade.route,
+        selectedTileColor: selectedTile,
         leading: Icon(Service.trade.icon),
         onTap: () {
           Navigator.pop(context);
@@ -58,6 +64,8 @@ class Menu extends StatelessWidget {
             ListTile(
               title: Text(Service.dca.label),
               leading: Icon(Service.dca.icon),
+              selected: GoRouter.of(context).location == Service.dca.route,
+              selectedTileColor: selectedTile,
               onTap: () {
                 Navigator.pop(context);
                 GoRouter.of(context).go(Service.dca.route);
@@ -66,6 +74,8 @@ class Menu extends StatelessWidget {
             ListTile(
               title: Text(Service.savings.label),
               leading: Icon(Service.savings.icon),
+              selected: GoRouter.of(context).location == Service.savings.route,
+              selectedTileColor: selectedTile,
               onTap: () {
                 Navigator.pop(context);
                 GoRouter.of(context).go(Service.savings.route);
@@ -75,6 +85,8 @@ class Menu extends StatelessWidget {
       ListTile(
         title: const Text("Settings"),
         leading: const Icon(Icons.settings),
+        // TODO: Add `selected` when added route (PR is open)
+        selectedTileColor: selectedTile,
         onTap: () {},
       ),
     ];
