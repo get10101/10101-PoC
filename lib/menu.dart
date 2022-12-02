@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/models/service_model.dart';
+import 'package:ten_ten_one/onboarding_tour.dart';
 import 'package:ten_ten_one/utilities/feedback.dart';
 
 class Menu extends StatelessWidget {
@@ -76,6 +77,14 @@ class Menu extends StatelessWidget {
         title: const Text("Settings"),
         leading: const Icon(Icons.settings),
         onTap: () {},
+      ),
+      ListTile(
+        title: const Text("Onboarding"),
+        leading: const Icon(Icons.question_answer),
+        onTap: () {
+          Navigator.pop(context);
+          GoRouter.of(context).go(OnboardingTour.route);
+        },
       ),
     ];
 
