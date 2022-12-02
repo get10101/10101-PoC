@@ -110,6 +110,18 @@ fn maker_port_http() -> u64 {
     }
 }
 
+fn maker_port_lightning() -> u64 {
+    match network() {
+        Network::Bitcoin => todo!(),
+        Network::Testnet => match testnet_maker_instance() {
+            TestnetMakerInstance::Main => TESTNET_MAIN_MAKER_PORT_LIGHTNING,
+            TestnetMakerInstance::Stable => MAKER_PORT_LIGHTNING,
+        },
+        Network::Signet => todo!(),
+        Network::Regtest => MAKER_PORT_LIGHTNING,
+    }
+}
+
 pub fn maker_endpoint() -> String {
     let ip = maker_ip();
     let http = maker_port_http();
@@ -118,19 +130,11 @@ pub fn maker_endpoint() -> String {
 
 pub fn maker_peer_info() -> PeerInfo {
     let ip = maker_ip();
-
-    if testnet_maker_instance() == TestnetMakerInstance::Main {
-        return PeerInfo {
-            pubkey: maker_pk(),
-            peer_addr: format!("{ip}:{TESTNET_MAIN_MAKER_PORT_LIGHTNING}")
-                .parse()
-                .expect("Hard-coded IP and port to be valid"),
-        };
-    }
+    let port_lightning = maker_port_lightning();
 
     PeerInfo {
         pubkey: maker_pk(),
-        peer_addr: format!("{ip}:{MAKER_PORT_LIGHTNING}")
+        peer_addr: format!("{ip}:{port_lightning}")
             .parse()
             .expect("Hard-coded IP and port to be valid"),
     }
