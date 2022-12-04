@@ -20,6 +20,7 @@ import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/onboarding_tour.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
+import 'package:ten_ten_one/settings.dart';
 import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
@@ -242,6 +243,12 @@ class _TenTenOneState extends State<TenTenOneApp> {
                 service: Service.dca,
                 description:
                     "When is the best time to buy Bitcoin? Now! DCA is a constant investment strategy to buy smaller amounts of Bitcoin over a period of time, no matter what price. DCA is coming soon!");
+          },
+        ),
+        GoRoute(
+          path: Settings.route,
+          builder: (BuildContext context, GoRouterState state) {
+            return const Settings();
           },
         ),
         GoRoute(
