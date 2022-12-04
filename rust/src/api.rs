@@ -163,6 +163,10 @@ pub fn maker_peer_info() -> String {
     config::maker_peer_info().to_string()
 }
 
+pub fn node_id() -> Result<String> {
+    wallet::node_id().map(|pk| pk.to_string())
+}
+
 pub fn network() -> SyncReturn<String> {
     SyncReturn(config::network().to_string())
 }
