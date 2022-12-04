@@ -176,7 +176,6 @@ class _CfdOfferState extends State<CfdOffer> {
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       style: const TextStyle(fontSize: 18.0),
-                      autofocus: true,
                       initialValue: order.quantity.toString(),
                       onChanged: (value) {
                         setState(() {
