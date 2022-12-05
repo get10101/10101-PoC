@@ -391,10 +391,13 @@ impl Wallet {
         }
 
         let tx = psbt.extract_tx();
+        let txid = tx.txid();
 
         self.lightning.wallet.broadcast(&tx)?;
 
-        Ok(tx.txid())
+        tracing::debug!(address = %send_to, sats = %amount, %txid, "Sent to address");
+
+        Ok(txid)
     }
 
     /// Fee recommendation in sats per vbyte.
