@@ -15,24 +15,40 @@ class LightningTxDetail extends StatelessWidget {
     final formatter = NumberFormat();
     formatter.minimumFractionDigits = 0;
     formatter.maximumFractionDigits = 0;
+
+    var rows = [
+      TtoRow(
+          label: "Creation time",
+          value: DateFormat('dd.MM.yy-kk:mm:ss')
+              .format(DateTime.fromMillisecondsSinceEpoch(transaction.createdTimestamp * 1000)),
+          type: ValueType.date),
+      TtoRow(
+          label: "Last Update",
+          value: DateFormat('dd.MM.yy-kk:mm:ss')
+              .format(DateTime.fromMillisecondsSinceEpoch(transaction.updatedTimestamp * 1000)),
+          type: ValueType.date),
+      TtoRow(
+          label: transaction.flow == Flow.Inbound ? "Received" : "Sent",
+          value: formatter.format(transaction.sats),
+          type: ValueType.satoshi),
+      TtoRow(label: "Type", value: transaction.txType.name, type: ValueType.text),
+      TtoRow(label: "Status", value: transaction.status.name, type: ValueType.text)
+    ];
+
+    if (transaction.expiryTimestamp != null) {
+      rows.insert(
+          5,
+          TtoRow(
+              label: "Expiry time",
+              value: DateFormat('dd.MM.yy-kk:mm:ss')
+                  .format(DateTime.fromMillisecondsSinceEpoch(transaction.expiryTimestamp! * 1000)),
+              type: ValueType.date));
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Lightning Payment Detail')),
       body: SafeArea(
-        child: Container(
-            padding: const EdgeInsets.all(20.0),
-            child: TtoTable([
-              TtoRow(
-                  label: "Timestamp",
-                  value: DateFormat('dd.MM.yy-kk:mm')
-                      .format(DateTime.fromMillisecondsSinceEpoch(transaction.timestamp * 1000)),
-                  type: ValueType.date),
-              TtoRow(
-                  label: transaction.flow == Flow.Inbound ? "Received" : "Sent",
-                  value: formatter.format(transaction.sats),
-                  type: ValueType.satoshi),
-              TtoRow(label: "Type", value: transaction.txType.name, type: ValueType.text),
-              TtoRow(label: "Status", value: transaction.status.name, type: ValueType.text),
-            ])),
+        child: Container(padding: const EdgeInsets.all(20.0), child: TtoTable(rows)),
       ),
     );
   }

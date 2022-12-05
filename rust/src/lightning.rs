@@ -200,6 +200,7 @@ pub enum HTLCStatus {
     Pending,
     Succeeded,
     Failed,
+    Expired,
 }
 
 /// Direction of the lightning payment
@@ -240,6 +241,7 @@ pub struct PaymentInfo {
     pub amt_msat: MillisatAmount,
     pub created_timestamp: u64,
     pub updated_timestamp: u64,
+    pub expiry_timestamp: Option<u64>,
 }
 
 impl PaymentInfo {
@@ -250,6 +252,7 @@ impl PaymentInfo {
         flow: Flow,
         status: HTLCStatus,
         amt_msat: MillisatAmount,
+        expiry_timestamp: Option<u64>,
     ) -> Self {
         Self {
             hash,
@@ -260,6 +263,7 @@ impl PaymentInfo {
             amt_msat,
             created_timestamp: get_timestamp(),
             updated_timestamp: get_timestamp(),
+            expiry_timestamp,
         }
     }
 }
@@ -1001,6 +1005,7 @@ async fn handle_ldk_events(
                     Flow::Inbound,
                     HTLCStatus::Succeeded,
                     MillisatAmount(Some(*amount_msat)),
+                    None,
                 );
                 if let Err(e) = insert_payment(&payment).await {
                     {
@@ -1152,6 +1157,7 @@ pub async fn send_payment(invoice: &Invoice) -> Result<()> {
         Flow::Outbound,
         status,
         MillisatAmount(invoice.amount_milli_satoshis()),
+        Some(invoice.duration_since_epoch().as_secs() + invoice.expiry_time().as_secs()),
     );
     insert_payment(&payment).await?;
     Ok(())
@@ -1198,6 +1204,7 @@ pub async fn create_invoice(
         Flow::Inbound,
         HTLCStatus::Pending,
         MillisatAmount(Some(amt_msat)),
+        Some(get_timestamp() + expiry_secs as u64),
     );
     insert_payment(&payment).await?;
     Ok(invoice.to_string())

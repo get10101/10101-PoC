@@ -360,6 +360,7 @@ Future<void> callSyncPaymentHistory() async {
     PaymentStatus status;
     switch (e.status) {
       case HTLCStatus.Failed:
+      case HTLCStatus.Expired:
         status = PaymentStatus.failed;
         break;
       case HTLCStatus.Succeeded:
@@ -369,7 +370,7 @@ Future<void> callSyncPaymentHistory() async {
         status = PaymentStatus.pending;
         break;
     }
-    return PaymentHistoryItem(amount, type, status, e.timestamp, e);
+    return PaymentHistoryItem(amount, type, status, e.createdTimestamp, e);
   }).toList();
 
   var bph = bitcoinTxHistory.map((bitcoinTxHistoryItem) {

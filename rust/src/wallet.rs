@@ -3,6 +3,7 @@ use crate::config::maker_endpoint;
 use crate::config::maker_peer_info;
 use crate::config::TCP_TIMEOUT;
 use crate::db;
+use crate::db::clean_expired_payments;
 use crate::db::load_payments;
 use crate::db::update_ignore_txid;
 use crate::lightning;
@@ -137,6 +138,7 @@ impl Wallet {
             .wallet
             .sync(self.lightning.confirmables())
             .map_err(|_| anyhow!("Could not sync bdk-ldk wallet"))?;
+
         Ok(())
     }
 
@@ -474,6 +476,11 @@ pub fn get_channel_manager() -> Result<Arc<ChannelManager>> {
 }
 
 pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
+    // Ensure we're not advertising any expired payments as pending
+    clean_expired_payments()
+        .await
+        .context("Could not clean expired payments")?;
+
     let payments = load_payments()
         .await?
         .iter()
@@ -482,7 +489,9 @@ pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             flow: payment_info.flow.clone(),
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
             status: payment_info.status.clone(),
-            timestamp: payment_info.updated_timestamp,
+            created_timestamp: payment_info.created_timestamp,
+            updated_timestamp: payment_info.updated_timestamp,
+            expiry_timestamp: payment_info.expiry_timestamp,
         })
         .collect();
     Ok(payments)
@@ -670,5 +679,7 @@ pub struct LightningTransaction {
     pub flow: Flow,
     pub sats: u64,
     pub status: HTLCStatus,
-    pub timestamp: u64,
+    pub created_timestamp: u64,
+    pub updated_timestamp: u64,
+    pub expiry_timestamp: Option<u64>,
 }
