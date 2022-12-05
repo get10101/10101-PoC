@@ -78,7 +78,7 @@ class _ReceiveState extends State<Receive> {
                     const Text("Description", style: TextStyle(color: Colors.grey)),
                     TextFormField(
                       initialValue: description,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
                       decoration: const InputDecoration(
                         border: UnderlineInputBorder(),
                       ),
