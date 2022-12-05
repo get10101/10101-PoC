@@ -39,7 +39,7 @@ class _CfdOfferState extends State<CfdOffer> {
 
     order = Order(
         openPrice: 0,
-        quantity: 10,
+        quantity: 2,
         leverage: 2,
         contractSymbol: ContractSymbol.BtcUsd,
         position: Position.Long,
