@@ -454,7 +454,8 @@ pub fn get_balance() -> Result<Balance> {
 
 pub fn sync() -> Result<()> {
     tracing::trace!("Wallet sync called");
-    get_wallet()?.sync()
+    let wallet = { (*get_wallet()?).clone() };
+    wallet.sync()
 }
 
 pub fn network() -> Result<bitcoin::Network> {
