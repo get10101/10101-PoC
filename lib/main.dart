@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ten_ten_one/app_info_change_notifier.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
@@ -41,6 +42,7 @@ import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/wallet/send.dart';
 import 'package:ten_ten_one/wallet/send_on_chain.dart';
 import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' as bridge_definitions;
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
 
@@ -49,6 +51,7 @@ BitcoinBalance bitcoinBalance = BitcoinBalance();
 SeedBackupModel seedBackup = SeedBackupModel();
 PaymentHistory paymentHistory = PaymentHistory();
 CfdOfferChangeNotifier cfdOffersChangeNotifier = CfdOfferChangeNotifier();
+AppInfoChangeNotifier appInfoChangeNotifier = AppInfoChangeNotifier();
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -73,6 +76,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
     ChangeNotifierProvider(create: (context) => ChannelChangeNotifier().init()),
+    ChangeNotifierProvider(create: (context) => appInfoChangeNotifier),
   ], child: const TenTenOneApp()));
 }
 
@@ -273,6 +277,14 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Future<void> init() async {
     try {
       await setupRustLogging();
+
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      String version = packageInfo.version;
+
+      FLog.info(text: "TenTenOne Version: " + version);
+
+      final network = api.network();
+      appInfoChangeNotifier.set(version, network);
 
       final appSupportDir = await getApplicationSupportDirectory();
       FLog.info(text: "App data will be stored in: " + appSupportDir.toString());
