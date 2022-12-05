@@ -164,12 +164,13 @@ pub async fn insert_payment(payment: &PaymentInfo) -> Result<()> {
         amt_msat,
         created_timestamp,
         updated_timestamp,
+        expiry_timestamp,
     } = payment.clone();
 
     let query_result = sqlx::query(
         r#"
-        INSERT INTO payments (payment_hash, preimage, secret, flow, htlc_status, amount_msat, created, updated)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO payments (payment_hash, preimage, secret, flow, htlc_status, amount_msat, created, updated, expiry)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         "#,
     )
     .bind(base64::encode(hash.0))
@@ -180,6 +181,7 @@ pub async fn insert_payment(payment: &PaymentInfo) -> Result<()> {
     .bind(amt_msat.0.map(|msat| msat as i64))
     .bind(created_timestamp as i64)
     .bind(updated_timestamp as i64)
+    .bind(expiry_timestamp.map(|x| x as i64))
     .execute(&mut conn)
     .await?;
 
@@ -286,7 +288,8 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
                 htlc_status as "status: crate::lightning::HTLCStatus",
                 amount_msat,
                 updated,
-                created
+                created,
+                expiry
             from
                 payments
             "#
@@ -312,6 +315,7 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
                 .unwrap_or(MillisatAmount(None)),
             created_timestamp: row.created as u64,
             updated_timestamp: row.updated as u64,
+            expiry_timestamp: row.expiry.map(|x| x as u64),
         };
         payments.push(payment);
     }
@@ -323,6 +327,7 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
 mod tests {
     use crate::lightning::Flow;
     use crate::lightning::MillisatAmount;
+    use bdk::wallet::time::get_timestamp;
     use std::env::temp_dir;
     use std::time::Duration;
     use tracing::subscriber::DefaultGuard;
@@ -338,6 +343,7 @@ mod tests {
             Flow::Inbound,
             crate::lightning::HTLCStatus::Pending,
             MillisatAmount(Some(100000)),
+            Some(get_timestamp() + 1), // 2 secs expiry time
         )
     }
 

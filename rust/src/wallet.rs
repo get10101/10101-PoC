@@ -137,6 +137,7 @@ impl Wallet {
             .wallet
             .sync(self.lightning.confirmables())
             .map_err(|_| anyhow!("Could not sync bdk-ldk wallet"))?;
+
         Ok(())
     }
 
