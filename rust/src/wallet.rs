@@ -3,6 +3,7 @@ use crate::config::maker_endpoint;
 use crate::config::maker_peer_info;
 use crate::config::TCP_TIMEOUT;
 use crate::db;
+use crate::db::clean_expired_payments;
 use crate::db::load_payments;
 use crate::db::update_ignore_txid;
 use crate::lightning;
@@ -475,6 +476,11 @@ pub fn get_channel_manager() -> Result<Arc<ChannelManager>> {
 }
 
 pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
+    // Ensure we're not advertising any expired payments as pending
+    clean_expired_payments()
+        .await
+        .context("Could not clean expired payments")?;
+
     let payments = load_payments()
         .await?
         .iter()

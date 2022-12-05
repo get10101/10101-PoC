@@ -10,6 +10,7 @@ use anyhow::Result;
 use bdk::bitcoin::hashes::hex::FromHex;
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::Txid;
+use bdk::wallet::time::get_timestamp;
 use futures::TryStreamExt;
 use lightning::ln::PaymentHash;
 use lightning::ln::PaymentPreimage;
@@ -323,11 +324,43 @@ pub async fn load_payments() -> Result<Vec<PaymentInfo>> {
     Ok(payments)
 }
 
+/// Update status of an expired lightning payments,
+/// as LDK does not handle monitoring for expired ones.
+pub async fn clean_expired_payments() -> Result<()> {
+    let newly_expired = load_payments()
+        .await?
+        .iter()
+        // only act on pending payments
+        .filter(|info| info.status == HTLCStatus::Pending)
+        // check whether we have reached expiry time
+        .filter(|pending| {
+            pending
+                .expiry_timestamp
+                .and_then(|expiry| {
+                    if get_timestamp() > expiry {
+                        Some(expiry)
+                    } else {
+                        None
+                    }
+                })
+                .is_some()
+        })
+        .cloned()
+        .collect::<Vec<PaymentInfo>>();
+
+    for payment in newly_expired {
+        update_payment(&payment.hash, HTLCStatus::Failed, None).await?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::lightning::Flow;
     use crate::lightning::MillisatAmount;
     use bdk::wallet::time::get_timestamp;
+    use rand::thread_rng;
+    use rand::Rng;
     use std::env::temp_dir;
     use std::time::Duration;
     use tracing::subscriber::DefaultGuard;
@@ -335,15 +368,18 @@ mod tests {
 
     use super::*;
 
-    fn dummy_payment() -> PaymentInfo {
+    fn dummy_payment(expiry_timestamp: Option<u64>) -> PaymentInfo {
+        let mut rng = thread_rng();
+        let hash = rng.gen();
+
         PaymentInfo::new(
-            PaymentHash([0u8; 32]),
+            PaymentHash(hash),
             None,
             None,
             Flow::Inbound,
             crate::lightning::HTLCStatus::Pending,
             MillisatAmount(Some(100000)),
-            Some(get_timestamp() + 1), // 2 secs expiry time
+            expiry_timestamp,
         )
     }
 
@@ -353,15 +389,18 @@ mod tests {
             .set_default()
     }
 
-    async fn ensure_init_fresh_db() -> Result<()> {
+    // Prepare DB for the test. Each test should have DB with unique name to
+    // avoid race conditions.
+    async fn ensure_init_fresh_db(db_name: &str) -> Result<()> {
         if get_db().is_err() {
-            let sqlite_path = temp_dir().join("test.sqlite");
+            let sqlite_path = temp_dir().join(db_name);
             if sqlite_path.exists() {
+                tracing::debug!(?sqlite_path, "removing DB");
                 std::fs::remove_file(sqlite_path.clone()).unwrap();
             };
             init_db(sqlite_path.as_path())
                 .await
-                .expect("DB to initialise ");
+                .expect("DB to initialise");
         };
         Ok(())
     }
@@ -369,16 +408,15 @@ mod tests {
     #[tokio::test]
     async fn test_payments_db_storage() {
         let _guard = init_tracing();
-        ensure_init_fresh_db().await.unwrap();
-        let payment = dummy_payment();
+        ensure_init_fresh_db("test_payments.sqlite").await.unwrap();
+
+        let payment = dummy_payment(None);
         insert_payment(&payment).await.unwrap();
 
-        let payments = load_payments().await.unwrap();
+        let stored_payment = load_payment(&payment.hash).await.unwrap();
 
-        assert_eq!(payments.len(), 1, "Only one payment got stored");
         assert_eq!(
-            payments.first().unwrap(),
-            &payment,
+            stored_payment, payment,
             "Stored and loaded payment do not match",
         );
 
@@ -397,6 +435,34 @@ mod tests {
         assert_ne!(
             updated_payment.created_timestamp,
             updated_payment.updated_timestamp
+        );
+    }
+
+    #[tokio::test]
+    async fn test_cleaning_expired_payments_in_db() {
+        let two_secs_expiry = Some(get_timestamp() + 2);
+        let _guard = init_tracing();
+        ensure_init_fresh_db("test_cleaning.sqlite").await.unwrap();
+        let payment = dummy_payment(two_secs_expiry);
+        let hash = payment.hash;
+        insert_payment(&payment).await.unwrap();
+
+        assert_eq!(
+            load_payment(&hash).await.unwrap().status,
+            HTLCStatus::Pending
+        );
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        clean_expired_payments().await.unwrap();
+        assert_eq!(
+            load_payment(&hash).await.unwrap().status,
+            HTLCStatus::Pending
+        );
+
+        tokio::time::sleep(Duration::from_secs(2)).await;
+        clean_expired_payments().await.unwrap();
+        assert_eq!(
+            load_payment(&hash).await.unwrap().status,
+            HTLCStatus::Failed
         );
     }
 }
