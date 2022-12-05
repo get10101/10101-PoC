@@ -200,6 +200,7 @@ pub enum HTLCStatus {
     Pending,
     Succeeded,
     Failed,
+    Expired,
 }
 
 /// Direction of the lightning payment

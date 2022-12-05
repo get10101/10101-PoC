@@ -360,6 +360,7 @@ Future<void> callSyncPaymentHistory() async {
     PaymentStatus status;
     switch (e.status) {
       case HTLCStatus.Failed:
+      case HTLCStatus.Expired:
         status = PaymentStatus.failed;
         break;
       case HTLCStatus.Succeeded:

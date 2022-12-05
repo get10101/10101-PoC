@@ -349,7 +349,7 @@ pub async fn clean_expired_payments() -> Result<()> {
         .collect::<Vec<PaymentInfo>>();
 
     for payment in newly_expired {
-        update_payment(&payment.hash, HTLCStatus::Failed, None).await?;
+        update_payment(&payment.hash, HTLCStatus::Expired, None).await?;
     }
     Ok(())
 }
@@ -462,7 +462,7 @@ mod tests {
         clean_expired_payments().await.unwrap();
         assert_eq!(
             load_payment(&hash).await.unwrap().status,
-            HTLCStatus::Failed
+            HTLCStatus::Expired
         );
     }
 }
