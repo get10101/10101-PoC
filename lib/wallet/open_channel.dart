@@ -24,7 +24,7 @@ class OpenChannel extends StatefulWidget {
 }
 
 class _OpenChannelState extends State<OpenChannel> {
-  int takerChannelAmount = 0;
+  int takerChannelAmount = OpenChannel.maxChannelAmount;
   bool submitting = false;
 
   final _formKey = GlobalKey<FormState>();
@@ -92,7 +92,7 @@ class _OpenChannelState extends State<OpenChannel> {
                           TextFormField(
                             initialValue: ThousandsSeparatorInputFormatter()
                                 .formatEditUpdate(TextEditingValue.empty,
-                                    TextEditingValue(text: maxTakerChannelAmount.toString()))
+                                    TextEditingValue(text: takerChannelAmount.toString()))
                                 .text,
                             readOnly: submitting,
                             keyboardType: TextInputType.number,
