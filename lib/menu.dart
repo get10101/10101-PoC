@@ -87,6 +87,7 @@ class Menu extends StatelessWidget {
       ListTile(
         title: const Text("Settings"),
         leading: const Icon(Icons.settings),
+        selected: GoRouter.of(context).location == Settings.route,
         selectedTileColor: selectedTile,
         onTap: () {
           Navigator.pop(context);
