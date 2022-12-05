@@ -73,45 +73,27 @@ class _CfdOfferState extends State<CfdOffer> {
     final channel = context.watch<ChannelChangeNotifier>();
     final int takerAmount = Amount.fromBtc(order.marginTaker()).asSats;
 
-    var showActionButton = true;
-    Message? channelError;
-    if (!channel.isInitialising() && !channel.isAvailable()) {
-      channelError = Message(
-          title: 'No channel with 10101 maker',
-          details: 'You need an open channel with the 10101 maker before you can open a CFD.',
-          type: AlertType.warning);
-      showActionButton = false;
-    } else if (channel.isInitialising()) {
-      channelError = Message(
-          title: 'Channel not confirmed',
-          details: 'Please wait until your channel has 1 confirmation.',
-          type: AlertType.warning);
-      showActionButton = false;
-    } else if (!channel.isAvailable()) {
-      channelError = Message(
-          title: 'Channel not available',
-          details: 'It looks like the channel is not available, maybe you lost connection.',
-          type: AlertType.warning);
-      showActionButton = false;
-    } else if (noOffer) {
-      channelError = Message(
+    Message? message = channel.validate();
+
+    if (noOffer && message == null) {
+      message = Message(
           title: 'No offer available',
           details: 'You cannot open a position without an offer.',
           type: AlertType.warning);
-      showActionButton = false;
-    } else if (takerAmount > balance) {
-      channelError = Message(
+    }
+
+    if (takerAmount > balance && message == null) {
+      message = Message(
           title: 'Insufficient funds',
           details: 'The required margin is higher than the available balance.',
           type: AlertType.warning);
-      showActionButton = false;
     }
 
     List<Widget> warnings = [];
-    if (channelError != null) {
+    if (message != null) {
       warnings.addAll([
         Expanded(child: Container()),
-        AlertMessage(message: channelError),
+        AlertMessage(message: message),
         const SizedBox(height: 80)
       ]);
     }
@@ -253,13 +235,13 @@ class _CfdOfferState extends State<CfdOffer> {
             padding: const EdgeInsets.only(left: 25, right: 25), child: Column(children: widgets)),
       ),
       floatingActionButton: Visibility(
-        visible: showActionButton,
+        visible: message == null,
         child: FloatingActionButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
               GoRouter.of(context).go(
                 CfdTrading.route + '/' + CfdOrderConfirmation.subRouteName,
-                extra: CfdOrderConfirmationArgs(order, channelError),
+                extra: CfdOrderConfirmationArgs(order, message),
               );
             }
           },

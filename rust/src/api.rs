@@ -81,6 +81,7 @@ pub fn init_wallet(path: String) -> Result<()> {
 pub enum ChannelState {
     Unavailable,
     Establishing,
+    Disconnected,
     Available,
 }
 
@@ -89,7 +90,13 @@ pub fn get_channel_state() -> ChannelState {
         Some(channel_details) => {
             if channel_details.is_usable {
                 ChannelState::Available
+            } else if channel_details.is_channel_ready {
+                // an unusable, but ready channel indicates that the maker might be
+                // disconnected.
+                ChannelState::Disconnected
             } else {
+                // if the channel is not usable and not ready - we are currently establishing a
+                // channel with the maker.
                 ChannelState::Establishing
             }
         }

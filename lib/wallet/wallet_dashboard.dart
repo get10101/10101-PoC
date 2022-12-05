@@ -21,7 +21,6 @@ import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
 
 import 'action_card.dart';
-import 'open_channel.dart';
 
 class WalletDashboard extends StatefulWidget {
   const WalletDashboard({Key? key}) : super(key: key);
@@ -64,24 +63,9 @@ class _WalletDashboardState extends State<WalletDashboard> {
           icon: const Icon(Icons.link))));
     }
 
-    if ((bitcoinBalance.total().asSats > 0 && !channel.isAvailable()) || channel.isInitialising()) {
-      widgets.add(ActionCard(CardDetails(
-        route: OpenChannel.route,
-        title: "Open Channel",
-        subtitle: "Open a channel to enable trading on Lightning",
-        disabled: channel.isInitialising(),
-        icon: channel.isInitialising()
-            ? Container(
-                width: 22,
-                height: 22,
-                padding: const EdgeInsets.all(2.0),
-                child: const CircularProgressIndicator(
-                  color: Colors.grey,
-                  strokeWidth: 3,
-                ),
-              )
-            : const Icon(Icons.launch),
-      )));
+    final channelCard = channel.buildCardDetails();
+    if (channelCard != null) {
+      widgets.add(ActionCard(channelCard));
     }
 
     final paymentHistoryList = ListView.builder(
