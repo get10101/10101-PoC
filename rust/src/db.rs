@@ -120,7 +120,7 @@ pub async fn insert_ignore_txid(txid: Txid, maker_amount: i64) -> Result<()> {
         bail!("Failed to insert txid to be ignored");
     }
 
-    tracing::info!("Successfully stored txid to be ignored");
+    tracing::info!("Successfully stored txid {txid} to be ignored");
 
     Ok(())
 }
