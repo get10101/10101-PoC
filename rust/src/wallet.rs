@@ -489,7 +489,9 @@ pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
             flow: payment_info.flow.clone(),
             sats: Amount::from(payment_info.amt_msat.clone()).to_sat(),
             status: payment_info.status.clone(),
-            timestamp: payment_info.updated_timestamp,
+            created_timestamp: payment_info.created_timestamp,
+            updated_timestamp: payment_info.updated_timestamp,
+            expiry_timestamp: payment_info.expiry_timestamp,
         })
         .collect();
     Ok(payments)
@@ -677,5 +679,7 @@ pub struct LightningTransaction {
     pub flow: Flow,
     pub sats: u64,
     pub status: HTLCStatus,
-    pub timestamp: u64,
+    pub created_timestamp: u64,
+    pub updated_timestamp: u64,
+    pub expiry_timestamp: Option<u64>,
 }

@@ -370,7 +370,7 @@ Future<void> callSyncPaymentHistory() async {
         status = PaymentStatus.pending;
         break;
     }
-    return PaymentHistoryItem(amount, type, status, e.timestamp, e);
+    return PaymentHistoryItem(amount, type, status, e.createdTimestamp, e);
   }).toList();
 
   var bph = bitcoinTxHistory.map((bitcoinTxHistoryItem) {
