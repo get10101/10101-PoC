@@ -3,14 +3,14 @@ import 'package:go_router/go_router.dart';
 
 class CardDetails {
   final String title;
-  final String route;
+  String? route;
   final String subtitle;
   final Widget icon;
   bool disabled;
 
   CardDetails(
       {required this.title,
-      required this.route,
+      this.route,
       required this.subtitle,
       required this.icon,
       this.disabled = false});
@@ -24,7 +24,9 @@ class ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onTap: details.disabled ? null : () => {GoRouter.of(context).go(details.route)},
+        onTap: details.disabled || details.route == null
+            ? null
+            : () => {GoRouter.of(context).go(details.route!)},
         child: Card(
           color: details.disabled ? Colors.grey.shade300 : Colors.white,
           elevation: 4,

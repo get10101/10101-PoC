@@ -70,16 +70,7 @@ class WalletLightning extends StatelessWidget {
       )
     ];
 
-    var showActionButton = true;
-    Message? channelError;
-    if (!channel.isInitialising() && !channel.isAvailable()) {
-      channelError = Message(
-          title: 'No channel',
-          details:
-              'You do not have a lightning channel open at the moment. You can open one from the Dashboard screen.',
-          type: AlertType.warning);
-      showActionButton = false;
-    }
+    Message? message = channel.status();
 
     if (channel.isAvailable()) {
       dials.insert(
@@ -92,16 +83,9 @@ class WalletLightning extends StatelessWidget {
           ));
     }
 
-    List<Widget> warnings = [];
-    if (channelError != null) {
-      warnings.addAll([
-        Expanded(child: Container()),
-        AlertMessage(message: channelError),
-        const SizedBox(height: 80)
-      ]);
+    if (message != null) {
+      widgets.insert(0, AlertMessage(message: message));
     }
-
-    widgets.addAll(warnings);
 
     return Scaffold(
       drawer: const Menu(),
@@ -114,7 +98,7 @@ class WalletLightning extends StatelessWidget {
         child: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
       )),
       floatingActionButton: Visibility(
-        visible: showActionButton,
+        visible: message == null,
         child: SpeedDial(
           icon: Icons.import_export,
           iconTheme: const IconThemeData(size: 35),
