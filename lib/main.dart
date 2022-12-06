@@ -20,6 +20,7 @@ import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/onboarding_tour.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
 import 'package:ten_ten_one/settings.dart';
+import 'package:ten_ten_one/tentenone_change_notifier.dart';
 import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
@@ -68,6 +69,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
     ChangeNotifierProvider(create: (context) => ChannelChangeNotifier().init()),
     ChangeNotifierProvider(create: (context) => appInfoChangeNotifier),
+    ChangeNotifierProvider(create: (context) => TenTenOneChangeNotifier())
   ], child: const TenTenOneApp()));
 }
 
@@ -96,26 +98,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (!ready) {
-      Timer(const Duration(milliseconds: 1500), () {
-        // delay removing the splash screen as otherwise the screen will jump due to loading the png
-        FlutterNativeSplash.remove();
-      });
-      return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          home: Scaffold(
-              body: Container(
-                  color: Colors.white,
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Center(child: Image.asset('assets/10101.finance_logo_1500x1500.png')),
-                    Center(
-                        child: Text(
-                      message,
-                      style: const TextStyle(fontSize: 18),
-                    )),
-                  ]))));
-    }
-
     return BetterFeedback(
       theme: FeedbackThemeData(background: Colors.white),
       child: MaterialApp.router(
@@ -145,7 +127,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
         routerConfig: _router,
       ),
     );
-    ;
   }
 
   final GoRouter _router = GoRouter(
@@ -153,6 +134,25 @@ class _TenTenOneState extends State<TenTenOneApp> {
         GoRoute(
             path: '/',
             builder: (BuildContext context, GoRouterState state) {
+              final tentenoneChangeNotifier = context.watch<TenTenOneChangeNotifier>();
+              if (!tentenoneChangeNotifier.isReady()) {
+                Timer(const Duration(milliseconds: 1000), () {
+                  // delay removing the splash screen as otherwise the screen will jump due to loading the png
+                  FlutterNativeSplash.remove();
+                });
+
+                return Scaffold(
+                    body: Container(
+                        color: Colors.white,
+                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Center(child: Image.asset('assets/10101.finance_logo_1500x1500.png')),
+                          Center(
+                              child: Text(
+                            tentenoneChangeNotifier.message(),
+                            style: const TextStyle(fontSize: 18),
+                          )),
+                        ])));
+              }
               return const Wallet();
             },
             routes: [
@@ -304,22 +304,18 @@ class _TenTenOneState extends State<TenTenOneApp> {
       seedBackupModel.update(isUserSeedBackupConfirmed);
 
       final walletChangeNotifier = context.read<WalletInfoChangeNotifier>();
+      final tentenoneChangeNotifier = context.read<TenTenOneChangeNotifier>();
 
       FLog.info(text: "Starting ldk node");
       api.run(appDir: appSupportDir.path).listen((event) {
         if (event is Event_Ready) {
-          setState(() {
-            FLog.info(text: "Tentenone is ready!");
-            ready = true;
-          });
+          tentenoneChangeNotifier.ready();
         } else if (event is Event_Offer) {
           cfdOffersChangeNotifier.update(event.field0);
         } else if (event is Event_WalletInfo) {
           walletChangeNotifier.update(event.field0);
         } else if (event is Event_Init) {
-          setState(() {
-            message = event.field0;
-          });
+          tentenoneChangeNotifier.set(event.field0);
         }
       });
     } on FfiException catch (error) {
