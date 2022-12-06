@@ -19,7 +19,7 @@ class ServicePlaceholder extends StatelessWidget {
     return Scaffold(
         drawer: const Menu(),
         appBar: PreferredSize(
-            child: const AppBarWithBalance(balanceSelector: balanceSelector),
+            child: const SafeArea(child: AppBarWithBalance(balanceSelector: balanceSelector)),
             preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
         body: SafeArea(
           child: Padding(
