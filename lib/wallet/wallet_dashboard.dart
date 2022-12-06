@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:f_logs/f_logs.dart';
 import 'package:feedback/feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -113,14 +112,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
   }
 
   Future<void> _pullRefresh() async {
-    try {
-      await callSyncWithChain();
-      await callSyncPaymentHistory();
-      await callGetBalances();
-      FLog.info(text: "Done");
-    } catch (error) {
-      FLog.error(text: "Failed to get balances:" + error.toString());
-    }
+    await refreshWalletInfo();
   }
 }
 

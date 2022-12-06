@@ -1,11 +1,10 @@
-import 'package:f_logs/model/flog/flog.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
-import 'package:ten_ten_one/main.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
@@ -120,12 +119,6 @@ class WalletLightning extends StatelessWidget {
   }
 
   Future<void> _pullRefresh() async {
-    try {
-      await callSyncWithChain();
-      await callSyncPaymentHistory();
-      await callGetBalances();
-    } catch (error) {
-      FLog.error(text: "Failed to get balances:" + error.toString());
-    }
+    await context.read<WalletInfoChangeNotifier>().refreshWalletInfo();
   }
 }

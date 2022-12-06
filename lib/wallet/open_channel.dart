@@ -32,16 +32,11 @@ class _OpenChannelState extends State<OpenChannel> {
 
   @override
   void initState() {
-    final bitcoinBalance = context.read<BitcoinBalance>();
-
-    final totalBalance = bitcoinBalance.confirmed.asSats +
-        bitcoinBalance.pendingInternal.asSats +
-        bitcoinBalance.pendingExternal.asSats;
-
+    final walletChangeNotifier = context.read<WalletInfoChangeNotifier>();
+    final totalBalance = walletChangeNotifier.totalOnChain().asSats;
     final maxTakerChannelAmount = (totalBalance).clamp(0, OpenChannel.maxChannelAmount);
 
     takerChannelAmount = maxTakerChannelAmount;
-
     super.initState();
   }
 

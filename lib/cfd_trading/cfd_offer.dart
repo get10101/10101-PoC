@@ -10,7 +10,7 @@ import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
 import 'package:ten_ten_one/cfd_trading/position_selection.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/utilities/dropdown.dart';
 import 'package:ten_ten_one/utilities/tto_table.dart';
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -69,7 +69,7 @@ class _CfdOfferState extends State<CfdOffer> {
         .format(DateTime.fromMillisecondsSinceEpoch((order.calculateExpiry() * 1000)));
     final margin = Amount.fromBtc(order.marginTaker()).display(currency: Currency.sat).value;
 
-    final balance = context.watch<LightningBalance>().amount.asSats;
+    final balance = context.watch<WalletInfoChangeNotifier>().walletInfo.balance.offChain.available;
     final channel = context.watch<ChannelChangeNotifier>();
     final int takerAmount = Amount.fromBtc(order.marginTaker()).asSats;
 

@@ -61,6 +61,7 @@ flutter:
   assets:
     - assets/10101_logo.svg
     - assets/10101_logo.png
+    - assets/10101.finance_logo_1500x1500.png
     - satoshi_regular_black.svg
     - assets/Onboarding1-OneAppAllthingsBitcoin.png
     - assets/Onboarding2-YourKeysYourBitcoin.png

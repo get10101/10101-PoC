@@ -4,15 +4,18 @@ use crate::cfd::models::Cfd;
 use crate::cfd::models::Order;
 use crate::cfd::models::Position;
 use crate::config;
-use crate::connection;
+use crate::connection::connect;
 use crate::db;
 use crate::faucet;
 use crate::logger;
 use crate::offer;
 use crate::offer::Offer;
 use crate::wallet;
+use crate::wallet::is_first_channel_usable;
 use crate::wallet::Balance;
 use crate::wallet::LightningTransaction;
+use crate::wallet::OffChain;
+use crate::wallet::OnChain;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
@@ -49,33 +52,6 @@ impl Address {
     pub fn new(address: String) -> Address {
         Address { address }
     }
-}
-
-#[tokio::main(flavor = "current_thread")]
-pub async fn init_db(app_dir: String) -> Result<()> {
-    anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
-    let network = config::network();
-    db::init_db(
-        &Path::new(app_dir.as_str())
-            .join(network.to_string())
-            .join("taker.sqlite"),
-    )
-    .await
-}
-
-/// Test DB operation running from Flutter
-// FIXME: remove this call and instead use DB meaningfully - this is just a test whether the DB
-// works with Flutter and this
-#[tokio::main(flavor = "current_thread")]
-pub async fn test_db_connection() -> Result<()> {
-    let connection = db::acquire().await?;
-    tracing::info!(?connection);
-    Ok(())
-}
-
-pub fn init_wallet(path: String) -> Result<()> {
-    anyhow::ensure!(!path.is_empty(), "path must not be empty");
-    wallet::init_wallet(Path::new(path.as_str()))
 }
 
 pub enum ChannelState {
@@ -139,13 +115,121 @@ pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
     })
 }
 
+pub enum Event {
+    Init(String),
+    Ready,
+    WalletInfo(WalletInfo),
+    Offer(Option<Offer>),
+}
+
+pub struct WalletInfo {
+    pub balance: Balance,
+    pub bitcoin_history: Vec<BitcoinTxHistoryItem>,
+    pub lightning_history: Vec<LightningTransaction>,
+}
+
+impl WalletInfo {
+    fn new() -> WalletInfo {
+        WalletInfo {
+            balance: Balance {
+                on_chain: OnChain {
+                    trusted_pending: 0,
+                    untrusted_pending: 0,
+                    confirmed: 0,
+                },
+                off_chain: OffChain {
+                    available: 0,
+                    pending_close: 0,
+                },
+            },
+            bitcoin_history: vec![],
+            lightning_history: vec![],
+        }
+    }
+
+    async fn build_wallet_info() -> Result<WalletInfo> {
+        let balance = wallet::get_balance()?;
+        let bitcoin_history = get_bitcoin_tx_history().await?;
+        let lightning_history = wallet::get_lightning_history().await?;
+        Ok(WalletInfo {
+            balance,
+            bitcoin_history,
+            lightning_history,
+        })
+    }
+}
+
 #[tokio::main(flavor = "current_thread")]
-pub async fn run_ldk() -> Result<()> {
+pub async fn refresh_wallet_info() -> Result<WalletInfo> {
+    WalletInfo::build_wallet_info().await
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
+    let network = config::network();
+    anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
+    stream.add(Event::Init(format!("Initialising {network} wallet")));
+    wallet::init_wallet(Path::new(app_dir.as_str()))?;
+
+    stream.add(Event::Init("Initialising database".to_string()));
+    db::init_db(
+        &Path::new(app_dir.as_str())
+            .join(network.to_string())
+            .join("taker.sqlite"),
+    )
+    .await?;
+
     tracing::debug!("Starting ldk node");
+    stream.add(Event::Init("Starting full lightning node".to_string()));
     match wallet::run_ldk().await {
         Ok(_background_processor) => {
+            stream.add(Event::Init("Fetching an offer!".to_string()));
+            stream.add(Event::Offer(offer::get_offer().await));
+            stream.add(Event::Init("Fetching your balance".to_string()));
+            stream.add(Event::WalletInfo(
+                WalletInfo::build_wallet_info()
+                    .await
+                    .unwrap_or_else(|_| WalletInfo::new()),
+            ));
+
+            stream.add(Event::Ready);
             // keep connection with maker alive!
-            connection::keep_alive().await?;
+            let mut connected = false;
+
+            let mut wallet_sync_counter = 60;
+            let mut wallet_info_counter = 10;
+            loop {
+                if !connected || !is_first_channel_usable() {
+                    connected = connect().await?;
+                }
+
+                // every 5 seconds
+                stream.add(Event::Offer(offer::get_offer().await));
+
+                // every 60 seconds
+                if wallet_sync_counter == 60 {
+                    wallet::sync().unwrap_or_else(|e| tracing::error!(?e, "Failed to sync wallet"));
+                    wallet_sync_counter = 0;
+                }
+
+                // every 10 seconds
+                if wallet_info_counter == 10 {
+                    match WalletInfo::build_wallet_info().await {
+                        Ok(wallet_info) => {
+                            stream.add(Event::WalletInfo(wallet_info));
+                        }
+                        Err(e) => {
+                            tracing::error!(?e, "Failed to build wallet info");
+                        }
+                    }
+                    wallet_info_counter = 0;
+                }
+
+                wallet_sync_counter += 5;
+                wallet_info_counter += 5;
+                // looping here indefinitely to keep the connection with the maker alive.
+                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+            }
         }
         Err(err) => {
             tracing::error!("Error running LDK: {err}");
@@ -156,10 +240,6 @@ pub async fn run_ldk() -> Result<()> {
 
 pub fn get_balance() -> Result<Balance> {
     wallet::get_balance()
-}
-
-pub fn sync() -> Result<()> {
-    wallet::sync()
 }
 
 pub fn get_address() -> Result<Address> {
@@ -212,11 +292,6 @@ pub async fn open_cfd(order: Order) -> Result<()> {
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn get_offer() -> Result<Option<Offer>> {
-    offer::get_offer().await
-}
-
-#[tokio::main(flavor = "current_thread")]
 pub async fn call_faucet(address: String) -> Result<String> {
     anyhow::ensure!(
         !address.is_empty(),
@@ -227,9 +302,7 @@ pub async fn call_faucet(address: String) -> Result<String> {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn get_fee_recommendation() -> Result<u32> {
-    let fee_recommendation = wallet::get_fee_recommendation()?;
-
-    Ok(fee_recommendation)
+    wallet::get_fee_recommendation()
 }
 
 /// Settles a CFD with the given taker and maker amounts in sats
@@ -238,8 +311,7 @@ pub async fn settle_cfd(cfd: Cfd, offer: Offer) -> Result<()> {
     cfd::settle(&cfd, &offer).await
 }
 
-#[tokio::main(flavor = "current_thread")]
-pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
+async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
     let tx_history = wallet::get_bitcoin_tx_history()
         .await?
         .into_iter()
@@ -261,11 +333,6 @@ pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
         .collect::<Vec<_>>();
 
     Ok(tx_history)
-}
-
-#[tokio::main(flavor = "current_thread")]
-pub async fn get_lightning_tx_history() -> Result<Vec<LightningTransaction>> {
-    wallet::get_lightning_history().await
 }
 
 /// Initialise logging infrastructure for Rust

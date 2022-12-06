@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Flow;
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,7 +41,6 @@ import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/wallet/send.dart';
 import 'package:ten_ten_one/wallet/send_on_chain.dart';
-import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart' as bridge_definitions;
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
@@ -90,6 +89,7 @@ class TenTenOneApp extends StatefulWidget {
 class _TenTenOneState extends State<TenTenOneApp> {
   bool ready = false;
   bool showOnboarding = false;
+  String message = "Starting 10101 ...";
 
   @override
   void initState() {
@@ -104,17 +104,33 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   @override
   Widget build(BuildContext context) {
-    const mainColor = Colors.blue;
-
-    if (ready) {
-      FlutterNativeSplash.remove();
+    if (!ready) {
+      Timer(const Duration(milliseconds: 1500), () {
+        // delay removing the splash screen as otherwise the screen will jump due to loading the png
+        FlutterNativeSplash.remove();
+      });
+      return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+              body: Container(
+                  color: Colors.white,
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Center(child: Image.asset('assets/10101.finance_logo_1500x1500.png')),
+                    Center(
+                        child: Text(
+                      message,
+                      style: const TextStyle(fontSize: 18),
+                    )),
+                  ]))));
     }
+
     return BetterFeedback(
+      theme: FeedbackThemeData(background: Colors.white),
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'TenTenOne',
         theme: ThemeData(
-            primarySwatch: mainColor,
+            primarySwatch: Colors.blue,
             outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
                   minimumSize: const Size(100, 50),
@@ -137,6 +153,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
         routerConfig: _router,
       ),
     );
+    ;
   }
 
   final GoRouter _router = GoRouter(
@@ -289,35 +306,33 @@ class _TenTenOneState extends State<TenTenOneApp> {
       final appSupportDir = await getApplicationSupportDirectory();
       FLog.info(text: "App data will be stored in: " + appSupportDir.toString());
 
-      await api.initWallet(path: appSupportDir.path);
-      await api.initDb(appDir: appSupportDir.path);
-
       final isUserSeedBackupConfirmed =
           await TenTenOneSharedPreferences.instance.isUserSeedBackupConfirmed();
       final seedBackupModel = context.read<SeedBackupModel>();
       seedBackupModel.update(isUserSeedBackupConfirmed);
 
       FLog.info(text: "Starting ldk node");
-      api
-          .runLdk()
-          .then((value) => FLog.info(text: "ldk node stopped."))
-          .catchError((error) => FLog.error(text: "ldk stopped with an error", exception: error));
-
-      setState(() {
-        FLog.info(text: "TenTenOne is ready!");
-        ready = true;
+      api.run(appDir: appSupportDir.path).listen((event) {
+        if (event is Event_Ready) {
+          setState(() {
+            FLog.info(text: "Tentenone is ready!");
+            ready = true;
+          });
+        } else if (event is Event_Offer) {
+          cfdOffersChangeNotifier.update(event.field0);
+        } else if (event is Event_WalletInfo) {
+          processWalletInfo(event.field0);
+        } else if (event is Event_Init) {
+          setState(() {
+            message = event.field0;
+          });
+        }
       });
     } on FfiException catch (error) {
       FLog.error(text: "Failed to initialise: Error: " + error.message, exception: error);
     } catch (error) {
       FLog.error(text: "Failed to initialise: Unknown error");
     }
-
-    // consecutive syncs
-    runPeriodically(callGetBalances, seconds: 10);
-    runPeriodically(callSyncWithChain, seconds: 60);
-    runPeriodically(callSyncPaymentHistory, seconds: 10);
-    runPeriodically(callGetOffers, seconds: 5);
   }
 
   Future<void> setupRustLogging() async {
@@ -331,45 +346,33 @@ class _TenTenOneState extends State<TenTenOneApp> {
   }
 }
 
-Future<void> callSyncWithChain() async {
+Future<void> refreshWalletInfo() async {
   try {
-    await api.sync();
+    final walletInfo = await api.refreshWalletInfo();
+    await processWalletInfo(walletInfo);
+    FLog.trace(text: 'Successfully refreshed wallet info');
   } catch (error) {
-    FLog.error(text: "Failed to sync wallet:" + error.toString());
+    FLog.error(text: "Failed to get wallet info:" + error.toString());
   }
 }
 
-Future<void> callGetBalances() async {
-  try {
-    final balance = await api.getBalance();
-    bitcoinBalance.update(Amount(balance.onChain.confirmed), Amount(balance.onChain.trustedPending),
-        Amount(balance.onChain.untrustedPending), Amount(balance.offChain.pendingClose));
-    lightningBalance.update(Amount(balance.offChain.available));
-    FLog.trace(text: 'Successfully retrieved wallet balances');
-  } catch (error) {
-    FLog.error(text: "Failed to get balances:" + error.toString());
-  }
-}
+// TODO: it would be nicer if this logic would be wrapped into a wallet change notifier.
+Future<void> processWalletInfo(WalletInfo walletInfo) async {
+  final balance = walletInfo.balance;
+  bitcoinBalance.update(Amount(balance.onChain.confirmed), Amount(balance.onChain.trustedPending),
+      Amount(balance.onChain.untrustedPending), Amount(balance.offChain.pendingClose));
+  lightningBalance.update(Amount(balance.offChain.available));
+  FLog.trace(text: 'Successfully retrieved wallet balances');
 
-Future<void> callGetOffers() async {
-  final offer = await api.getOffer();
-  cfdOffersChangeNotifier.update(offer);
-  FLog.trace(text: 'Successfully fetched offers');
-}
-
-Future<void> callSyncPaymentHistory() async {
-  final bitcoinTxHistory = await api.getBitcoinTxHistory();
-  final lightningTxHistory = await api.getLightningTxHistory();
-
-  var lth = lightningTxHistory.map((e) {
+  var lth = walletInfo.lightningHistory.map((e) {
     var amount = Amount(e.sats);
     PaymentType type;
     switch (e.flow) {
-      case bridge_definitions.Flow.Inbound:
+      case Flow.Inbound:
         type = PaymentType.receive;
         amount = Amount(e.sats);
         break;
-      case bridge_definitions.Flow.Outbound:
+      case Flow.Outbound:
         type = PaymentType.send;
         amount = Amount(-e.sats);
         break;
@@ -390,7 +393,7 @@ Future<void> callSyncPaymentHistory() async {
     return PaymentHistoryItem(amount, type, status, e.createdTimestamp, e);
   }).toList();
 
-  var bph = bitcoinTxHistory.map((bitcoinTxHistoryItem) {
+  var bph = walletInfo.bitcoinHistory.map((bitcoinTxHistoryItem) {
     var amount = bitcoinTxHistoryItem.sent != 0
         ? Amount(
             (bitcoinTxHistoryItem.sent - bitcoinTxHistoryItem.received - bitcoinTxHistoryItem.fee) *
@@ -410,22 +413,6 @@ Future<void> callSyncPaymentHistory() async {
   paymentHistory.update(combinedList);
 
   FLog.trace(text: 'Successfully synced payment history');
-}
-
-void runPeriodically(void Function() callback, {seconds = 20}) {
-  _callback() {
-    try {
-      callback();
-    } on FfiException catch (error) {
-      FLog.error(text: 'Error: ' + error.message, exception: error);
-    }
-  }
-
-  _callback();
-
-  Timer.periodic(Duration(seconds: seconds), (timer) {
-    _callback();
-  });
 }
 
 class TenTenOneSharedPreferences {
