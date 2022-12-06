@@ -1,8 +1,11 @@
 import 'package:f_logs/model/flog/flog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
+import 'package:provider/provider.dart';
+import 'package:ten_ten_one/app_info_change_notifier.dart';
 import 'package:ten_ten_one/ffi.io.dart';
 import 'package:ten_ten_one/menu.dart';
+import 'package:ten_ten_one/utilities/tto_table.dart';
 
 class Settings extends StatefulWidget {
   static const route = "/" + subRouteName;
@@ -39,6 +42,17 @@ class _SettingsState extends State<Settings> {
 
   @override
   Widget build(BuildContext context) {
+    final appInfoChangeNotifier = context.read<AppInfoChangeNotifier>();
+    final version = appInfoChangeNotifier.appVersion;
+    final network = appInfoChangeNotifier.network;
+
+    var rows = [
+      TtoRow(label: '10101 App Version', value: version, type: ValueType.text),
+      TtoRow(label: 'Bitcoin Network', value: network, type: ValueType.text),
+      TtoRow(label: 'Maker Peer Info', value: makerPeerInfo, type: ValueType.text),
+      TtoRow(label: 'Your Node Id', value: nodeId, type: ValueType.text),
+    ];
+
     return Scaffold(
       drawer: const Menu(),
       appBar: AppBar(
@@ -47,33 +61,8 @@ class _SettingsState extends State<Settings> {
       body: SafeArea(
           child: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Table(
-          columnWidths: const <int, TableColumnWidth>{
-            0: FlexColumnWidth(),
-            1: FlexColumnWidth(),
-          },
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: <TableRow>[
-            buildTableRow("Maker Peer Info", makerPeerInfo),
-            buildTableRow("Your Node Id", nodeId),
-          ],
-        ),
+        child: TtoTable(rows),
       )),
-    );
-  }
-
-  TableRow buildTableRow(String title, String field) {
-    return TableRow(
-      children: <Widget>[
-        TableCell(
-          verticalAlignment: TableCellVerticalAlignment.middle,
-          child: Text(title),
-        ),
-        TableCell(
-          verticalAlignment: TableCellVerticalAlignment.middle,
-          child: SelectableText(field),
-        ),
-      ],
     );
   }
 }
