@@ -2,6 +2,7 @@ import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:provider/provider.dart';
+import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:go_router/go_router.dart';
 
@@ -145,7 +146,9 @@ class _SeedState extends State<Seed> {
                           onPressed: checked
                               ? () {
                                   final seedBackupModel = context.read<SeedBackupModel>();
-                                  seedBackupModel.update();
+                                  seedBackupModel.update(true);
+                                  TenTenOneSharedPreferences.instance
+                                      .setUserSeedBackupConfirmed(true);
                                   context.go('/');
                                 }
                               : null,

@@ -280,6 +280,11 @@ class _TenTenOneState extends State<TenTenOneApp> {
       await api.initWallet(path: appSupportDir.path);
       await api.initDb(appDir: appSupportDir.path);
 
+      final isUserSeedBackupConfirmed =
+          await TenTenOneSharedPreferences.instance.isUserSeedBackupConfirmed();
+      final seedBackupModel = context.read<SeedBackupModel>();
+      seedBackupModel.update(isUserSeedBackupConfirmed);
+
       FLog.info(text: "Starting ldk node");
       api
           .runLdk()
@@ -418,6 +423,7 @@ class TenTenOneSharedPreferences {
       TenTenOneSharedPreferences._privateConstructor();
 
   static const firstStartup = "firstStartup";
+  static const userSeedBackupConfirmed = "userSeedBackupConfirmed";
 
   setFirstStartup(bool value) async {
     SharedPreferences myPrefs = await SharedPreferences.getInstance();
@@ -427,5 +433,15 @@ class TenTenOneSharedPreferences {
   Future<bool> isFirstStartup() async {
     SharedPreferences myPrefs = await SharedPreferences.getInstance();
     return myPrefs.getBool(firstStartup) == null ? true : false;
+  }
+
+  setUserSeedBackupConfirmed(bool value) async {
+    SharedPreferences myPrefs = await SharedPreferences.getInstance();
+    myPrefs.setBool(userSeedBackupConfirmed, value);
+  }
+
+  Future<bool> isUserSeedBackupConfirmed() async {
+    SharedPreferences myPrefs = await SharedPreferences.getInstance();
+    return myPrefs.getBool(userSeedBackupConfirmed) ?? false;
   }
 }
