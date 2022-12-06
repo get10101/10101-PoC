@@ -21,22 +21,22 @@ class ChannelChangeNotifier extends ChangeNotifier {
   Message? validate() {
     if (isUnavailable()) {
       return Message(
-          title: 'No channel with 10101 maker',
-          details: 'You need an open channel with the 10101.',
+          title: 'No channel with 10101',
+          details: 'You need an open channel with 10101.',
           type: AlertType.warning);
     }
 
     if (isInitialising()) {
       return Message(
-          title: 'Channel not confirmed',
+          title: 'Channel not yet confirmed',
           details: 'Please wait until your channel has 1 confirmation.',
           type: AlertType.warning);
     }
 
     if (isDisconnected()) {
       return Message(
-          title: 'Disconnected maker',
-          details: 'You are currently not connected to the maker.',
+          title: 'Not connected to the 10101 node',
+          details: 'Automatically trying to reconnect to the 10101 Lightning node',
           type: AlertType.warning);
     }
 
@@ -62,8 +62,8 @@ class ChannelChangeNotifier extends ChangeNotifier {
         return null;
       case ChannelState.Disconnected:
         return CardDetails(
-            title: "Disconnected Maker",
-            subtitle: "Trying to reconnect to the 10101 maker.",
+            title: "Disconnected from 10101 ",
+            subtitle: "Automatically trying to reconnect to 10101 Lightning Node.",
             disabled: true,
             icon: _buildSpinningWheel());
       default:

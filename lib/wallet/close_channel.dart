@@ -48,7 +48,7 @@ class _CloseChannelState extends State<CloseChannel> {
                         style: const TextStyle(color: Colors.black, fontSize: 18),
                         children: [
                       const TextSpan(
-                          text: "This will close your Lightning channel with the 10101 maker\n\n",
+                          text: "This will close your Lightning channel with 10101\n\n",
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       TextSpan(
                           text:
