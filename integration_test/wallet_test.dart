@@ -1,13 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Balance;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:ten_ten_one/balance.dart';
+import 'package:ten_ten_one/bridge_generated/bridge_definitions.dart';
 import 'package:ten_ten_one/wallet/wallet_lightning.dart';
-import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 
@@ -29,9 +28,10 @@ final GoRouter _router = GoRouter(
   ],
 );
 
-Widget createWallet(balanceModel, seedBackupModel) => MultiProvider(
+Widget createWallet(walletChangeNotifier, seedBackupModel) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<LightningBalance>(create: (context) => balanceModel),
+          ChangeNotifierProvider<WalletInfoChangeNotifier>(
+              create: (context) => walletChangeNotifier),
           ChangeNotifierProvider<SeedBackupModel>(create: (context) => seedBackupModel)
         ],
         child: MaterialApp.router(
@@ -43,19 +43,24 @@ void main() {
 
   group('Wallet widget tests', () {
     testWidgets('test if balance is rendered', (tester) async {
-      await tester.pumpWidget(createWallet(LightningBalance(), SeedBackupModel()));
+      await tester.pumpWidget(createWallet(WalletInfoChangeNotifier(), SeedBackupModel()));
 
       expect(find.byType(Balance), findsOneWidget);
     });
 
     testWidgets('test if Bitcoin balance gets updated', (tester) async {
-      final balanceModel = LightningBalance();
-      await tester.pumpWidget(createWallet(balanceModel, SeedBackupModel()));
+      final walletChangeNotifier = WalletInfoChangeNotifier();
+      await tester.pumpWidget(createWallet(walletChangeNotifier, SeedBackupModel()));
 
       Text balance = find.byKey(const Key('bitcoinBalance')).evaluate().first.widget as Text;
       // balance is empty on start
       expect(balance.data, '0');
-      balanceModel.update(Amount(1001));
+      walletChangeNotifier.update(WalletInfo(
+          balance: Balance(
+              onChain: OnChain(trustedPending: 0, untrustedPending: 0, confirmed: 1001),
+              offChain: OffChain(available: 0, pendingClose: 0)),
+          bitcoinHistory: List.empty(),
+          lightningHistory: List.empty()));
       await tester.pumpAndSettle();
 
       balance = find.byKey(const Key('bitcoinBalance')).evaluate().first.widget as Text;

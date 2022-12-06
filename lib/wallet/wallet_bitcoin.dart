@@ -3,14 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/main.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/send_on_chain.dart';
 
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/payment_history_change_notifier.dart';
 
 class WalletBitcoin extends StatefulWidget {
   const WalletBitcoin({Key? key}) : super(key: key);
@@ -27,7 +26,7 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
 
   @override
   Widget build(BuildContext context) {
-    final history = context.watch<PaymentHistory>();
+    final history = context.watch<WalletInfoChangeNotifier>();
 
     List<Widget> widgets = [];
 
@@ -88,6 +87,6 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
   }
 
   Future<void> _pullRefresh() async {
-    await refreshWalletInfo();
+    await context.read<WalletInfoChangeNotifier>().refreshWalletInfo();
   }
 }

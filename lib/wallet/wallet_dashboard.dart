@@ -6,12 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
-import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/utilities/feedback.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
@@ -37,9 +35,8 @@ class _WalletDashboardState extends State<WalletDashboard> {
   @override
   Widget build(BuildContext context) {
     final seedBackupModel = context.watch<SeedBackupModel>();
-    final bitcoinBalance = context.watch<BitcoinBalance>();
-    final paymentHistory = context.watch<PaymentHistory>();
     final channel = context.watch<ChannelChangeNotifier>();
+    final walletChangeNotifier = context.watch<WalletInfoChangeNotifier>();
 
     List<Widget> widgets = [
       const ServiceNavigation(),
@@ -53,7 +50,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
           icon: const Icon(Icons.warning))));
     }
 
-    if (bitcoinBalance.total().asSats == 0) {
+    if (walletChangeNotifier.totalOnChain().asSats == 0) {
       widgets.add(ActionCard(CardDetails(
           route: FundWalletOnChain.route,
           title: "Deposit Bitcoin",
@@ -71,9 +68,9 @@ class _WalletDashboardState extends State<WalletDashboard> {
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       physics: const ClampingScrollPhysics(),
-      itemCount: paymentHistory.history.length,
+      itemCount: walletChangeNotifier.history.length,
       itemBuilder: (context, index) {
-        return PaymentHistoryListItem(data: paymentHistory.history[index]);
+        return PaymentHistoryListItem(data: walletChangeNotifier.history[index]);
       },
     );
 
@@ -112,7 +109,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
   }
 
   Future<void> _pullRefresh() async {
-    await refreshWalletInfo();
+    await context.read<WalletInfoChangeNotifier>().refreshWalletInfo();
   }
 }
 

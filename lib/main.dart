@@ -16,10 +16,8 @@ import 'package:ten_ten_one/cfd_trading/cfd_offer_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_confirmation.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_order_detail.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading.dart';
-import 'package:ten_ten_one/models/payment.model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
 import 'package:ten_ten_one/onboarding_tour.dart';
-import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
 import 'package:ten_ten_one/settings.dart';
 import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
@@ -31,9 +29,7 @@ import 'package:ten_ten_one/wallet/qr_scan.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/open_channel.dart';
 import 'package:ten_ten_one/wallet/wallet.dart';
-import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
-import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/wallet/receive.dart';
@@ -44,11 +40,9 @@ import 'package:ten_ten_one/wallet/send_on_chain.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:ten_ten_one/ffi.io.dart' if (dart.library.html) 'ffi.web.dart';
+import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 
-LightningBalance lightningBalance = LightningBalance();
-BitcoinBalance bitcoinBalance = BitcoinBalance();
 SeedBackupModel seedBackup = SeedBackupModel();
-PaymentHistory paymentHistory = PaymentHistory();
 CfdOfferChangeNotifier cfdOffersChangeNotifier = CfdOfferChangeNotifier();
 AppInfoChangeNotifier appInfoChangeNotifier = AppInfoChangeNotifier();
 
@@ -66,12 +60,10 @@ void main() {
   FLog.applyConfigurations(config);
 
   runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(create: (context) => lightningBalance),
-    ChangeNotifierProvider(create: (context) => bitcoinBalance),
     ChangeNotifierProvider(create: (context) => seedBackup),
-    ChangeNotifierProvider(create: (context) => paymentHistory),
     ChangeNotifierProvider(create: (context) => CfdTradingChangeNotifier().init()),
     ChangeNotifierProvider(create: (context) => QrScanChangeNotifier()),
+    ChangeNotifierProvider(create: (context) => WalletInfoChangeNotifier()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
     ChangeNotifierProvider(create: (context) => ChannelChangeNotifier().init()),
@@ -311,6 +303,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
       final seedBackupModel = context.read<SeedBackupModel>();
       seedBackupModel.update(isUserSeedBackupConfirmed);
 
+      final walletChangeNotifier = context.read<WalletInfoChangeNotifier>();
+
       FLog.info(text: "Starting ldk node");
       api.run(appDir: appSupportDir.path).listen((event) {
         if (event is Event_Ready) {
@@ -321,7 +315,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
         } else if (event is Event_Offer) {
           cfdOffersChangeNotifier.update(event.field0);
         } else if (event is Event_WalletInfo) {
-          processWalletInfo(event.field0);
+          walletChangeNotifier.update(event.field0);
         } else if (event is Event_Init) {
           setState(() {
             message = event.field0;
@@ -344,75 +338,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
       }
     });
   }
-}
-
-Future<void> refreshWalletInfo() async {
-  try {
-    final walletInfo = await api.refreshWalletInfo();
-    await processWalletInfo(walletInfo);
-    FLog.trace(text: 'Successfully refreshed wallet info');
-  } catch (error) {
-    FLog.error(text: "Failed to get wallet info:" + error.toString());
-  }
-}
-
-// TODO: it would be nicer if this logic would be wrapped into a wallet change notifier.
-Future<void> processWalletInfo(WalletInfo walletInfo) async {
-  final balance = walletInfo.balance;
-  bitcoinBalance.update(Amount(balance.onChain.confirmed), Amount(balance.onChain.trustedPending),
-      Amount(balance.onChain.untrustedPending), Amount(balance.offChain.pendingClose));
-  lightningBalance.update(Amount(balance.offChain.available));
-  FLog.trace(text: 'Successfully retrieved wallet balances');
-
-  var lth = walletInfo.lightningHistory.map((e) {
-    var amount = Amount(e.sats);
-    PaymentType type;
-    switch (e.flow) {
-      case Flow.Inbound:
-        type = PaymentType.receive;
-        amount = Amount(e.sats);
-        break;
-      case Flow.Outbound:
-        type = PaymentType.send;
-        amount = Amount(-e.sats);
-        break;
-    }
-    PaymentStatus status;
-    switch (e.status) {
-      case HTLCStatus.Failed:
-      case HTLCStatus.Expired:
-        status = PaymentStatus.failed;
-        break;
-      case HTLCStatus.Succeeded:
-        status = PaymentStatus.finalized;
-        break;
-      case HTLCStatus.Pending:
-        status = PaymentStatus.pending;
-        break;
-    }
-    return PaymentHistoryItem(amount, type, status, e.createdTimestamp, e);
-  }).toList();
-
-  var bph = walletInfo.bitcoinHistory.map((bitcoinTxHistoryItem) {
-    var amount = bitcoinTxHistoryItem.sent != 0
-        ? Amount(
-            (bitcoinTxHistoryItem.sent - bitcoinTxHistoryItem.received - bitcoinTxHistoryItem.fee) *
-                -1)
-        : Amount(bitcoinTxHistoryItem.received);
-
-    var type =
-        bitcoinTxHistoryItem.sent != 0 ? PaymentType.sendOnChain : PaymentType.receiveOnChain;
-
-    var status = bitcoinTxHistoryItem.isConfirmed ? PaymentStatus.finalized : PaymentStatus.pending;
-    return PaymentHistoryItem(
-        amount, type, status, bitcoinTxHistoryItem.timestamp, bitcoinTxHistoryItem);
-  }).toList();
-
-  final combinedList = [...bph, ...lth];
-  combinedList.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-  paymentHistory.update(combinedList);
-
-  FLog.trace(text: 'Successfully synced payment history');
 }
 
 class TenTenOneSharedPreferences {

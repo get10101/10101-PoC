@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 
-import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/utilities/submit_button.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
@@ -42,12 +42,10 @@ class _OpenChannelState extends State<OpenChannel> {
 
   @override
   Widget build(BuildContext context) {
-    final bitcoinBalance = context.watch<BitcoinBalance>();
-    final totalBalance = bitcoinBalance.confirmed.asSats +
-        bitcoinBalance.pendingInternal.asSats +
-        bitcoinBalance.pendingExternal.asSats;
+    final walletChangeNotifier = context.watch<WalletInfoChangeNotifier>();
+    final totalBalance = walletChangeNotifier.totalOnChain().asSats;
 
-    final maxTakerChannelAmount = (totalBalance).clamp(0, OpenChannel.maxChannelAmount);
+    final maxTakerChannelAmount = totalBalance.clamp(0, OpenChannel.maxChannelAmount);
 
     return Scaffold(
       appBar: AppBar(

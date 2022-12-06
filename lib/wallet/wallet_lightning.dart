@@ -13,15 +13,19 @@ import 'package:ten_ten_one/wallet/send.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
 
-class WalletLightning extends StatelessWidget {
+class WalletLightning extends StatefulWidget {
   const WalletLightning({Key? key}) : super(key: key);
 
   @override
+  State<WalletLightning> createState() => _WalletLightningState();
+}
+
+class _WalletLightningState extends State<WalletLightning> {
+  @override
   Widget build(BuildContext context) {
-    final history = context.watch<PaymentHistory>();
+    final history = context.watch<WalletInfoChangeNotifier>();
     final channel = context.watch<ChannelChangeNotifier>();
 
     List<Widget> widgets = [];

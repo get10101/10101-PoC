@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
 import 'package:ten_ten_one/ffi.io.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
+import 'package:ten_ten_one/models/wallet_info_change_notifier.dart';
 import 'package:ten_ten_one/utilities/submit_button.dart';
 
 class CloseChannel extends StatefulWidget {
@@ -29,8 +29,9 @@ class _CloseChannelState extends State<CloseChannel> {
 
   @override
   Widget build(BuildContext context) {
-    LightningBalance lightningBalance = context.watch<LightningBalance>();
-    closeAmount = lightningBalance.amount.display(currency: Currency.sat);
+    WalletInfoChangeNotifier walletChangeNotifier = context.watch<WalletInfoChangeNotifier>();
+    final lightningAmount = Amount(walletChangeNotifier.walletInfo.balance.offChain.available);
+    closeAmount = lightningAmount.display(currency: Currency.sat);
 
     return Scaffold(
       appBar: AppBar(

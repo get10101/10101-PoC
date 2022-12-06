@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/models/amount.model.dart';
 
-import 'models/balance_model.dart';
+import 'models/wallet_info_change_notifier.dart';
 
 enum BalanceSelector { bitcoin, lightning, both }
 
@@ -13,54 +13,54 @@ class Balance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<LightningBalance, BitcoinBalance>(
-      builder: (context, lightningBalance, bitcoinBalance, child) {
-        var bitcoinBalanceDisplay = bitcoinBalance.confirmed.display(currency: Currency.sat);
-        var bitcoinBalanceConfirmedDisplay =
-            bitcoinBalance.confirmed.display(currency: Currency.sat);
-        var bitcoinBalancePendingDisplay = bitcoinBalance.pending().display(currency: Currency.sat);
+    final walletChangeNotifier = context.watch<WalletInfoChangeNotifier>();
 
-        var lightningBalanceDisplay = lightningBalance.amount.display(currency: Currency.sat);
+    final onChain = walletChangeNotifier.walletInfo.balance.onChain;
+    final bitcoinBalanceConfirmedDisplay =
+        Amount(onChain.confirmed).display(currency: Currency.sat);
+    final bitcoinBalancePendingDisplay =
+        walletChangeNotifier.pending().display(currency: Currency.sat);
 
-        var bitcoinBalanceWidget = Tooltip(
-            richMessage: TextSpan(
-              text: 'Confirmed: ${bitcoinBalanceConfirmedDisplay.value} sats',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-              children: [
-                TextSpan(
-                  text: '\nPending:      ${bitcoinBalancePendingDisplay.value} sats',
-                  style: const TextStyle(fontWeight: FontWeight.normal),
-                )
-              ],
-            ),
-            child: BalanceRow(
-                value: bitcoinBalanceDisplay.value,
-                unit: bitcoinBalanceDisplay.unit,
-                icon: Icons.link,
-                smaller: balanceSelector == BalanceSelector.both));
-        var lightningBalanceWidget = BalanceRow(
-            value: lightningBalanceDisplay.value,
-            unit: lightningBalanceDisplay.unit,
-            icon: Icons.bolt_outlined,
-            smaller: balanceSelector == BalanceSelector.both);
+    final lightningBalance = Amount(walletChangeNotifier.walletInfo.balance.offChain.available);
+    var lightningBalanceDisplay = lightningBalance.display(currency: Currency.sat);
 
-        var balanceWidgets = Column();
+    var bitcoinBalanceWidget = Tooltip(
+        richMessage: TextSpan(
+          text: 'Confirmed: ${bitcoinBalanceConfirmedDisplay.value} sats',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+          children: [
+            TextSpan(
+              text: '\nPending:      ${bitcoinBalancePendingDisplay.value} sats',
+              style: const TextStyle(fontWeight: FontWeight.normal),
+            )
+          ],
+        ),
+        child: BalanceRow(
+            value: bitcoinBalanceConfirmedDisplay.value,
+            unit: bitcoinBalanceConfirmedDisplay.unit,
+            icon: Icons.link,
+            smaller: balanceSelector == BalanceSelector.both));
+    var lightningBalanceWidget = BalanceRow(
+        value: lightningBalanceDisplay.value,
+        unit: lightningBalanceDisplay.unit,
+        icon: Icons.bolt_outlined,
+        smaller: balanceSelector == BalanceSelector.both);
 
-        switch (balanceSelector) {
-          case BalanceSelector.bitcoin:
-            balanceWidgets = Column(children: [bitcoinBalanceWidget]);
-            break;
-          case BalanceSelector.lightning:
-            balanceWidgets = Column(children: [lightningBalanceWidget]);
-            break;
-          case BalanceSelector.both:
-            balanceWidgets = Column(children: [lightningBalanceWidget, bitcoinBalanceWidget]);
-            break;
-        }
+    var balanceWidgets = Column();
 
-        return balanceWidgets;
-      },
-    );
+    switch (balanceSelector) {
+      case BalanceSelector.bitcoin:
+        balanceWidgets = Column(children: [bitcoinBalanceWidget]);
+        break;
+      case BalanceSelector.lightning:
+        balanceWidgets = Column(children: [lightningBalanceWidget]);
+        break;
+      case BalanceSelector.both:
+        balanceWidgets = Column(children: [lightningBalanceWidget, bitcoinBalanceWidget]);
+        break;
+    }
+
+    return balanceWidgets;
   }
 }
 
