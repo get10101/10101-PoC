@@ -24,7 +24,7 @@ class OpenChannel extends StatefulWidget {
 }
 
 class _OpenChannelState extends State<OpenChannel> {
-  int takerChannelAmount = OpenChannel.maxChannelAmount;
+  late int takerChannelAmount;
   bool submitting = false;
 
   final _formKey = GlobalKey<FormState>();
@@ -32,12 +32,17 @@ class _OpenChannelState extends State<OpenChannel> {
 
   @override
   void initState() {
-    super.initState();
-  }
+    final bitcoinBalance = context.read<BitcoinBalance>();
 
-  @override
-  void dispose() {
-    super.dispose();
+    final totalBalance = bitcoinBalance.confirmed.asSats +
+        bitcoinBalance.pendingInternal.asSats +
+        bitcoinBalance.pendingExternal.asSats;
+
+    final maxTakerChannelAmount = (totalBalance).clamp(0, OpenChannel.maxChannelAmount);
+
+    takerChannelAmount = maxTakerChannelAmount;
+
+    super.initState();
   }
 
   @override
