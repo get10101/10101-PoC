@@ -103,7 +103,12 @@ class _WalletDashboardState extends State<WalletDashboard> {
             side: BorderSide(width: 1.0, color: Theme.of(context).primaryColor)),
         child: const Text('Provide feedback'),
         onPressed: () {
-          BetterFeedback.of(context).show(submitFeedback);
+          try {
+            BetterFeedback.of(context).show(submitFeedback);
+          } on Exception catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to share feedback via email app because: $e')));
+          }
         },
       ));
       widgets.add(const SizedBox(height: 10));
