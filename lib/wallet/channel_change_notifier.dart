@@ -18,7 +18,7 @@ class ChannelChangeNotifier extends ChangeNotifier {
 
   bool isUnavailable() => state == ChannelState.Unavailable;
 
-  Message? validate() {
+  Message? status() {
     if (isUnavailable()) {
       return Message(
           title: 'No channel with 10101',

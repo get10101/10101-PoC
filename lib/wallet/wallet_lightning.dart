@@ -70,7 +70,7 @@ class WalletLightning extends StatelessWidget {
       )
     ];
 
-    Message? message = channel.validate();
+    Message? message = channel.status();
 
     if (channel.isAvailable()) {
       dials.insert(

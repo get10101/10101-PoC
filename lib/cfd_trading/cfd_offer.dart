@@ -73,7 +73,7 @@ class _CfdOfferState extends State<CfdOffer> {
     final channel = context.watch<ChannelChangeNotifier>();
     final int takerAmount = Amount.fromBtc(order.marginTaker()).asSats;
 
-    Message? message = channel.validate();
+    Message? message = channel.status();
 
     if (noOffer && message == null) {
       message = Message(
