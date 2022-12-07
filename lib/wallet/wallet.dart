@@ -30,7 +30,7 @@ class _WalletState extends State<Wallet> {
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
+              icon: Icon(Icons.wallet),
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
@@ -45,13 +45,7 @@ class _WalletState extends State<Wallet> {
           currentIndex: walletChangeNotifier.selectedIndex,
           selectedItemColor: Theme.of(context).colorScheme.primary,
           onTap: (index) {
-            setState(() {
-              // setting the selected index should be sufficient but for some reason
-              // this is not triggering a rebuild even though the cfd trading state
-              // is watched. A manual re-rendering is triggered through the setState
-              // hook.
-              walletChangeNotifier.selectedIndex = index;
-            });
+            walletChangeNotifier.update(index);
           },
         ));
   }
