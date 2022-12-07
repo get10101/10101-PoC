@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2022-12-07
+
+### Fixed
+
+- Action button that enables simple navigation to the wallet dashboard from all screens that show the balance.
+- Don't auto open the keyboard in the CFD trading screen.
+- Default invoice description keyboard to text.
+- Persist feed backup state over restarts.
+
+### Added
+
+- Settings screen that shows some useful app information but does not allow changes yet.
+- Show connection status to `10101` in the app.
+
+### Changed
+
+- Form validation for the open channel screen providing the user with more information.
+- Detect expired lightning payments and show them.
+- Show the `confirmed` balance as `on-chain` balance instead of the `total` balance to avoid confusion when opening a channel.
+
 ## [0.3.1] - 2022-12-02
 
 ### Fixed
@@ -65,7 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Backup seed view
 - Mocked CFD trading view
 
-[Unreleased]: https://github.com/itchysats/10101/compare/0.3.1...HEAD
+[Unreleased]: https://github.com/itchysats/10101/compare/0.3.2...HEAD
+[0.3.2]: https://github.com/itchysats/10101/compare/0.3.1...0.3.2
 [0.3.1]: https://github.com/itchysats/10101/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/itchysats/10101/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/itchysats/10101/compare/0.2.0...0.2.1
