@@ -30,7 +30,7 @@ class _WalletState extends State<Wallet> {
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
+              icon: Icon(Icons.wallet),
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(

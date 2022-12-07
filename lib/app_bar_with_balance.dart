@@ -32,12 +32,10 @@ class AppBarWithBalance extends StatelessWidget {
 
     var actionButton = <Widget>[];
 
-    final icon = currentRoute == '/' ? Icons.home : Icons.wallet;
-
     if (!(currentRoute == '/' && walletIndex == 0)) {
       actionButton = [
         IconButton(
-          icon: Icon(icon),
+          icon: const Icon(Icons.wallet),
           tooltip: 'Wallet Dashboard',
           onPressed: () {
             walletChangeNotifier.update(0);
