@@ -199,7 +199,8 @@ pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
     stream.add(Event::Ready);
 
     // keep connection with maker alive
-    let connection_handle = connection::spawn();
+    let peer_manager = wallet::get_peer_manager()?;
+    let connection_handle = connection::spawn(peer_manager);
 
     // sync offer every 5 seconds
     let offer_handle = offer::spawn(stream.clone());
