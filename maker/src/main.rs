@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
             .await
             .expect("lightning node to run");
 
-        let node_info = wallet::get_node_info().expect("To get node id for maker");
+        let node_info = wallet::get_node_info();
         let public_key = node_info.node_id;
         let listening_address = format!("{public_key}@{lightning_p2p_address}");
         tracing::info!(listening_address, "Listening on");
