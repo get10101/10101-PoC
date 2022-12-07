@@ -7,7 +7,7 @@ use anyhow::Result;
 pub async fn keep_alive() -> Result<()> {
     let mut connected = false;
     loop {
-        if !connected || !is_first_channel_usable() {
+        if !connected || !is_first_channel_usable().await {
             connected = connect().await?;
         }
 

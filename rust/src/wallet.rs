@@ -46,9 +46,9 @@ use std::net::SocketAddr;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::sync::Mutex;
-use std::sync::MutexGuard;
 use std::time::Duration;
+use tokio::sync::Mutex;
+use tokio::sync::MutexGuard;
 use tokio::task::JoinHandle;
 
 /// Wallet has to be managed by Rust as generics are not support by frb
@@ -284,7 +284,7 @@ impl Wallet {
                 None => {
                     // Try to extract it from channel
                     let channel_manager = {
-                        let lightning = &get_wallet()?.lightning;
+                        let lightning = &get_wallet().await?.lightning;
                         lightning.channel_manager.clone()
                     };
 
@@ -417,12 +417,12 @@ impl Wallet {
 // XXX: Try not to make this function public - exposing MutexGuard is risky.
 // Instead, expose a free function that wraps this in a way that returns what
 // you're after.
-fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
-    WALLET
+async fn get_wallet() -> Result<MutexGuard<'static, Wallet>> {
+    Ok(WALLET
         .try_get()
         .context("Wallet uninitialised")?
         .lock()
-        .map_err(|_| anyhow!("cannot acquire wallet lock"))
+        .await)
 }
 
 /// Boilerplate wrappers for using Wallet with static functions in the library
@@ -434,46 +434,46 @@ pub fn init_wallet(data_dir: &Path) -> Result<()> {
 }
 
 pub async fn run_ldk() -> Result<BackgroundProcessor> {
-    let wallet = { (*get_wallet()?).clone() };
+    let wallet = { (*get_wallet().await?).clone() };
     wallet.run_ldk().await
 }
 
 pub async fn run_ldk_server(address: SocketAddr) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
-    let wallet = { (*get_wallet()?).clone() };
+    let wallet = { (*get_wallet().await?).clone() };
     wallet.run_ldk_server(address).await
 }
 
-pub fn node_id() -> Result<PublicKey> {
-    let node_id = get_wallet()?.get_node_id();
+pub async fn node_id() -> Result<PublicKey> {
+    let node_id = get_wallet().await?.get_node_id();
     Ok(node_id)
 }
 
-pub fn get_balance() -> Result<Balance> {
-    get_wallet()?.get_balance()
+pub async fn get_balance() -> Result<Balance> {
+    get_wallet().await?.get_balance()
 }
 
-pub fn sync() -> Result<()> {
+pub async fn sync() -> Result<()> {
     tracing::trace!("Wallet sync called");
-    let wallet = { (*get_wallet()?).clone() };
+    let wallet = { (*get_wallet().await?).clone() };
     wallet.sync()
 }
 
-pub fn network() -> Result<bitcoin::Network> {
-    Ok(get_wallet()?.network())
+pub async fn network() -> Result<bitcoin::Network> {
+    Ok(get_wallet().await?.network())
 }
 
-pub fn get_address() -> Result<bitcoin::Address> {
-    get_wallet()?.get_address()
+pub async fn get_address() -> Result<bitcoin::Address> {
+    get_wallet().await?.get_address()
 }
 
 pub async fn get_bitcoin_tx_history() -> Result<Vec<bdk::TransactionDetails>> {
-    let wallet = { (*get_wallet()?).clone() };
+    let wallet = { (*get_wallet().await?).clone() };
     let tx_history = wallet.get_bitcoin_tx_history().await?;
     Ok(tx_history)
 }
 
-pub fn get_channel_manager() -> Result<Arc<ChannelManager>> {
-    Ok(get_wallet()?.get_channel_manager())
+pub async fn get_channel_manager() -> Result<Arc<ChannelManager>> {
+    Ok(get_wallet().await?.get_channel_manager())
 }
 
 pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
@@ -498,8 +498,8 @@ pub async fn get_lightning_history() -> Result<Vec<LightningTransaction>> {
     Ok(payments)
 }
 
-pub fn get_seed_phrase() -> Result<Vec<String>> {
-    let seed_phrase = get_wallet()?.seed.get_seed_phrase();
+pub async fn get_seed_phrase() -> Result<Vec<String>> {
+    let seed_phrase = get_wallet().await?.seed.get_seed_phrase();
     Ok(seed_phrase)
 }
 
@@ -529,7 +529,7 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
     let maker_amount = taker_amount * 2;
     let channel_capacity = taker_amount + maker_amount;
 
-    let address_to_fund = get_address()?;
+    let address_to_fund = get_address().await?;
 
     let client = reqwest::Client::builder().timeout(TCP_TIMEOUT).build()?;
 
@@ -564,7 +564,10 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 
     let mut processing_sec_counter = 0;
     let sleep_secs = 5;
-    while get_wallet()?.get_script_status(address_to_fund.script_pubkey(), maker_funding_txid)?
+
+    while get_wallet()
+        .await?
+        .get_script_status(address_to_fund.script_pubkey(), maker_funding_txid)?
         == ScriptStatus::Unseen
     {
         processing_sec_counter += sleep_secs;
@@ -575,11 +578,11 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
         tokio::time::sleep(Duration::from_secs(sleep_secs)).await;
     }
 
-    get_wallet()?.sync().expect("To be able to sync");
+    get_wallet().await?.sync().expect("To be able to sync");
 
     // Open Channel
     let channel_manager = {
-        let lightning = &get_wallet()?.lightning;
+        let lightning = &get_wallet().await?.lightning;
         lightning.channel_manager.clone()
     };
 
@@ -589,15 +592,15 @@ pub async fn open_channel(peer_info: PeerInfo, taker_amount: u64) -> Result<()> 
 /// If the first channel is not usable, it might be because we've lost
 /// the connection with the 10101 maker, according to the
 /// `rust-lightning` logs.
-pub fn is_first_channel_usable() -> bool {
-    match get_first_channel_details() {
+pub async fn is_first_channel_usable() -> bool {
+    match get_first_channel_details().await {
         Some(channel_details) => channel_details.is_usable,
         None => false,
     }
 }
 
-pub fn get_first_channel_details() -> Option<ChannelDetails> {
-    let channel_manager = match &get_wallet() {
+pub async fn get_first_channel_details() -> Option<ChannelDetails> {
+    let channel_manager = match &get_wallet().await {
         Ok(wallet) => Some(wallet.lightning.channel_manager.clone()),
         Err(_) => None,
     }?;
@@ -607,7 +610,7 @@ pub fn get_first_channel_details() -> Option<ChannelDetails> {
 
 pub async fn connect() -> Result<()> {
     let peer_manager = {
-        let lightning = &get_wallet()?.lightning;
+        let lightning = &get_wallet().await?.lightning;
 
         lightning.peer_manager.clone()
     };
@@ -620,7 +623,7 @@ pub async fn connect() -> Result<()> {
 
 pub async fn close_channel(remote_node_id: PublicKey, force: bool) -> Result<()> {
     let channel_manager = {
-        let lightning = &get_wallet()?.lightning;
+        let lightning = &get_wallet().await?.lightning;
 
         lightning.channel_manager.clone()
     };
@@ -630,12 +633,12 @@ pub async fn close_channel(remote_node_id: PublicKey, force: bool) -> Result<()>
     Ok(())
 }
 
-pub fn send_to_address(address: Address, amount: u64) -> Result<Txid> {
-    get_wallet()?.send_to_address(address, amount)
+pub async fn send_to_address(address: Address, amount: u64) -> Result<Txid> {
+    get_wallet().await?.send_to_address(address, amount)
 }
 
-pub fn get_node_info() -> Result<NodeInfo> {
-    Ok(get_wallet()?.lightning.node_info())
+pub async fn get_node_info() -> Result<NodeInfo> {
+    Ok(get_wallet().await?.lightning.node_info())
 }
 
 pub async fn create_invoice(
@@ -644,7 +647,7 @@ pub async fn create_invoice(
     description: String,
 ) -> Result<String> {
     let (channel_manager, keys_manager, network, logger) = {
-        let wallet = get_wallet()?;
+        let wallet = get_wallet().await?;
         (
             wallet.lightning.channel_manager.clone(),
             wallet.lightning.keys_manager.clone(),
@@ -666,8 +669,8 @@ pub async fn create_invoice(
     .await
 }
 
-pub fn get_fee_recommendation() -> Result<u32> {
-    get_wallet()?.get_fee_recommendation()
+pub async fn get_fee_recommendation() -> Result<u32> {
+    get_wallet().await?.get_fee_recommendation()
 }
 
 pub enum LightningTransactionType {

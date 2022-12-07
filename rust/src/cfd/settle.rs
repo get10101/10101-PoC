@@ -27,7 +27,7 @@ pub async fn settle(cfd: &Cfd, offer: &Offer) -> Result<()> {
         .to_u64()
         .expect("decimal to fit into u64");
 
-    let channel_manager = wallet::get_channel_manager()?;
+    let channel_manager = wallet::get_channel_manager().await?;
 
     let custom_output_id = base64::decode(&cfd.custom_output_id)?;
     let custom_output_id: [u8; 32] = custom_output_id

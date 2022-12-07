@@ -23,7 +23,7 @@ pub async fn open(order: &Order) -> Result<()> {
         "Opening CFD",
     );
 
-    let channel_manager = wallet::get_channel_manager()?;
+    let channel_manager = wallet::get_channel_manager().await?;
     let channels = channel_manager.list_channels();
 
     tracing::info!("Channels: {channels:?}");

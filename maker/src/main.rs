@@ -36,11 +36,14 @@ async fn main() -> Result<()> {
             .await
             .expect("lightning node to run");
 
-        let node_info = wallet::get_node_info().expect("To get node id for maker");
+        let node_info = wallet::get_node_info()
+            .await
+            .expect("To get node id for maker");
         let public_key = node_info.node_id;
         let listening_address = format!("{public_key}@{lightning_p2p_address}");
         tracing::info!(listening_address, "Listening on");
         let address = wallet::get_address()
+            .await
             .expect("To get a new address")
             .to_string();
         tracing::info!(address, "New address");
@@ -48,11 +51,11 @@ async fn main() -> Result<()> {
         loop {
             let started = Instant::now();
 
-            if let Err(e) = wallet::sync() {
+            if let Err(e) = wallet::sync().await {
                 tracing::error!("Wallet sync failed: {e:#}");
             }
 
-            let wallet_result = wallet::get_balance();
+            let wallet_result = wallet::get_balance().await;
             let duration = started.elapsed();
             let sync_time_in_seconds = duration.as_secs();
             match wallet_result {

@@ -85,8 +85,9 @@ pub enum ChannelState {
     Available,
 }
 
-pub fn get_channel_state() -> ChannelState {
-    match wallet::get_first_channel_details() {
+#[tokio::main(flavor = "current_thread")]
+pub async fn get_channel_state() -> ChannelState {
+    match wallet::get_first_channel_details().await {
         Some(channel_details) => {
             if channel_details.is_usable {
                 ChannelState::Available
@@ -154,24 +155,28 @@ pub async fn run_ldk() -> Result<()> {
     Ok(())
 }
 
-pub fn get_balance() -> Result<Balance> {
-    wallet::get_balance()
+#[tokio::main(flavor = "current_thread")]
+pub async fn get_balance() -> Result<Balance> {
+    wallet::get_balance().await
 }
 
-pub fn sync() -> Result<()> {
-    wallet::sync()
+#[tokio::main(flavor = "current_thread")]
+pub async fn sync() -> Result<()> {
+    wallet::sync().await
 }
 
-pub fn get_address() -> Result<Address> {
-    Ok(Address::new(wallet::get_address()?.to_string()))
+#[tokio::main(flavor = "current_thread")]
+pub async fn get_address() -> Result<Address> {
+    Ok(Address::new(wallet::get_address().await?.to_string()))
 }
 
 pub fn maker_peer_info() -> String {
     config::maker_peer_info().to_string()
 }
 
-pub fn node_id() -> Result<String> {
-    wallet::node_id().map(|pk| pk.to_string())
+#[tokio::main(flavor = "current_thread")]
+pub async fn node_id() -> Result<String> {
+    wallet::node_id().await.map(|pk| pk.to_string())
 }
 
 pub fn network() -> SyncReturn<String> {
@@ -190,11 +195,12 @@ pub async fn close_channel() -> Result<()> {
     wallet::close_channel(peer_info.pubkey, false).await
 }
 
-pub fn send_to_address(address: String, amount: u64) -> Result<String> {
+#[tokio::main(flavor = "current_thread")]
+pub async fn send_to_address(address: String, amount: u64) -> Result<String> {
     anyhow::ensure!(!address.is_empty(), "cannot send to an empty address");
     let address = address.parse()?;
 
-    let txid = wallet::send_to_address(address, amount)?;
+    let txid = wallet::send_to_address(address, amount).await?;
     let txid = txid.to_string();
 
     Ok(txid)
@@ -227,9 +233,7 @@ pub async fn call_faucet(address: String) -> Result<String> {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn get_fee_recommendation() -> Result<u32> {
-    let fee_recommendation = wallet::get_fee_recommendation()?;
-
-    Ok(fee_recommendation)
+    wallet::get_fee_recommendation().await
 }
 
 /// Settles a CFD with the given taker and maker amounts in sats
@@ -273,10 +277,11 @@ pub fn init_logging(sink: StreamSink<logger::LogEntry>) {
     logger::create_log_stream(sink)
 }
 
-pub fn get_seed_phrase() -> Result<Vec<String>> {
+#[tokio::main(flavor = "current_thread")]
+pub async fn get_seed_phrase() -> Result<Vec<String>> {
     // The flutter rust bridge generator unfortunately complains when wrapping a ZeroCopyBuffer with
     // a Result. Hence we need to copy here (data isn't too big though, so that should be ok).
-    wallet::get_seed_phrase()
+    wallet::get_seed_phrase().await
 }
 
 #[tokio::main(flavor = "current_thread")]

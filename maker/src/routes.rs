@@ -46,7 +46,7 @@ pub async fn get_faucet(address: String) -> Result<Json<Txid>, HttpApiProblem> {
             .detail(format!("Provided address {address} was not valid: {e:#}"))
     })?;
 
-    let txid = send_to_address(address, 10_000).map_err(|e| {
+    let txid = send_to_address(address, 10_000).await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed to fund address")
             .detail(format!("{e:#}"))
@@ -132,20 +132,20 @@ pub struct WalletDetails {
 
 #[allow(clippy::result_large_err)]
 #[rocket::get("/wallet-details")]
-pub fn get_wallet_details() -> Result<Json<WalletDetails>, HttpApiProblem> {
-    let balance = get_balance().map_err(|e| {
+pub async fn get_wallet_details() -> Result<Json<WalletDetails>, HttpApiProblem> {
+    let balance = get_balance().await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed get new balance")
             .detail(format!("Internal wallet error: {e:#}"))
     })?;
 
-    let address = get_address().map_err(|e| {
+    let address = get_address().await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed get new address")
             .detail(format!("Internal wallet error: {e:#}"))
     })?;
 
-    let node_info = wallet::get_node_info().map_err(|e| {
+    let node_info = wallet::get_node_info().await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed get new address")
             .detail(format!("Internal wallet error: {e:#}"))
@@ -189,6 +189,7 @@ pub async fn post_open_channel(
     request: Json<OpenChannelRequest>,
 ) -> Result<Json<OpenChannelResponse>, HttpApiProblem> {
     let funding_txid = send_to_address(request.address_to_fund.clone(), request.fund_amount + 500)
+        .await
         .map_err(|e| {
             HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .title("Failed to open channel with maker")
@@ -206,7 +207,7 @@ pub async fn post_send_to_address(address: String, amount: u64) -> Result<String
             .detail("Invalid address")
     })?;
 
-    let txid = send_to_address(address, amount).map_err(|e| {
+    let txid = send_to_address(address, amount).await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed to send bitcoin to address")
             .detail(format!("{e:#}"))
@@ -271,6 +272,7 @@ pub struct ChannelConfig {
 #[rocket::get("/channel/list")]
 pub async fn get_channel_details() -> Result<Json<Vec<ChannelDetail>>, HttpApiProblem> {
     let list = get_channel_manager()
+        .await
         .map_err(|e| {
             HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .title("Failed to create lightning invoice")
@@ -318,7 +320,7 @@ pub async fn get_channel_details() -> Result<Json<Vec<ChannelDetail>>, HttpApiPr
 
 #[rocket::get("/node/info")]
 pub async fn get_node_info() -> Result<Json<NodeInfo>, HttpApiProblem> {
-    let info = wallet::get_node_info().map_err(|e| {
+    let info = wallet::get_node_info().await.map_err(|e| {
         HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
             .title("Failed to retrieve node info")
             .detail(format!("{e:#}"))
