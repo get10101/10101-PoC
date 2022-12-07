@@ -170,8 +170,8 @@ pub fn maker_peer_info() -> String {
     config::maker_peer_info().to_string()
 }
 
-pub fn node_id() -> Result<String> {
-    wallet::node_id().map(|pk| pk.to_string())
+pub fn node_id() -> String {
+    wallet::node_id().to_string()
 }
 
 pub fn network() -> SyncReturn<String> {
@@ -273,7 +273,7 @@ pub fn init_logging(sink: StreamSink<logger::LogEntry>) {
     logger::create_log_stream(sink)
 }
 
-pub fn get_seed_phrase() -> Result<Vec<String>> {
+pub fn get_seed_phrase() -> Vec<String> {
     // The flutter rust bridge generator unfortunately complains when wrapping a ZeroCopyBuffer with
     // a Result. Hence we need to copy here (data isn't too big though, so that should be ok).
     wallet::get_seed_phrase()

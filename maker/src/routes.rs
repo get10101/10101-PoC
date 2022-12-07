@@ -145,11 +145,8 @@ pub fn get_wallet_details() -> Result<Json<WalletDetails>, HttpApiProblem> {
             .detail(format!("Internal wallet error: {e:#}"))
     })?;
 
-    let node_info = wallet::get_node_info().map_err(|e| {
-        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .title("Failed get new address")
-            .detail(format!("Internal wallet error: {e:#}"))
-    })?;
+    let node_info = wallet::get_node_info();
+
     Ok(Json(WalletDetails {
         address,
         balance,
@@ -269,16 +266,9 @@ pub struct ChannelConfig {
 }
 
 #[rocket::get("/channel/list")]
-pub async fn get_channel_details() -> Result<Json<Vec<ChannelDetail>>, HttpApiProblem> {
+pub async fn get_channel_details() -> Json<Vec<ChannelDetail>> {
     let list = get_channel_manager()
-        .map_err(|e| {
-            HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
-                .title("Failed to create lightning invoice")
-                .detail(format!("{e:#}"))
-        })?
-        .list_channels();
-
-    let vec = list
+        .list_channels()
         .iter()
         .map(|cd| ChannelDetail {
             channel_id: hex::encode(cd.channel_id),
@@ -312,16 +302,10 @@ pub async fn get_channel_details() -> Result<Json<Vec<ChannelDetail>>, HttpApiPr
         })
         .collect::<Vec<_>>();
 
-    tracing::info!(?list, "Open channels: {}", list.len());
-    Ok(Json(vec))
+    Json(list)
 }
 
 #[rocket::get("/node/info")]
-pub async fn get_node_info() -> Result<Json<NodeInfo>, HttpApiProblem> {
-    let info = wallet::get_node_info().map_err(|e| {
-        HttpApiProblem::new(StatusCode::INTERNAL_SERVER_ERROR)
-            .title("Failed to retrieve node info")
-            .detail(format!("{e:#}"))
-    })?;
-    Ok(Json(info))
+pub async fn get_node_info() -> Json<NodeInfo> {
+    Json(wallet::get_node_info())
 }
