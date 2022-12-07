@@ -309,7 +309,7 @@ packages:
       name: flutter_rust_bridge
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.51.0"
+    version: "1.53.0"
   flutter_speed_dial:
     dependency: "direct main"
     description:

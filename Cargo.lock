@@ -652,6 +652,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dart-sys"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42fe64308f2072bb94ecd8f7557f9ac01b69d86e6199bac24be0f091ad74b092"
+
+[[package]]
 name = "devise"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -789,19 +795,23 @@ dependencies = [
 
 [[package]]
 name = "flutter_rust_bridge"
-version = "1.51.0"
+version = "1.53.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a46a779310d708f39fdac03654a501fe03c83f058c3ff23bb2ec819e0a519ac6"
+checksum = "f841f90e5d04d119e148cafc1118aa1bf67943a6e1e2587b96ca7db4919543e5"
 dependencies = [
  "allo-isolate",
  "anyhow",
  "build-target",
  "bytemuck",
+ "cc",
  "chrono",
  "console_error_panic_hook",
+ "dart-sys",
  "flutter_rust_bridge_macros",
  "js-sys",
  "lazy_static",
+ "libc",
+ "log",
  "parking_lot 0.12.1",
  "threadpool",
  "wasm-bindgen",
