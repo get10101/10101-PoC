@@ -4,18 +4,18 @@ use crate::cfd::models::Cfd;
 use crate::cfd::models::Order;
 use crate::cfd::models::Position;
 use crate::config;
-use crate::connection::connect;
+use crate::connection;
 use crate::db;
 use crate::faucet;
 use crate::logger;
 use crate::offer;
 use crate::offer::Offer;
 use crate::wallet;
-use crate::wallet::is_first_channel_usable;
 use crate::wallet::Balance;
 use crate::wallet::LightningTransaction;
 use crate::wallet::OffChain;
 use crate::wallet::OnChain;
+use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
@@ -29,12 +29,14 @@ use std::path::Path;
 use std::str::FromStr;
 use std::time::SystemTime;
 use time::Duration;
-pub use time::OffsetDateTime;
+use time::OffsetDateTime;
+use tokio::join;
 
 pub struct Address {
     pub address: String,
 }
 
+#[derive(Clone)]
 pub struct BitcoinTxHistoryItem {
     pub sent: u64,
     pub received: u64,
@@ -115,6 +117,7 @@ pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
     })
 }
 
+#[derive(Clone)]
 pub enum Event {
     Init(String),
     Ready,
@@ -122,6 +125,7 @@ pub enum Event {
     Offer(Option<Offer>),
 }
 
+#[derive(Clone)]
 pub struct WalletInfo {
     pub balance: Balance,
     pub bitcoin_history: Vec<BitcoinTxHistoryItem>,
@@ -179,63 +183,59 @@ pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
     )
     .await?;
 
+    stream.add(Event::Init("Fetching an offer!".to_string()));
+    stream.add(Event::Offer(offer::get_offer().await));
+    stream.add(Event::Init("Fetching your balance".to_string()));
+    stream.add(Event::WalletInfo(
+        WalletInfo::build_wallet_info()
+            .await
+            .unwrap_or_else(|_| WalletInfo::new()),
+    ));
+
     tracing::debug!("Starting ldk node");
     stream.add(Event::Init("Starting full lightning node".to_string()));
-    match wallet::run_ldk().await {
-        Ok(_background_processor) => {
-            stream.add(Event::Init("Fetching an offer!".to_string()));
-            stream.add(Event::Offer(offer::get_offer().await));
-            stream.add(Event::Init("Fetching your balance".to_string()));
-            stream.add(Event::WalletInfo(
-                WalletInfo::build_wallet_info()
-                    .await
-                    .unwrap_or_else(|_| WalletInfo::new()),
-            ));
 
-            stream.add(Event::Ready);
-            // keep connection with maker alive!
-            let mut connected = false;
+    let background_processor = wallet::run_ldk().await?;
+    stream.add(Event::Ready);
 
-            let mut wallet_sync_counter = 60;
-            let mut wallet_info_counter = 10;
-            loop {
-                if !connected || !is_first_channel_usable() {
-                    connected = connect().await?;
+    // keep connection with maker alive
+    let connection_handle = connection::spawn();
+
+    // sync offer every 5 seconds
+    let offer_handle = offer::spawn(stream.clone());
+
+    // sync wallet every 60 seconds
+    let wallet_sync_handle = tokio::spawn(async {
+        loop {
+            wallet::sync().unwrap_or_else(|e| tracing::error!(?e, "Failed to sync wallet"));
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+        }
+    });
+
+    // sync wallet info every 10 seconds
+    let wallet_info_stream = stream.clone();
+    let wallet_info_handle = tokio::spawn(async move {
+        loop {
+            match WalletInfo::build_wallet_info().await {
+                Ok(wallet_info) => {
+                    wallet_info_stream.add(Event::WalletInfo(wallet_info));
                 }
-
-                // every 5 seconds
-                stream.add(Event::Offer(offer::get_offer().await));
-
-                // every 60 seconds
-                if wallet_sync_counter == 60 {
-                    wallet::sync().unwrap_or_else(|e| tracing::error!(?e, "Failed to sync wallet"));
-                    wallet_sync_counter = 0;
+                Err(e) => {
+                    tracing::error!(?e, "Failed to build wallet info");
                 }
-
-                // every 10 seconds
-                if wallet_info_counter == 10 {
-                    match WalletInfo::build_wallet_info().await {
-                        Ok(wallet_info) => {
-                            stream.add(Event::WalletInfo(wallet_info));
-                        }
-                        Err(e) => {
-                            tracing::error!(?e, "Failed to build wallet info");
-                        }
-                    }
-                    wallet_info_counter = 0;
-                }
-
-                wallet_sync_counter += 5;
-                wallet_info_counter += 5;
-                // looping here indefinitely to keep the connection with the maker alive.
-                tokio::time::sleep(std::time::Duration::from_secs(5)).await;
             }
+            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
         }
-        Err(err) => {
-            tracing::error!("Error running LDK: {err}");
-        }
-    }
-    Ok(())
+    });
+
+    let _ = join!(
+        connection_handle,
+        offer_handle,
+        wallet_sync_handle,
+        wallet_info_handle,
+    );
+
+    background_processor.join().map_err(|e| anyhow!(e))
 }
 
 pub fn get_balance() -> Result<Balance> {

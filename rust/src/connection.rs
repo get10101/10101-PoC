@@ -1,9 +1,25 @@
 use crate::wallet;
-use anyhow::Result;
+use crate::wallet::is_first_channel_usable;
+use tokio::task::JoinHandle;
 
-pub async fn connect() -> Result<bool> {
+pub async fn spawn() -> JoinHandle<()> {
+    // keep connection with maker alive!
+    tokio::spawn(async {
+        let mut connected = false;
+        loop {
+            if !connected || !is_first_channel_usable() {
+                connected = connect().await;
+            }
+
+            // looping here indefinitely to keep the connection with the maker alive.
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        }
+    })
+}
+
+async fn connect() -> bool {
     let result = wallet::connect().await;
-    let connected = match result {
+    match result {
         Ok(()) => {
             tracing::info!("Successfully connected to maker");
             true
@@ -12,7 +28,5 @@ pub async fn connect() -> Result<bool> {
             tracing::warn!("Failed to connect to maker! {err:?}");
             false
         }
-    };
-
-    Ok(connected)
+    }
 }
