@@ -184,7 +184,7 @@ pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
     .await?;
 
     stream.add(Event::Init("Fetching an offer!".to_string()));
-    stream.add(Event::Offer(offer::get_offer().await));
+    stream.add(Event::Offer(offer::get_offer().await.ok()));
     stream.add(Event::Init("Fetching your balance".to_string()));
     stream.add(Event::WalletInfo(
         WalletInfo::build_wallet_info()
