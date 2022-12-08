@@ -54,18 +54,6 @@ impl Address {
     }
 }
 
-#[tokio::main(flavor = "current_thread")]
-pub async fn init_db(app_dir: String) -> Result<()> {
-    anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
-    let network = config::network();
-    db::init_db(
-        &Path::new(app_dir.as_str())
-            .join(network.to_string())
-            .join("taker.sqlite"),
-    )
-    .await
-}
-
 /// Test DB operation running from Flutter
 // FIXME: remove this call and instead use DB meaningfully - this is just a test whether the DB
 // works with Flutter and this
@@ -74,11 +62,6 @@ pub async fn test_db_connection() -> Result<()> {
     let connection = db::acquire().await?;
     tracing::info!(?connection);
     Ok(())
-}
-
-pub fn init_wallet(path: String) -> Result<()> {
-    anyhow::ensure!(!path.is_empty(), "path must not be empty");
-    wallet::init_wallet(Path::new(path.as_str()))
 }
 
 #[derive(Clone)]
@@ -145,6 +128,7 @@ pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
 
 #[derive(Clone)]
 pub enum Event {
+    Init(String),
     Ready,
     Offer(Option<Offer>),
     WalletInfo(Option<WalletInfo>),
@@ -196,14 +180,34 @@ impl WalletInfo {
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
-    tracing::debug!("Starting ldk node");
+pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
+    let network = config::network();
+    anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
+    stream.add(Event::Init(format!("Initialising {network} wallet")));
+    wallet::init_wallet(Path::new(app_dir.as_str()))?;
+
+    stream.add(Event::Init("Initialising database".to_string()));
+    db::init_db(
+        &Path::new(app_dir.as_str())
+            .join(network.to_string())
+            .join("taker.sqlite"),
+    )
+    .await?;
+
+    stream.add(Event::Init("Starting full ldk node".to_string()));
     let background_processor = wallet::run_ldk().await?;
+
+    stream.add(Event::Init("Fetching an offer".to_string()));
     stream.add(Event::Offer(offer::get_offer().await.ok()));
+
+    stream.add(Event::Init("Fetching your balance".to_string()));
     stream.add(Event::WalletInfo(
         WalletInfo::build_wallet_info().await.ok(),
     ));
+    stream.add(Event::Init("Checking channel state".to_string()));
     stream.add(Event::ChannelState(get_channel_state()));
+
+    stream.add(Event::Init("Ready".to_string()));
     stream.add(Event::Ready);
 
     // spawn a connection task keeping the connection with the maker alive.
