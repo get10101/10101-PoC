@@ -299,13 +299,15 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
       FLog.info(text: "Starting ldk node");
       api.runLdk().listen((event) {
-        switch (event) {
-          case Event.Ready:
-            setState(() {
-              FLog.info(text: "TenTenOne is ready!");
-              ready = true;
-            });
-            break;
+        if (event is Event_Ready) {
+          setState(() {
+            FLog.info(text: "TenTenOne is ready!");
+            ready = true;
+          });
+        } else if (event is Event_Offer) {
+          cfdOffersChangeNotifier.update(event.field0);
+        } else {
+          FLog.warning(text: "Received unexpected event: " + event.toString());
         }
       });
     } on FfiException catch (error) {
@@ -318,7 +320,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
     runPeriodically(callGetBalances, seconds: 10);
     runPeriodically(callSyncWithChain, seconds: 60);
     runPeriodically(callSyncPaymentHistory, seconds: 10);
-    runPeriodically(callGetOffers, seconds: 5);
   }
 
   Future<void> setupRustLogging() async {
@@ -350,12 +351,6 @@ Future<void> callGetBalances() async {
   } catch (error) {
     FLog.error(text: "Failed to get balances:" + error.toString());
   }
-}
-
-Future<void> callGetOffers() async {
-  final offer = await api.getOffer();
-  cfdOffersChangeNotifier.update(offer);
-  FLog.trace(text: 'Successfully fetched offers');
 }
 
 Future<void> callSyncPaymentHistory() async {

@@ -144,19 +144,24 @@ pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
 #[derive(Clone)]
 pub enum Event {
     Ready,
+    Offer(Option<Offer>),
 }
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     tracing::debug!("Starting ldk node");
     let background_processor = wallet::run_ldk().await?;
+    stream.add(Event::Offer(offer::get_offer().await.ok()));
     stream.add(Event::Ready);
 
     // spawn a connection task keeping the connection with the maker alive.
     let peer_manager = wallet::get_peer_manager()?;
     let connection_handle = connection::spawn(peer_manager);
 
-    try_join!(connection_handle)?;
+    // sync offers every 5 seconds
+    let offer_handle = offer::spawn(stream.clone());
+
+    try_join!(connection_handle, offer_handle)?;
     background_processor.join().map_err(|e| anyhow!(e))
 }
 
@@ -215,11 +220,6 @@ pub async fn list_cfds() -> Result<Vec<Cfd>> {
 #[tokio::main(flavor = "current_thread")]
 pub async fn open_cfd(order: Order) -> Result<()> {
     cfd::open(&order).await
-}
-
-#[tokio::main(flavor = "current_thread")]
-pub async fn get_offer() -> Result<Option<Offer>> {
-    offer::get_offer().await
 }
 
 #[tokio::main(flavor = "current_thread")]
