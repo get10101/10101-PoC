@@ -306,6 +306,19 @@ class _TenTenOneState extends State<TenTenOneApp> {
           });
         } else if (event is Event_Offer) {
           cfdOffersChangeNotifier.update(event.field0);
+        } else if (event is Event_WalletInfo) {
+          if (event.field0 == null) {
+            return;
+          }
+          final walletInfo = event.field0!;
+          final balance = walletInfo.balance;
+          bitcoinBalance.update(
+              Amount(balance.onChain.confirmed),
+              Amount(balance.onChain.trustedPending),
+              Amount(balance.onChain.untrustedPending),
+              Amount(balance.offChain.pendingClose));
+          lightningBalance.update(Amount(balance.offChain.available));
+          generatePaymentHistory(walletInfo.lightningHistory, walletInfo.bitcoinHistory);
         } else {
           FLog.warning(text: "Received unexpected event: " + event.toString());
         }
@@ -315,10 +328,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
     } catch (error) {
       FLog.error(text: "Failed to initialise: Unknown error");
     }
-
-    // consecutive syncs
-    runPeriodically(callGetBalances, seconds: 10);
-    runPeriodically(callSyncPaymentHistory, seconds: 10);
   }
 
   Future<void> setupRustLogging() async {
@@ -356,6 +365,11 @@ Future<void> callSyncPaymentHistory() async {
   final bitcoinTxHistory = await api.getBitcoinTxHistory();
   final lightningTxHistory = await api.getLightningTxHistory();
 
+  generatePaymentHistory(lightningTxHistory, bitcoinTxHistory);
+}
+
+void generatePaymentHistory(
+    List<LightningTransaction> lightningTxHistory, List<BitcoinTxHistoryItem> bitcoinTxHistory) {
   var lth = lightningTxHistory.map((e) {
     var amount = Amount(e.sats);
     PaymentType type;

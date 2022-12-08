@@ -34,6 +34,7 @@ pub struct Address {
     pub address: String,
 }
 
+#[derive(Clone)]
 pub struct BitcoinTxHistoryItem {
     pub sent: u64,
     pub received: u64,
@@ -135,6 +136,51 @@ pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
 pub enum Event {
     Ready,
     Offer(Option<Offer>),
+    WalletInfo(Option<WalletInfo>),
+}
+
+#[derive(Clone)]
+pub struct WalletInfo {
+    pub balance: Balance,
+    pub bitcoin_history: Vec<BitcoinTxHistoryItem>,
+    pub lightning_history: Vec<LightningTransaction>,
+}
+
+impl WalletInfo {
+    async fn build_wallet_info() -> Result<WalletInfo> {
+        let balance = wallet::get_balance()?;
+        let bitcoin_history = WalletInfo::get_bitcoin_tx_history().await?;
+        let lightning_history = wallet::get_lightning_history().await?;
+        Ok(WalletInfo {
+            balance,
+            bitcoin_history,
+            lightning_history,
+        })
+    }
+
+    async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
+        let tx_history = wallet::get_bitcoin_tx_history()
+            .await?
+            .into_iter()
+            .map(|tx| {
+                let (is_confirmed, timestamp) = match tx.confirmation_time {
+                    None => (false, OffsetDateTime::now_utc().unix_timestamp() as u64),
+                    Some(blocktime) => (true, blocktime.timestamp),
+                };
+
+                BitcoinTxHistoryItem {
+                    sent: tx.sent,
+                    received: tx.received,
+                    txid: tx.txid.to_string(),
+                    fee: tx.fee.unwrap_or(0),
+                    is_confirmed,
+                    timestamp,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tx_history)
+    }
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -142,6 +188,9 @@ pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     tracing::debug!("Starting ldk node");
     let background_processor = wallet::run_ldk().await?;
     stream.add(Event::Offer(offer::get_offer().await.ok()));
+    stream.add(Event::WalletInfo(
+        WalletInfo::build_wallet_info().await.ok(),
+    ));
     stream.add(Event::Ready);
 
     // spawn a connection task keeping the connection with the maker alive.
@@ -159,7 +208,24 @@ pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
         }
     });
 
-    try_join!(connection_handle, offer_handle, wallet_sync_handle)?;
+    // sync wallet info every 10 seconds
+    let wallet_info_stream = stream.clone();
+    let wallet_info_sync_handle = tokio::spawn(async move {
+        loop {
+            wallet_info_stream.add(Event::WalletInfo(
+                WalletInfo::build_wallet_info().await.ok(),
+            ));
+            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+        }
+    });
+
+    try_join!(
+        connection_handle,
+        offer_handle,
+        wallet_sync_handle,
+        wallet_info_sync_handle
+    )?;
+
     background_processor.join().map_err(|e| anyhow!(e))
 }
 
@@ -244,27 +310,7 @@ pub async fn settle_cfd(cfd: Cfd, offer: Offer) -> Result<()> {
 
 #[tokio::main(flavor = "current_thread")]
 pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
-    let tx_history = wallet::get_bitcoin_tx_history()
-        .await?
-        .into_iter()
-        .map(|tx| {
-            let (is_confirmed, timestamp) = match tx.confirmation_time {
-                None => (false, OffsetDateTime::now_utc().unix_timestamp() as u64),
-                Some(blocktime) => (true, blocktime.timestamp),
-            };
-
-            BitcoinTxHistoryItem {
-                sent: tx.sent,
-                received: tx.received,
-                txid: tx.txid.to_string(),
-                fee: tx.fee.unwrap_or(0),
-                is_confirmed,
-                timestamp,
-            }
-        })
-        .collect::<Vec<_>>();
-
-    Ok(tx_history)
+    WalletInfo::get_bitcoin_tx_history().await
 }
 
 #[tokio::main(flavor = "current_thread")]
