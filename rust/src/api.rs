@@ -13,6 +13,7 @@ use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::Balance;
 use crate::wallet::LightningTransaction;
+use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
@@ -139,19 +140,19 @@ pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
     })
 }
 
+#[derive(Clone)]
+pub enum Event {
+    Ready,
+}
+
 #[tokio::main(flavor = "current_thread")]
-pub async fn run_ldk() -> Result<()> {
+pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     tracing::debug!("Starting ldk node");
-    match wallet::run_ldk().await {
-        Ok(_background_processor) => {
-            // keep connection with maker alive!
-            connection::keep_alive().await?;
-        }
-        Err(err) => {
-            tracing::error!("Error running LDK: {err}");
-        }
-    }
-    Ok(())
+    let background_processor = wallet::run_ldk().await?;
+    stream.add(Event::Ready);
+    // keep connection with maker alive!
+    connection::keep_alive().await?;
+    background_processor.join().map_err(|e| anyhow!(e))
 }
 
 pub fn get_balance() -> Result<Balance> {

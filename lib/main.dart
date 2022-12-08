@@ -298,14 +298,15 @@ class _TenTenOneState extends State<TenTenOneApp> {
       seedBackupModel.update(isUserSeedBackupConfirmed);
 
       FLog.info(text: "Starting ldk node");
-      api
-          .runLdk()
-          .then((value) => FLog.info(text: "ldk node stopped."))
-          .catchError((error) => FLog.error(text: "ldk stopped with an error", exception: error));
-
-      setState(() {
-        FLog.info(text: "TenTenOne is ready!");
-        ready = true;
+      api.runLdk().listen((event) {
+        switch (event) {
+          case Event.Ready:
+            setState(() {
+              FLog.info(text: "TenTenOne is ready!");
+              ready = true;
+            });
+            break;
+        }
       });
     } on FfiException catch (error) {
       FLog.error(text: "Failed to initialise: Error: " + error.message, exception: error);
