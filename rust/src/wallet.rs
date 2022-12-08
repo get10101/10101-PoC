@@ -1,6 +1,5 @@
 use crate::config;
 use crate::config::maker_endpoint;
-use crate::config::maker_peer_info;
 use crate::config::TCP_TIMEOUT;
 use crate::db;
 use crate::db::clean_expired_payments;
@@ -13,6 +12,7 @@ use crate::lightning::HTLCStatus;
 use crate::lightning::LightningSystem;
 use crate::lightning::NodeInfo;
 use crate::lightning::PeerInfo;
+use crate::lightning::PeerManager;
 use crate::seed::Bip39Seed;
 use ::lightning::chain::chaininterface::ConfirmationTarget;
 use ::lightning::ln::channelmanager::ChannelDetails;
@@ -163,7 +163,7 @@ impl Wallet {
             .wallet
             .get_balance()
             .map_err(|_| anyhow!("Could not retrieve bdk wallet balance"))?;
-        tracing::debug!(%balance, "Wallet balance");
+        tracing::trace!(%balance, "Wallet balance");
         Ok(balance)
     }
 
@@ -485,6 +485,10 @@ pub fn get_seed_phrase() -> Vec<String> {
     get_wallet().seed.get_seed_phrase()
 }
 
+pub fn get_peer_manager() -> Result<Arc<PeerManager>> {
+    Ok(get_wallet().lightning.peer_manager.clone())
+}
+
 pub async fn send_lightning_payment(invoice: &str) -> Result<()> {
     let invoice = Invoice::from_str(invoice).context("Could not parse Invoice string")?;
     lightning::send_payment(&invoice).await?;
@@ -584,15 +588,6 @@ pub fn get_first_channel_details() -> Option<ChannelDetails> {
     let channel_manager = get_wallet().lightning.channel_manager.clone();
 
     channel_manager.list_channels().first().cloned()
-}
-
-pub async fn connect() -> Result<()> {
-    let peer_manager = get_wallet().lightning.peer_manager.clone();
-    let peer_info = maker_peer_info();
-    tracing::debug!("Connecting with {peer_info}");
-    lightning::connect_peer_if_necessary(&peer_info, peer_manager).await?;
-
-    Ok(())
 }
 
 pub async fn close_channel(remote_node_id: PublicKey, force: bool) -> Result<()> {
