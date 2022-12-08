@@ -22,6 +22,7 @@ import 'package:ten_ten_one/onboarding_tour.dart';
 import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/service_placeholders.dart';
 import 'package:ten_ten_one/settings.dart';
+import 'package:ten_ten_one/startup_change_notifier.dart';
 import 'package:ten_ten_one/wallet/bitcoin_tx_detail.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
@@ -77,6 +78,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
     ChangeNotifierProvider(create: (context) => ChannelChangeNotifier()),
     ChangeNotifierProvider(create: (context) => appInfoChangeNotifier),
+    ChangeNotifierProvider(create: (context) => StartupChangeNotifier()),
   ], child: const TenTenOneApp()));
 }
 
@@ -88,7 +90,6 @@ class TenTenOneApp extends StatefulWidget {
 }
 
 class _TenTenOneState extends State<TenTenOneApp> {
-  bool ready = false;
   bool showOnboarding = false;
 
   @override
@@ -106,9 +107,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
   Widget build(BuildContext context) {
     const mainColor = Colors.blue;
 
-    if (ready) {
-      FlutterNativeSplash.remove();
-    }
     return BetterFeedback(
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
@@ -144,6 +142,25 @@ class _TenTenOneState extends State<TenTenOneApp> {
         GoRoute(
             path: '/',
             builder: (BuildContext context, GoRouterState state) {
+              final tentenoneChangeNotifier = context.watch<StartupChangeNotifier>();
+              if (!tentenoneChangeNotifier.isReady()) {
+                Timer(const Duration(milliseconds: 750), () {
+                  // delay removing the splash screen as otherwise the screen will jump due to loading the png
+                  FlutterNativeSplash.remove();
+                });
+
+                return Scaffold(
+                    body: Container(
+                        color: Colors.white,
+                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Center(child: Image.asset('assets/10101.finance_logo_1500x1500.png')),
+                          Center(
+                              child: Text(
+                            tentenoneChangeNotifier.message(),
+                            style: const TextStyle(fontSize: 18),
+                          )),
+                        ])));
+              }
               return const Wallet();
             },
             routes: [
@@ -289,20 +306,19 @@ class _TenTenOneState extends State<TenTenOneApp> {
       final appSupportDir = await getApplicationSupportDirectory();
       FLog.info(text: "App data will be stored in: " + appSupportDir.toString());
 
-      await api.initWallet(path: appSupportDir.path);
-      await api.initDb(appDir: appSupportDir.path);
-
       final isUserSeedBackupConfirmed =
           await TenTenOneSharedPreferences.instance.isUserSeedBackupConfirmed();
       final seedBackupModel = context.read<SeedBackupModel>();
       seedBackupModel.update(isUserSeedBackupConfirmed);
 
+      final tentenoneChangeNotifier = context.read<StartupChangeNotifier>();
+
       FLog.info(text: "Starting ldk node");
-      api.runLdk().listen((event) {
+      api.run(appDir: appSupportDir.path).listen((event) {
         if (event is Event_Ready) {
           setState(() {
             FLog.info(text: "TenTenOne is ready!");
-            ready = true;
+            tentenoneChangeNotifier.ready();
           });
         } else if (event is Event_Offer) {
           cfdOffersChangeNotifier.update(event.field0);
@@ -321,6 +337,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
           generatePaymentHistory(walletInfo.lightningHistory, walletInfo.bitcoinHistory);
         } else if (event is Event_ChannelState) {
           context.read<ChannelChangeNotifier>().update(event.field0);
+        } else if (event is Event_Init) {
+          tentenoneChangeNotifier.set(event.field0);
         } else {
           FLog.warning(text: "Received unexpected event: " + event.toString());
         }
@@ -328,7 +346,7 @@ class _TenTenOneState extends State<TenTenOneApp> {
     } on FfiException catch (error) {
       FLog.error(text: "Failed to initialise: Error: " + error.message, exception: error);
     } catch (error) {
-      FLog.error(text: "Failed to initialise: Unknown error");
+      FLog.error(text: "Failed to initialise", exception: error);
     }
   }
 
