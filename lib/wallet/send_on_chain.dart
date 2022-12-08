@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ten_ten_one/ffi.io.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/utilities/submit_button.dart';
+import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 
 class SendOnChain extends StatefulWidget {
   const SendOnChain({Key? key}) : super(key: key);
@@ -25,8 +25,8 @@ class _SendOnChainState extends State<SendOnChain> {
   void initState() {
     super.initState();
 
-    final bitcoinBalance = context.read<BitcoinBalance>();
-    amount = bitcoinBalance.confirmed.asSats;
+    final wallet = context.read<WalletChangeNotifier>();
+    amount = wallet.onChain().confirmed;
   }
 
   @override

@@ -1,11 +1,9 @@
-import 'package:f_logs/model/flog/flog.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ten_ten_one/balance.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/cfd_trading/cfd_trading_change_notifier.dart';
 import 'package:ten_ten_one/cfd_trading/validation_error.dart';
-import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/close_channel.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
@@ -14,20 +12,20 @@ import 'package:ten_ten_one/wallet/send.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
+import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 
 class WalletLightning extends StatelessWidget {
   const WalletLightning({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final history = context.watch<PaymentHistory>();
     final channel = context.watch<ChannelChangeNotifier>();
+    final wallet = context.read<WalletChangeNotifier>();
 
     List<Widget> widgets = [];
 
-    final lightningHistory = history.lightningHistory();
+    final lightningHistory = wallet.lightningHistory();
     final paymentHistoryList = ListView.builder(
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
@@ -94,7 +92,7 @@ class WalletLightning extends StatelessWidget {
           preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
       body: SafeArea(
           child: RefreshIndicator(
-        onRefresh: _pullRefresh,
+        onRefresh: wallet.refreshWalletInfo,
         child: ListView(padding: const EdgeInsets.only(left: 25, right: 25), children: widgets),
       )),
       floatingActionButton: Visibility(
@@ -117,15 +115,5 @@ class WalletLightning extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _pullRefresh() async {
-    try {
-      await callSyncWithChain();
-      await callSyncPaymentHistory();
-      await callGetBalances();
-    } catch (error) {
-      FLog.error(text: "Failed to get balances:" + error.toString());
-    }
   }
 }

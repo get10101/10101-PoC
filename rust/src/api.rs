@@ -170,6 +170,12 @@ impl WalletInfo {
 }
 
 #[tokio::main(flavor = "current_thread")]
+pub async fn refresh_wallet_info() -> Result<WalletInfo> {
+    wallet::sync()?;
+    WalletInfo::build_wallet_info().await
+}
+
+#[tokio::main(flavor = "current_thread")]
 pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
     let network = config::network();
     anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
@@ -219,9 +225,12 @@ pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
     let wallet_info_stream = stream.clone();
     let wallet_info_sync_handle = tokio::spawn(async move {
         loop {
-            wallet_info_stream.add(Event::WalletInfo(
-                WalletInfo::build_wallet_info().await.ok(),
-            ));
+            match WalletInfo::build_wallet_info().await {
+                Ok(wallet_info) => {
+                    let _ = wallet_info_stream.add(Event::WalletInfo(Some(wallet_info)));
+                }
+                Err(e) => tracing::error!(?e, "Failed to build wallet info"),
+            }
             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
         }
     });
@@ -323,11 +332,6 @@ pub async fn get_fee_recommendation() -> Result<u32> {
 #[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(cfd: Cfd, offer: Offer) -> Result<()> {
     cfd::settle(&cfd, &offer).await
-}
-
-#[tokio::main(flavor = "current_thread")]
-pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
-    WalletInfo::get_bitcoin_tx_history().await
 }
 
 #[tokio::main(flavor = "current_thread")]

@@ -1,17 +1,15 @@
-import 'package:f_logs/f_logs.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:ten_ten_one/wallet/receive_on_chain.dart';
 import 'package:ten_ten_one/wallet/send_on_chain.dart';
 
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/payment_history_change_notifier.dart';
+import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 
 class WalletBitcoin extends StatefulWidget {
   const WalletBitcoin({Key? key}) : super(key: key);
@@ -28,7 +26,7 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
 
   @override
   Widget build(BuildContext context) {
-    final history = context.watch<PaymentHistory>();
+    final wallet = context.watch<WalletChangeNotifier>();
 
     List<Widget> widgets = [];
 
@@ -36,9 +34,9 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      itemCount: history.bitcoinHistory().length,
+      itemCount: wallet.bitcoinHistory().length,
       itemBuilder: (context, index) {
-        return PaymentHistoryListItem(data: history.bitcoinHistory()[index]);
+        return PaymentHistoryListItem(data: wallet.bitcoinHistory()[index]);
       },
     );
 
@@ -53,7 +51,7 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
           preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
       body: SafeArea(
           child: RefreshIndicator(
-              onRefresh: _pullRefresh,
+              onRefresh: wallet.refreshWalletInfo,
               child: ListView(
                   padding: const EdgeInsets.only(left: 25, right: 25), children: widgets))),
       floatingActionButton: SpeedDial(
@@ -86,15 +84,5 @@ class _WalletBitcoinState extends State<WalletBitcoin> {
         ],
       ),
     );
-  }
-
-  Future<void> _pullRefresh() async {
-    try {
-      await callSyncWithChain();
-      await callSyncPaymentHistory();
-      await callGetBalances();
-    } catch (error) {
-      FLog.error(text: "Failed to get balances:" + error.toString());
-    }
   }
 }
