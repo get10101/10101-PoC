@@ -634,50 +634,6 @@ pub async fn run_ldk_server(
     Ok((tcp_handle, background_processor))
 }
 
-pub async fn connect_peer_if_necessary(
-    peer: &PeerInfo,
-    peer_manager: Arc<PeerManager>,
-) -> Result<()> {
-    for node_pubkey in peer_manager.get_peer_node_ids() {
-        if node_pubkey == peer.pubkey {
-            return Ok(());
-        }
-    }
-    match lightning_net_tokio::connect_outbound(
-        Arc::clone(&peer_manager),
-        peer.pubkey,
-        peer.peer_addr,
-    )
-    .await
-    {
-        Some(connection_closed_future) => {
-            tracing::info!("Connected with {peer}");
-            let mut connection_closed_future = Box::pin(connection_closed_future);
-            loop {
-                match futures::poll!(&mut connection_closed_future) {
-                    std::task::Poll::Ready(_) => {
-                        bail!("ERROR: Peer disconnected before we finished the handshake");
-                    }
-                    std::task::Poll::Pending => {}
-                }
-                // Avoid blocking the tokio context by sleeping a bit
-                match peer_manager
-                    .get_peer_node_ids()
-                    .iter()
-                    .find(|id| **id == peer.pubkey)
-                {
-                    Some(_) => break,
-                    None => tokio::time::sleep(Duration::from_millis(10)).await,
-                }
-            }
-        }
-        None => {
-            bail!("ERROR: failed to connect to peer");
-        }
-    }
-    Ok(())
-}
-
 #[allow(clippy::too_many_arguments)]
 async fn handle_ldk_events(
     channel_manager: Arc<ChannelManager>,

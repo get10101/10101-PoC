@@ -28,6 +28,7 @@ use std::str::FromStr;
 use std::time::SystemTime;
 use time::Duration;
 pub use time::OffsetDateTime;
+use tokio::try_join;
 
 pub struct Address {
     pub address: String,
@@ -140,8 +141,12 @@ pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     tracing::debug!("Starting ldk node");
     let background_processor = wallet::run_ldk().await?;
     stream.add(Event::Ready);
-    // keep connection with maker alive!
-    connection::keep_alive().await?;
+
+    // spawn a connection task keeping the connection with the maker alive.
+    let peer_manager = wallet::get_peer_manager()?;
+    let connection_handle = connection::spawn(peer_manager);
+
+    try_join!(connection_handle)?;
     background_processor.join().map_err(|e| anyhow!(e))
 }
 
