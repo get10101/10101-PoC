@@ -75,7 +75,7 @@ void main() {
     ChangeNotifierProvider(create: (context) => QrScanChangeNotifier()),
     ChangeNotifierProvider(create: (context) => WalletChangeNotifier()),
     ChangeNotifierProvider(create: (context) => cfdOffersChangeNotifier),
-    ChangeNotifierProvider(create: (context) => ChannelChangeNotifier().init()),
+    ChangeNotifierProvider(create: (context) => ChannelChangeNotifier()),
     ChangeNotifierProvider(create: (context) => appInfoChangeNotifier),
   ], child: const TenTenOneApp()));
 }
@@ -319,6 +319,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
               Amount(balance.offChain.pendingClose));
           lightningBalance.update(Amount(balance.offChain.available));
           generatePaymentHistory(walletInfo.lightningHistory, walletInfo.bitcoinHistory);
+        } else if (event is Event_ChannelState) {
+          context.read<ChannelChangeNotifier>().update(event.field0);
         } else {
           FLog.warning(text: "Received unexpected event: " + event.toString());
         }
