@@ -81,6 +81,7 @@ pub fn init_wallet(path: String) -> Result<()> {
     wallet::init_wallet(Path::new(path.as_str()))
 }
 
+#[derive(Clone)]
 pub enum ChannelState {
     Unavailable,
     Establishing,
@@ -88,7 +89,7 @@ pub enum ChannelState {
     Available,
 }
 
-pub fn get_channel_state() -> ChannelState {
+fn get_channel_state() -> ChannelState {
     match wallet::get_first_channel_details() {
         Some(channel_details) => {
             if channel_details.is_usable {
@@ -147,6 +148,7 @@ pub enum Event {
     Ready,
     Offer(Option<Offer>),
     WalletInfo(Option<WalletInfo>),
+    ChannelState(ChannelState),
 }
 
 #[derive(Clone)]
@@ -201,6 +203,7 @@ pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     stream.add(Event::WalletInfo(
         WalletInfo::build_wallet_info().await.ok(),
     ));
+    stream.add(Event::ChannelState(get_channel_state()));
     stream.add(Event::Ready);
 
     // spawn a connection task keeping the connection with the maker alive.
@@ -229,11 +232,21 @@ pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
         }
     });
 
+    // sync channel state every 5 seconds
+    let channel_state_stream = stream.clone();
+    let channel_state_handle = tokio::spawn(async move {
+        loop {
+            channel_state_stream.add(Event::ChannelState(get_channel_state()));
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        }
+    });
+
     try_join!(
         connection_handle,
         offer_handle,
         wallet_sync_handle,
-        wallet_info_sync_handle
+        wallet_info_sync_handle,
+        channel_state_handle,
     )?;
 
     background_processor.join().map_err(|e| anyhow!(e))
