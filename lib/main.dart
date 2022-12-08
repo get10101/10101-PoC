@@ -318,7 +318,6 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
     // consecutive syncs
     runPeriodically(callGetBalances, seconds: 10);
-    runPeriodically(callSyncWithChain, seconds: 60);
     runPeriodically(callSyncPaymentHistory, seconds: 10);
   }
 
