@@ -638,11 +638,13 @@ pub fn get_fee_recommendation() -> Result<u32> {
     get_wallet().get_fee_recommendation()
 }
 
+#[derive(Clone)]
 pub enum LightningTransactionType {
     Payment,
     Cfd,
 }
 
+#[derive(Clone)]
 pub struct LightningTransaction {
     pub tx_type: LightningTransactionType,
     pub flow: Flow,
