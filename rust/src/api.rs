@@ -151,7 +151,15 @@ pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     // sync offers every 5 seconds
     let offer_handle = offer::spawn(stream.clone());
 
-    try_join!(connection_handle, offer_handle)?;
+    // sync wallet every 60 seconds
+    let wallet_sync_handle = tokio::spawn(async {
+        loop {
+            wallet::sync().unwrap_or_else(|e| tracing::error!(?e, "Failed to sync wallet"));
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+        }
+    });
+
+    try_join!(connection_handle, offer_handle, wallet_sync_handle)?;
     background_processor.join().map_err(|e| anyhow!(e))
 }
 
