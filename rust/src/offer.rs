@@ -1,41 +1,44 @@
+use crate::api::Event;
 use crate::config::maker_endpoint;
 use anyhow::anyhow;
 use anyhow::bail;
 use anyhow::Result;
+use flutter_rust_bridge::StreamSink;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use serde::Serialize;
+use tokio::task::JoinHandle;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Offer {
     pub bid: f64,
     pub ask: f64,
     pub index: f64,
 }
 
-pub async fn get_offer() -> Result<Option<Offer>> {
+pub fn spawn(stream: StreamSink<Event>) -> JoinHandle<()> {
+    tokio::spawn(async move {
+        loop {
+            let offer = get_offer().await.ok();
+            stream.add(Event::Offer(offer));
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        }
+    })
+}
+
+pub async fn get_offer() -> Result<Offer> {
     let client = reqwest::Client::builder()
         .timeout(crate::config::TCP_TIMEOUT)
         .build()?;
-    let result = client.get(maker_endpoint() + "/api/offer").send().await;
-    let response = match result {
-        Ok(res) => res,
-        Err(err) => {
-            tracing::error!("Could not fetch offers {err:?}");
-            return Ok(None);
-        }
-    };
+    let response = client.get(maker_endpoint() + "/api/offer").send().await?;
 
     if response.status() == StatusCode::NOT_FOUND
         || response.status() == StatusCode::INTERNAL_SERVER_ERROR
     {
         let response = response.text().await?;
-        bail!("Failed to fetch offer: {response}")
+        tracing::debug!("Failed to fetch offer: {response}");
+        bail!("Failed to fetch offer: {response}");
     }
 
-    let result = response
-        .json::<Offer>()
-        .await
-        .map_err(|e| anyhow!("Failed to fetch offer {e:?}"))?;
-    Ok(Some(result))
+    response.json::<Offer>().await.map_err(|e| anyhow!(e))
 }
