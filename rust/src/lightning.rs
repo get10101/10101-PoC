@@ -88,7 +88,7 @@ use tokio::runtime;
 use tokio::task::JoinHandle;
 
 /// has to be managed by Rust as generics are not support by frb
-static INVOICE_PAYER: Storage<Mutex<Arc<BdkLdkInvoicePayer>>> = Storage::new();
+static INVOICE_PAYER: Storage<Arc<BdkLdkInvoicePayer>> = Storage::new();
 
 #[derive(Serialize)]
 pub struct NodeInfo {
@@ -581,7 +581,7 @@ pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         payment::Retry::Timeout(Duration::from_secs(10)),
     ));
 
-    INVOICE_PAYER.set(Mutex::new(invoice_payer.clone()));
+    INVOICE_PAYER.set(invoice_payer.clone());
 
     // Step 19: Background Processing
     let background_processor = BackgroundProcessor::start(
@@ -1118,9 +1118,7 @@ pub async fn send_payment(invoice: &Invoice) -> Result<()> {
     let status = {
         let invoice_payer = INVOICE_PAYER
             .try_get()
-            .context("LDK not running - no invoice payer")?
-            .lock()
-            .map_err(|e| anyhow!("could not acquire mutex: {e:#}"))?;
+            .context("LDK not running - no invoice payer")?;
         match invoice_payer.pay_invoice(invoice) {
             Ok(_payment_id) => {
                 let payee_pubkey = invoice.recover_payee_pub_key();
