@@ -38,7 +38,7 @@ class AppBarWithBalance extends StatelessWidget {
           icon: const Icon(Icons.wallet),
           tooltip: 'Wallet Dashboard',
           onPressed: () {
-            walletChangeNotifier.update(0);
+            walletChangeNotifier.set(0);
             GoRouter.of(context).go('/');
           },
         )

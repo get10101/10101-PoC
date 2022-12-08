@@ -45,7 +45,7 @@ class _WalletState extends State<Wallet> {
           currentIndex: walletChangeNotifier.selectedIndex,
           selectedItemColor: Theme.of(context).colorScheme.primary,
           onTap: (index) {
-            walletChangeNotifier.update(index);
+            walletChangeNotifier.set(index);
           },
         ));
   }

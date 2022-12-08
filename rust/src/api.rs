@@ -196,13 +196,19 @@ impl WalletInfo {
 }
 
 #[tokio::main(flavor = "current_thread")]
+pub async fn refresh_wallet_info() -> Result<WalletInfo> {
+    wallet::sync()?;
+    WalletInfo::build_wallet_info().await
+}
+
+#[tokio::main(flavor = "current_thread")]
 pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     tracing::debug!("Starting ldk node");
     let background_processor = wallet::run_ldk().await?;
-    stream.add(Event::Offer(offer::get_offer().await.ok()));
     stream.add(Event::WalletInfo(
         WalletInfo::build_wallet_info().await.ok(),
     ));
+    stream.add(Event::Offer(offer::get_offer().await.ok()));
     stream.add(Event::ChannelState(get_channel_state()));
     stream.add(Event::Ready);
 
@@ -225,9 +231,10 @@ pub async fn run_ldk(stream: StreamSink<Event>) -> Result<()> {
     let wallet_info_stream = stream.clone();
     let wallet_info_sync_handle = tokio::spawn(async move {
         loop {
-            wallet_info_stream.add(Event::WalletInfo(
-                WalletInfo::build_wallet_info().await.ok(),
-            ));
+            match WalletInfo::build_wallet_info().await {
+                Ok(wallet_info) => wallet_info_stream.add(Event::WalletInfo(Some(wallet_info))),
+                Err(e) => tracing::error!(?e, "Failed to build wallet info"),
+            }
             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
         }
     });
@@ -329,11 +336,6 @@ pub async fn get_fee_recommendation() -> Result<u32> {
 #[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(cfd: Cfd, offer: Offer) -> Result<()> {
     cfd::settle(&cfd, &offer).await
-}
-
-#[tokio::main(flavor = "current_thread")]
-pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
-    WalletInfo::get_bitcoin_tx_history().await
 }
 
 #[tokio::main(flavor = "current_thread")]

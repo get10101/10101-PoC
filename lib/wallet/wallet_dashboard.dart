@@ -1,24 +1,21 @@
 import 'dart:io';
 
-import 'package:f_logs/f_logs.dart';
 import 'package:feedback/feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/app_bar_with_balance.dart';
 import 'package:ten_ten_one/balance.dart';
-import 'package:ten_ten_one/main.dart';
 import 'package:ten_ten_one/menu.dart';
-import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/models/seed_backup_model.dart';
 import 'package:ten_ten_one/models/service_model.dart';
-import 'package:ten_ten_one/payment_history_change_notifier.dart';
 import 'package:ten_ten_one/utilities/feedback.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
 import 'package:ten_ten_one/wallet/fund_wallet_on_chain.dart';
 import 'package:ten_ten_one/wallet/payment_history_list_item.dart';
 import 'package:ten_ten_one/wallet/seed.dart';
 import 'package:ten_ten_one/wallet/service_card.dart';
+import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 
 import 'action_card.dart';
 
@@ -38,8 +35,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
   @override
   Widget build(BuildContext context) {
     final seedBackupModel = context.watch<SeedBackupModel>();
-    final bitcoinBalance = context.watch<BitcoinBalance>();
-    final paymentHistory = context.watch<PaymentHistory>();
+    final wallet = context.watch<WalletChangeNotifier>();
     final channel = context.watch<ChannelChangeNotifier>();
 
     List<Widget> widgets = [
@@ -54,7 +50,7 @@ class _WalletDashboardState extends State<WalletDashboard> {
           icon: const Icon(Icons.warning))));
     }
 
-    if (bitcoinBalance.total().asSats == 0) {
+    if (wallet.totalOnChain().asSats == 0) {
       widgets.add(ActionCard(CardDetails(
           route: FundWalletOnChain.route,
           title: "Deposit Bitcoin",
@@ -72,9 +68,9 @@ class _WalletDashboardState extends State<WalletDashboard> {
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       physics: const ClampingScrollPhysics(),
-      itemCount: paymentHistory.history.length,
+      itemCount: wallet.history.length,
       itemBuilder: (context, index) {
-        return PaymentHistoryListItem(data: paymentHistory.history[index]);
+        return PaymentHistoryListItem(data: wallet.history[index]);
       },
     );
 
@@ -107,20 +103,9 @@ class _WalletDashboardState extends State<WalletDashboard> {
             preferredSize: Size.fromHeight(balanceSelector.preferredHeight)),
         body: SafeArea(
             child: RefreshIndicator(
-                onRefresh: _pullRefresh,
+                onRefresh: wallet.refreshWalletInfo,
                 child: ListView(
                     padding: const EdgeInsets.only(left: 20, right: 20), children: widgets))));
-  }
-
-  Future<void> _pullRefresh() async {
-    try {
-      await callSyncWithChain();
-      await callSyncPaymentHistory();
-      await callGetBalances();
-      FLog.info(text: "Done");
-    } catch (error) {
-      FLog.error(text: "Failed to get balances:" + error.toString());
-    }
   }
 }
 

@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:ten_ten_one/balance.dart';
 
-import 'package:ten_ten_one/models/balance_model.dart';
 import 'package:ten_ten_one/utilities/submit_button.dart';
 import 'package:ten_ten_one/utilities/divider.dart';
 import 'package:ten_ten_one/wallet/channel_change_notifier.dart';
+import 'package:ten_ten_one/wallet/wallet_change_notifier.dart';
 
 class OpenChannel extends StatefulWidget {
   const OpenChannel({Key? key}) : super(key: key);
@@ -32,13 +32,13 @@ class _OpenChannelState extends State<OpenChannel> {
 
   @override
   void initState() {
-    final bitcoinBalance = context.read<BitcoinBalance>();
+    final wallet = context.read<WalletChangeNotifier>();
 
-    final totalBalance = bitcoinBalance.confirmed.asSats +
-        bitcoinBalance.pendingInternal.asSats +
-        bitcoinBalance.pendingExternal.asSats;
+    final totalBalance = wallet.onChain().confirmed +
+        wallet.onChain().trustedPending +
+        wallet.onChain().untrustedPending;
 
-    final maxTakerChannelAmount = (totalBalance).clamp(0, OpenChannel.maxChannelAmount);
+    final maxTakerChannelAmount = totalBalance.clamp(0, OpenChannel.maxChannelAmount);
 
     takerChannelAmount = maxTakerChannelAmount;
 
@@ -47,12 +47,12 @@ class _OpenChannelState extends State<OpenChannel> {
 
   @override
   Widget build(BuildContext context) {
-    final bitcoinBalance = context.watch<BitcoinBalance>();
-    final totalBalance = bitcoinBalance.confirmed.asSats +
-        bitcoinBalance.pendingInternal.asSats +
-        bitcoinBalance.pendingExternal.asSats;
+    final wallet = context.read<WalletChangeNotifier>();
+    final totalBalance = wallet.onChain().confirmed +
+        wallet.onChain().trustedPending +
+        wallet.onChain().untrustedPending;
 
-    final maxTakerChannelAmount = (totalBalance).clamp(0, OpenChannel.maxChannelAmount);
+    final maxTakerChannelAmount = totalBalance.clamp(0, OpenChannel.maxChannelAmount);
 
     return Scaffold(
       appBar: AppBar(
