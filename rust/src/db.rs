@@ -21,13 +21,12 @@ use sqlx::Sqlite;
 use sqlx::SqlitePool;
 use state::Storage;
 use std::path::Path;
-use std::sync::Mutex;
-use std::sync::MutexGuard;
+use std::sync::Arc;
 
 pub type SqliteConnection = PoolConnection<Sqlite>;
 
 /// Wallet has to be managed by Rust as generics are not support by frb
-static DB: Storage<Mutex<SqlitePool>> = Storage::new();
+static DB: Storage<Arc<SqlitePool>> = Storage::new();
 
 fn into_array(vec: Vec<u8>) -> [u8; 32] {
     vec.as_slice()
@@ -50,25 +49,20 @@ pub async fn init_db(sqlite_path: &Path) -> Result<()> {
         .await
         .context("Failed to run migrations")?;
 
-    DB.set(Mutex::new(pool));
+    DB.set(Arc::new(pool));
     Ok(())
 }
 
 pub async fn acquire() -> Result<SqliteConnection> {
-    let pool = get_db()
-        .map_err(|e| anyhow!("cannot acquire DB lock: {e:#}"))?
-        .clone();
+    let pool = get_db()?;
 
     pool.acquire()
         .await
         .map_err(|e| anyhow!("cannot acquire connection: {e:#}"))
 }
 
-fn get_db() -> Result<MutexGuard<'static, SqlitePool>> {
-    DB.try_get()
-        .context("DB uninitialised")?
-        .lock()
-        .map_err(|_| anyhow!("cannot acquire DB lock"))
+fn get_db() -> Result<Arc<SqlitePool>> {
+    DB.try_get().context("DB uninitialised").cloned()
 }
 
 pub async fn load_ignore_txids() -> Result<Vec<(Txid, u64, Option<Txid>)>> {
