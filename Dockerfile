@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/cc-debian11
+FROM ubuntu:22.04
 
 LABEL "org.opencontainers.image.source"="https://github.com/itchysats/10101"
 LABEL "org.opencontainers.image.authors"="hello@itchysats.network"
