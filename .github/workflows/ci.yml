@@ -54,10 +54,12 @@ jobs:
               - '.github/workflows/**'
               - 'rust/**'
               - 'rust-toolchain.toml'
+              - 'Cargo.*'
             maker:
               - '.github/workflows/**'
               - 'maker/**'
               - 'rust-toolchain.toml'
+              - 'Cargo.*'
             flutter:
               - '.github/workflows/**'
               - 'lib/**'
