@@ -63,16 +63,6 @@ pub async fn init_db(app_dir: String) -> Result<()> {
     .await
 }
 
-/// Test DB operation running from Flutter
-// FIXME: remove this call and instead use DB meaningfully - this is just a test whether the DB
-// works with Flutter and this
-#[tokio::main(flavor = "current_thread")]
-pub async fn test_db_connection() -> Result<()> {
-    let connection = db::acquire().await?;
-    tracing::info!(?connection);
-    Ok(())
-}
-
 pub fn init_wallet(path: String) -> Result<()> {
     anyhow::ensure!(!path.is_empty(), "path must not be empty");
     wallet::init_wallet(Path::new(path.as_str()))
