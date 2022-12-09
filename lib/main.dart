@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:f_logs/f_logs.dart';
 import 'package:feedback/feedback.dart';
-import 'package:flutter/foundation.dart' as foundation;
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:path_provider/path_provider.dart';
@@ -322,9 +322,8 @@ class _TenTenOneState extends State<TenTenOneApp> {
 
   Future<void> setupRustLogging() async {
     api.initLogging().listen((event) {
-      // Only log to Dart file in release mode - in debug mode it's easier to
-      // use stdout
-      if (foundation.kReleaseMode) {
+      // Only log to Dart file if on android or ios - it's easier to use stdout on native
+      if (Platform.isAndroid || Platform.isIOS) {
         FLog.logThis(text: '${event.target}: ${event.msg}', type: LogLevel.DEBUG);
       }
     });
