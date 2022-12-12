@@ -489,10 +489,13 @@ pub fn get_peer_manager() -> Arc<PeerManager> {
     get_wallet().lightning.peer_manager.clone()
 }
 
+pub fn start_background_processor() -> BackgroundProcessor {
+    get_wallet().lightning.start_background_processor()
+}
+
 pub async fn send_lightning_payment(invoice: &str) -> Result<()> {
     let invoice = Invoice::from_str(invoice).context("Could not parse Invoice string")?;
-    lightning::send_payment(&invoice).await?;
-    Ok(())
+    lightning::send_payment(&invoice).await
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -268,10 +268,15 @@ pub fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
         });
 
         runtime.spawn_blocking(move || {
-            // background processor joins on a sync thread, meaning that join here will block a
-            // full thread, which is dis-encouraged to do in async code.
-            if let Err(err) = background_processor.join() {
-                tracing::error!(?err, "Background processor stopped unexpected");
+            let mut background_processor = background_processor;
+            loop {
+                // background processor joins on a sync thread, meaning that join here will block a
+                // full thread, which is dis-encouraged to do in async code.
+                if let Err(err) = background_processor.join() {
+                    tracing::warn!(?err, "Background processor stopped unexpected");
+                }
+                tracing::info!("Restarting lightning node");
+                background_processor = wallet::start_background_processor();
             }
         });
         Ok(())

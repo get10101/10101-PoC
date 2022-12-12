@@ -112,6 +112,7 @@ pub struct LightningSystem {
     pub persister: Arc<FilesystemPersister>,
     pub gossip_sync: Arc<LdkGossipSync>,
     pub data_dir: PathBuf,
+    pub scorer: Arc<Mutex<Scorer>>,
     pub network: Network,
 }
 
@@ -143,6 +144,22 @@ impl LightningSystem {
             num_peers: self.peer_manager.get_peer_node_ids().len(),
             peers: self.peer_manager.get_peer_node_ids(),
         }
+    }
+
+    pub fn start_background_processor(&self) -> BackgroundProcessor {
+        let invoice_payer = INVOICE_PAYER
+            .try_get()
+            .expect("invoice payer to be initialized");
+        BackgroundProcessor::start(
+            self.persister.clone(),
+            invoice_payer.clone(),
+            self.chain_monitor.clone(),
+            self.channel_manager.clone(),
+            GossipSync::p2p(self.gossip_sync.clone()),
+            self.peer_manager.clone(),
+            self.logger.clone(),
+            Some(self.scorer.clone()),
+        )
     }
 }
 
@@ -510,6 +527,14 @@ pub fn setup(
         IgnoringMessageHandler {},
     ));
 
+    // Step 17: Initialize routing ProbabilisticScorer
+    let scorer_path = format!("{ldk_data_dir}/scorer");
+    let scorer = Arc::new(Mutex::new(disk::read_scorer(
+        Path::new(&scorer_path),
+        Arc::clone(&network_graph),
+        Arc::clone(&logger),
+    )));
+
     let system = LightningSystem {
         wallet: lightning_wallet,
         chain_monitor,
@@ -521,6 +546,7 @@ pub fn setup(
         persister,
         gossip_sync,
         data_dir: Path::new(&ldk_data_dir).to_path_buf(),
+        scorer,
         network,
     };
 
@@ -546,8 +572,6 @@ fn default_user_config() -> UserConfig {
 }
 
 pub fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
-    let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
-
     let runtime_handle = tokio::runtime::Handle::current();
     let event_handler = BdkLdkEventHandler {
         runtime_handle,
@@ -558,20 +582,12 @@ pub fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
         network: system.network,
     };
 
-    // Step 17: Initialize routing ProbabilisticScorer
-    let scorer_path = format!("{ldk_data_dir}/scorer");
-    let scorer = Arc::new(Mutex::new(disk::read_scorer(
-        Path::new(&scorer_path),
-        Arc::clone(&system.network_graph),
-        Arc::clone(&system.logger),
-    )));
-
     // Step 18: Create InvoicePayer
     let router = DefaultRouter::new(
         system.network_graph.clone(),
         system.logger.clone(),
         system.keys_manager.get_secure_random_bytes(),
-        scorer.clone(),
+        system.scorer.clone(),
     );
     let invoice_payer = Arc::new(BdkLdkInvoicePayer::new(
         system.channel_manager.clone(),
@@ -583,20 +599,9 @@ pub fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
 
     INVOICE_PAYER.set(invoice_payer.clone());
 
-    // Step 19: Background Processing
-    let background_processor = BackgroundProcessor::start(
-        system.persister.clone(),
-        invoice_payer.clone(),
-        system.chain_monitor.clone(),
-        system.channel_manager.clone(),
-        GossipSync::p2p(system.gossip_sync.clone()),
-        system.peer_manager.clone(),
-        system.logger.clone(),
-        Some(scorer),
-    );
+    let background_processor = system.start_background_processor();
 
     let node_id = system.channel_manager.get_our_node_id();
-
     tracing::info!("Lightning node started with node ID {node_id}");
     Ok(background_processor)
 }
