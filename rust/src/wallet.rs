@@ -238,8 +238,8 @@ impl Wallet {
     }
 
     /// Run the lightning node
-    pub async fn run_ldk(&self) -> Result<BackgroundProcessor> {
-        lightning::run_ldk(&self.lightning).await
+    pub fn run_ldk(&self) -> Result<BackgroundProcessor> {
+        lightning::run_ldk(&self.lightning)
     }
 
     /// Run the lightning node
@@ -418,9 +418,9 @@ pub fn init_wallet(data_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn run_ldk() -> Result<BackgroundProcessor> {
+pub fn run_ldk() -> Result<BackgroundProcessor> {
     let wallet = get_wallet();
-    wallet.run_ldk().await
+    wallet.run_ldk()
 }
 
 pub async fn run_ldk_server(address: SocketAddr) -> Result<(JoinHandle<()>, BackgroundProcessor)> {
@@ -485,8 +485,8 @@ pub fn get_seed_phrase() -> Vec<String> {
     get_wallet().seed.get_seed_phrase()
 }
 
-pub fn get_peer_manager() -> Result<Arc<PeerManager>> {
-    Ok(get_wallet().lightning.peer_manager.clone())
+pub fn get_peer_manager() -> Arc<PeerManager> {
+    get_wallet().lightning.peer_manager.clone()
 }
 
 pub async fn send_lightning_payment(invoice: &str) -> Result<()> {
