@@ -89,14 +89,8 @@ class ChannelChangeNotifier extends ChangeNotifier {
     super.notifyListeners();
   }
 
-  ChannelChangeNotifier init() {
-    Timer.periodic(const Duration(seconds: 5), (timer) async {
-      final channelState = await api.getChannelState();
-      if (state != channelState) {
-        state = channelState;
-        super.notifyListeners();
-      }
-    });
-    return this;
+  void update(ChannelState state) {
+    this.state = state;
+    super.notifyListeners();
   }
 }

@@ -13,6 +13,7 @@ use crate::offer::Offer;
 use crate::wallet;
 use crate::wallet::Balance;
 use crate::wallet::LightningTransaction;
+use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use flutter_rust_bridge::StreamSink;
@@ -27,11 +28,13 @@ use std::str::FromStr;
 use std::time::SystemTime;
 use time::Duration;
 pub use time::OffsetDateTime;
+use tokio::try_join;
 
 pub struct Address {
     pub address: String,
 }
 
+#[derive(Clone)]
 pub struct BitcoinTxHistoryItem {
     pub sent: u64,
     pub received: u64,
@@ -51,23 +54,7 @@ impl Address {
     }
 }
 
-#[tokio::main(flavor = "current_thread")]
-pub async fn init_db(app_dir: String) -> Result<()> {
-    anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
-    let network = config::network();
-    db::init_db(
-        &Path::new(app_dir.as_str())
-            .join(network.to_string())
-            .join("taker.sqlite"),
-    )
-    .await
-}
-
-pub fn init_wallet(path: String) -> Result<()> {
-    anyhow::ensure!(!path.is_empty(), "path must not be empty");
-    wallet::init_wallet(Path::new(path.as_str()))
-}
-
+#[derive(Clone)]
 pub enum ChannelState {
     Unavailable,
     Establishing,
@@ -75,7 +62,7 @@ pub enum ChannelState {
     Available,
 }
 
-pub fn get_channel_state() -> ChannelState {
+fn get_channel_state() -> ChannelState {
     match wallet::get_first_channel_details() {
         Some(channel_details) => {
             if channel_details.is_usable {
@@ -129,19 +116,143 @@ pub fn decode_invoice(invoice: String) -> Result<LightningInvoice> {
     })
 }
 
-#[tokio::main(flavor = "current_thread")]
-pub async fn run_ldk() -> Result<()> {
-    tracing::debug!("Starting ldk node");
-    match wallet::run_ldk().await {
-        Ok(_background_processor) => {
-            // keep connection with maker alive!
-            connection::keep_alive().await?;
-        }
-        Err(err) => {
-            tracing::error!("Error running LDK: {err}");
-        }
+#[derive(Clone)]
+pub enum Event {
+    Init(String),
+    Ready,
+    Offer(Option<Offer>),
+    WalletInfo(Option<WalletInfo>),
+    ChannelState(ChannelState),
+}
+
+#[derive(Clone)]
+pub struct WalletInfo {
+    pub balance: Balance,
+    pub bitcoin_history: Vec<BitcoinTxHistoryItem>,
+    pub lightning_history: Vec<LightningTransaction>,
+}
+
+impl WalletInfo {
+    async fn build_wallet_info() -> Result<WalletInfo> {
+        let balance = wallet::get_balance()?;
+        let bitcoin_history = WalletInfo::get_bitcoin_tx_history().await?;
+        let lightning_history = wallet::get_lightning_history().await?;
+        Ok(WalletInfo {
+            balance,
+            bitcoin_history,
+            lightning_history,
+        })
     }
-    Ok(())
+
+    async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
+        let tx_history = wallet::get_bitcoin_tx_history()
+            .await?
+            .into_iter()
+            .map(|tx| {
+                let (is_confirmed, timestamp) = match tx.confirmation_time {
+                    None => (false, OffsetDateTime::now_utc().unix_timestamp() as u64),
+                    Some(blocktime) => (true, blocktime.timestamp),
+                };
+
+                BitcoinTxHistoryItem {
+                    sent: tx.sent,
+                    received: tx.received,
+                    txid: tx.txid.to_string(),
+                    fee: tx.fee.unwrap_or(0),
+                    is_confirmed,
+                    timestamp,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Ok(tx_history)
+    }
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn refresh_wallet_info() -> Result<WalletInfo> {
+    wallet::sync()?;
+    WalletInfo::build_wallet_info().await
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn run(stream: StreamSink<Event>, app_dir: String) -> Result<()> {
+    let network = config::network();
+    anyhow::ensure!(!app_dir.is_empty(), "app_dir must not be empty");
+    stream.add(Event::Init(format!("Initialising {network} wallet")));
+    wallet::init_wallet(Path::new(app_dir.as_str()))?;
+
+    stream.add(Event::Init("Initialising database".to_string()));
+    db::init_db(
+        &Path::new(app_dir.as_str())
+            .join(network.to_string())
+            .join("taker.sqlite"),
+    )
+    .await?;
+
+    stream.add(Event::Init("Starting full ldk node".to_string()));
+    let background_processor = wallet::run_ldk().await?;
+
+    stream.add(Event::Init("Fetching an offer".to_string()));
+    stream.add(Event::Offer(offer::get_offer().await.ok()));
+
+    stream.add(Event::Init("Fetching your balance".to_string()));
+    stream.add(Event::WalletInfo(
+        WalletInfo::build_wallet_info().await.ok(),
+    ));
+    stream.add(Event::Init("Checking channel state".to_string()));
+    stream.add(Event::ChannelState(get_channel_state()));
+
+    stream.add(Event::Init("Ready".to_string()));
+    stream.add(Event::Ready);
+
+    // spawn a connection task keeping the connection with the maker alive.
+    let peer_manager = wallet::get_peer_manager()?;
+    let connection_handle = connection::spawn(peer_manager);
+
+    // sync offers every 5 seconds
+    let offer_handle = offer::spawn(stream.clone());
+
+    // sync wallet every 60 seconds
+    let wallet_sync_handle = tokio::spawn(async {
+        loop {
+            wallet::sync().unwrap_or_else(|e| tracing::error!(?e, "Failed to sync wallet"));
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+        }
+    });
+
+    // sync wallet info every 10 seconds
+    let wallet_info_stream = stream.clone();
+    let wallet_info_sync_handle = tokio::spawn(async move {
+        loop {
+            match WalletInfo::build_wallet_info().await {
+                Ok(wallet_info) => {
+                    let _ = wallet_info_stream.add(Event::WalletInfo(Some(wallet_info)));
+                }
+                Err(e) => tracing::error!(?e, "Failed to build wallet info"),
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+        }
+    });
+
+    // sync channel state every 5 seconds
+    let channel_state_stream = stream.clone();
+    let channel_state_handle = tokio::spawn(async move {
+        loop {
+            channel_state_stream.add(Event::ChannelState(get_channel_state()));
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        }
+    });
+
+    try_join!(
+        connection_handle,
+        offer_handle,
+        wallet_sync_handle,
+        wallet_info_sync_handle,
+        channel_state_handle,
+    )?;
+
+    background_processor.join().map_err(|e| anyhow!(e))
 }
 
 pub fn get_balance() -> Result<Balance> {
@@ -202,11 +313,6 @@ pub async fn open_cfd(order: Order) -> Result<()> {
 }
 
 #[tokio::main(flavor = "current_thread")]
-pub async fn get_offer() -> Result<Option<Offer>> {
-    offer::get_offer().await
-}
-
-#[tokio::main(flavor = "current_thread")]
 pub async fn call_faucet(address: String) -> Result<String> {
     anyhow::ensure!(
         !address.is_empty(),
@@ -226,31 +332,6 @@ pub async fn get_fee_recommendation() -> Result<u32> {
 #[tokio::main(flavor = "current_thread")]
 pub async fn settle_cfd(cfd: Cfd, offer: Offer) -> Result<()> {
     cfd::settle(&cfd, &offer).await
-}
-
-#[tokio::main(flavor = "current_thread")]
-pub async fn get_bitcoin_tx_history() -> Result<Vec<BitcoinTxHistoryItem>> {
-    let tx_history = wallet::get_bitcoin_tx_history()
-        .await?
-        .into_iter()
-        .map(|tx| {
-            let (is_confirmed, timestamp) = match tx.confirmation_time {
-                None => (false, OffsetDateTime::now_utc().unix_timestamp() as u64),
-                Some(blocktime) => (true, blocktime.timestamp),
-            };
-
-            BitcoinTxHistoryItem {
-                sent: tx.sent,
-                received: tx.received,
-                txid: tx.txid.to_string(),
-                fee: tx.fee.unwrap_or(0),
-                is_confirmed,
-                timestamp,
-            }
-        })
-        .collect::<Vec<_>>();
-
-    Ok(tx_history)
 }
 
 #[tokio::main(flavor = "current_thread")]
