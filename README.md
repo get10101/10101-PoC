@@ -1,4 +1,9 @@
-# 10101 (a.k.a TenTenOne)
+# 10101 (a.k.a TenTenOne) - PoC
+
+
+> :warning: _The code within this repository was created during the [Legends of Lightning Tournament](https://makers.bolt.fun/project/10101). It is now archived and replaced by https://github.com/get10101/10101_
+
+
 
 ## Dependencies
 
