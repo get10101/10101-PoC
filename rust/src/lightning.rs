@@ -115,7 +115,7 @@ pub struct LightningSystem {
     pub network: Network,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Copy)]
 pub struct PeerInfo {
     pub pubkey: PublicKey,
     pub peer_addr: SocketAddr,
@@ -545,7 +545,7 @@ fn default_user_config() -> UserConfig {
     }
 }
 
-pub async fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
+pub fn run_ldk(system: &LightningSystem) -> Result<BackgroundProcessor> {
     let ldk_data_dir = system.data_dir.to_string_lossy().to_string();
 
     let runtime_handle = tokio::runtime::Handle::current();
@@ -630,7 +630,7 @@ pub async fn run_ldk_server(
 
     tracing::info!("Listening on {address}");
 
-    let background_processor = run_ldk(system).await?;
+    let background_processor = run_ldk(system)?;
     Ok((tcp_handle, background_processor))
 }
 
